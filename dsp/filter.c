@@ -58,6 +58,10 @@ void FilterClean(Filter *filter)
 inline float computeFilter(Filter *filter, float inputSample)
 {
   float w = inputSample;
+
+///@TODO: Estic depurant aquest return w s'ha d'eliminar###############################################################################
+///@####################################################################½@½#¬~½¬½~½¬~½¬~½½½½½½½½½½½½½½½½½½½½½½½½½¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬
+return w;
   ///if(filter->filter_type != FILTER_OFF)//if filter is enabled 
   if(filter->iFilterEnabled)
   {

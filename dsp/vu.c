@@ -42,8 +42,8 @@ Vu *VuInit(double rate)
   vu->vu_value = 0.0;
   vu->vu_max = 0.0;
   
-  m_min = (1.0 / 256);
-  m_decay = exp(log(m_min) / (1 * rate));
+  vu->m_min = (1.0 / 256);
+  vu->m_decay = exp(log(vu->m_min) / (1 * rate));
  
   return vu;
 #ifdef IS_DEBUG_
@@ -54,8 +54,8 @@ Vu *VuInit(double rate)
 //Clear the VU
 void resetVU(Vu *vu)
 {
-  vu->vu_full = 1;
-  vu->vu_output = 0.0;
+  vu->vu_max = 1;
+  vu->vu_value = 0.0;
 }
 
 //Destroy a Vu instance
@@ -73,11 +73,11 @@ inline void SetSample(Vu *vu, float sample)
 //Compute the VU's
 inline float ComputeVu(Vu *vu, uint32_t nframes)
 {
-  const float fVuOut = vu_max > m_min ? vu_max : 0;
-      if (vu_max > m_min)
-		vu_max *= pow(m_decay, nframes);
+  const float fVuOut = vu->vu_max > vu->m_min ? vu->vu_max : 0;
+      if (vu->vu_max > vu->m_min)
+		vu->vu_max *= pow(vu->m_decay, nframes);
       else
-	vu_max = 0.0;
+	vu->vu_max = 0.0;
 	
   return fVuOut;
 }

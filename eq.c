@@ -218,8 +218,7 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
       fBandParam[i] = *(plugin_data->fBandParam[i]);
       iBandType[i] = (int)(*(plugin_data->fBandType[i]));
       iBandEnabled[i] = (int)(*(plugin_data->fBandEnabled[i]));
-printf("iBandEnabled = %d\n\r",iBandEnabled[i]);
-printf("iBandType = %d\n\r",iBandType[i]);
+
       if(checkBandChange(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]))
       {
         setFilterParams(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]);
@@ -281,8 +280,8 @@ printf("iBandType = %d\n\r",iBandType[i]);
   //Update VU ports
   for(i = 0; i<NUM_CHANNELS; i++)
   {
-    *(plugin_data->fVuIn[i]) = ComputeVu(plugin_data->InputVu[i]);
-    *(plugin_data->fVuOut[i]) = ComputeVu(plugin_data->OutputVu[i]);
+    *(plugin_data->fVuIn[i]) = ComputeVu(plugin_data->InputVu[i], sample_count);
+    *(plugin_data->fVuOut[i]) = ComputeVu(plugin_data->OutputVu[i], sample_count);
   }
 }
 

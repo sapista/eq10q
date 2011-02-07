@@ -3,21 +3,21 @@
 @prefix doap: <http://usefulinc.com/ns/doap#>.
 @prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
 ##LV2 GUI extension
-#<http://eq10q.sourceforge.net/eq/eq10qm/gui>
+#<http://eq10q.sourceforge.net/eq/eq6qs/gui>
 #  a guiext:GtkUI;
-#  guiext:binary <eq10qm_gui.so>;
+#  guiext:binary <eq6qs_gui.so>;
 #  guiext:requiredFeature guiext:makeResident.
 
 ##LV2 plugin binary
-<http://eq10q.sourceforge.net/eq/eq10qm>
+<http://eq10q.sourceforge.net/eq/eq6qs>
   a lv2:Plugin;
-  lv2:binary <eq10qm.so>;
-  doap:name "EQ10Q Mono";
+  lv2:binary <eq6qs.so>;
+  doap:name "EQ6Q Stereo";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
 ###Uncoment the following line if do you have GUI extension for this plugin
-#  guiext:ui <http://eq10q.sourceforge.net/eq/eq10qm/gui>;
+#  guiext:ui <http://eq10q.sourceforge.net/eq/eq6qs/gui>;
 
 doap:maintainer [
       foaf:name "Pere Rafols Soler";
@@ -58,20 +58,34 @@ doap:maintainer [
  [
     a lv2:AudioPort, lv2:InputPort;
     lv2:index 3;
-    lv2:symbol "input";
-    lv2:name "Input";
+    lv2:symbol "input1";
+    lv2:name "Input1";
+  ],
+
+   [
+    a lv2:AudioPort, lv2:InputPort;
+    lv2:index 4;
+    lv2:symbol "input2";
+    lv2:name "Input2";
   ],
 
   [
     a lv2:AudioPort, lv2:OutputPort;
-    lv2:index 4;
-    lv2:symbol "output";
-    lv2:name "Output";
+    lv2:index 5;
+    lv2:symbol "output1";
+    lv2:name "Output1";
+  ],
+
+  [
+    a lv2:AudioPort, lv2:OutputPort;
+    lv2:index 6;
+    lv2:symbol "output2";
+    lv2:name "Output2";
   ],
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 5;
+    lv2:index 7;
     lv2:symbol "filter1_gain";
     lv2:name "Filter 1 Gain";
     lv2:minimum -20;
@@ -81,7 +95,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 6;
+    lv2:index 8;
     lv2:symbol "filter1_freq";
     lv2:name "Filter Freq";
     lv2:minimum 10;
@@ -91,7 +105,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 7;
+    lv2:index 9;
     lv2:symbol "filter1_q";
     lv2:name "Filter 1 Q";
     lv2:minimum 0.1;
@@ -101,7 +115,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 8;
+    lv2:index 10;
     lv2:symbol "filter1_type";
     lv2:name "Filter 1 Type";
     lv2:minimum 1;
@@ -112,7 +126,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 9;
+    lv2:index 11;
     lv2:symbol "filter1_enable";
     lv2:name "Filter 1 Enable";
     lv2:minimum 0;
@@ -123,7 +137,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 10;
+    lv2:index 12;
     lv2:symbol "filter2_gain";
     lv2:name "Filter 2 Gain";
     lv2:minimum -20;
@@ -133,7 +147,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 11;
+    lv2:index 13;
     lv2:symbol "filter2_freq";
     lv2:name "Filter 2 Freq";
     lv2:minimum 10;
@@ -143,7 +157,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 12;
+    lv2:index 14;
     lv2:symbol "filter2_q";
     lv2:name "Filter 2 Q";
     lv2:minimum 0.1;
@@ -153,7 +167,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 13;
+    lv2:index 15;
     lv2:symbol "filter2_type";
     lv2:name "Filter 2 Type";
     lv2:minimum 1;
@@ -164,7 +178,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 14;
+    lv2:index 16;
     lv2:symbol "filter2_enable";
     lv2:name "Filter 2 Enable";
     lv2:minimum 0;
@@ -175,7 +189,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 15;
+    lv2:index 17;
     lv2:symbol "filter3_gain";
     lv2:name "Filter 3 Gain";
     lv2:minimum -20;
@@ -185,7 +199,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 16;
+    lv2:index 18;
     lv2:symbol "filter3_freq";
     lv2:name "Filter 3 Freq";
     lv2:minimum 10;
@@ -195,7 +209,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 17;
+    lv2:index 19;
     lv2:symbol "filter3_q";
     lv2:name "Filter 3 Q";
     lv2:minimum 0.1;
@@ -205,7 +219,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 18;
+    lv2:index 20;
     lv2:symbol "filter3_type";
     lv2:name "Filter 3 Type";
     lv2:minimum 1;
@@ -216,7 +230,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 19;
+    lv2:index 21;
     lv2:symbol "filter3_enable";
     lv2:name "Filter 3 Enable";
     lv2:minimum 0;
@@ -227,7 +241,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 20;
+    lv2:index 22;
     lv2:symbol "filter4_gain";
     lv2:name "Filter 4 Gain";
     lv2:minimum -20;
@@ -237,7 +251,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 21;
+    lv2:index 23;
     lv2:symbol "filter4_freq";
     lv2:name "Filter 4 Freq";
     lv2:minimum 10;
@@ -247,7 +261,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 22;
+    lv2:index 24;
     lv2:symbol "filter4_q";
     lv2:name "Filter 4 Q";
     lv2:minimum 0.1;
@@ -257,7 +271,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 23;
+    lv2:index 25;
     lv2:symbol "filter4_type";
     lv2:name "Filter 4 Type";
     lv2:minimum 1;
@@ -268,7 +282,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 24;
+    lv2:index 26;
     lv2:symbol "filter4_enable";
     lv2:name "Filter 4 Enable";
     lv2:minimum 0;
@@ -279,7 +293,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 25;
+    lv2:index 27;
     lv2:symbol "filter5_gain";
     lv2:name "Filter 5 Gain";
     lv2:minimum -20;
@@ -289,7 +303,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 26;
+    lv2:index 28;
     lv2:symbol "filter5_freq";
     lv2:name "Filter 5 Freq";
     lv2:minimum 10;
@@ -299,7 +313,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 27;
+    lv2:index 29;
     lv2:symbol "filter5_q";
     lv2:name "Filter 5 Q";
     lv2:minimum 0.1;
@@ -309,7 +323,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 28;
+    lv2:index 30;
     lv2:symbol "filter5_type";
     lv2:name "Filter 5 Type";
     lv2:minimum 1;
@@ -320,7 +334,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 29;
+    lv2:index 31;
     lv2:symbol "filter5_enable";
     lv2:name "Filter 5 Enable";
     lv2:minimum 0;
@@ -331,7 +345,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 30;
+    lv2:index 32;
     lv2:symbol "filter6_gain";
     lv2:name "Filter 6 Gain";
     lv2:minimum -20;
@@ -341,7 +355,7 @@ doap:maintainer [
 
  [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 31;
+    lv2:index 33;
     lv2:symbol "filter6_freq";
     lv2:name "Filter 6 Freq";
     lv2:minimum 10;
@@ -351,7 +365,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort;
-    lv2:index 32;
+    lv2:index 34;
     lv2:symbol "filter6_q";
     lv2:name "Filter 6 Q";
     lv2:minimum 0.1;
@@ -361,7 +375,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 33;
+    lv2:index 35;
     lv2:symbol "filter6_type";
     lv2:name "Filter 6 Type";
     lv2:minimum 1;
@@ -372,7 +386,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 34;
+    lv2:index 36;
     lv2:symbol "filter6_enable";
     lv2:name "Filter 6 Enable";
     lv2:minimum 0;
@@ -382,227 +396,37 @@ doap:maintainer [
   ],
 
  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 35;
-    lv2:symbol "filter7_gain";
-    lv2:name "Filter 7 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 36;
-    lv2:symbol "filter7_freq";
-    lv2:name "Filter 7 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 37;
-    lv2:symbol "filter7_q";
-    lv2:name "Filter 7 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 38;
-    lv2:symbol "filter7_type";
-    lv2:name "Filter 7 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 39;
-    lv2:symbol "filter7_enable";
-    lv2:name "Filter 7 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 40;
-    lv2:symbol "filter8_gain";
-    lv2:name "Filter 8 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 41;
-    lv2:symbol "filter8_freq";
-    lv2:name "Filter 8 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 42;
-    lv2:symbol "filter8_q";
-    lv2:name "Filter 8 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 43;
-    lv2:symbol "filter8_type";
-    lv2:name "Filter 8 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 44;
-    lv2:symbol "filter8_enable";
-    lv2:name "Filter 8 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 45;
-    lv2:symbol "filter9_gain";
-    lv2:name "Filter 9 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 46;
-    lv2:symbol "filter9_freq";
-    lv2:name "Filter 9 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 47;
-    lv2:symbol "filter9_q";
-    lv2:name "Filter 9 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 48;
-    lv2:symbol "filter9_type";
-    lv2:name "Filter 9 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 49;
-    lv2:symbol "filter9_enable";
-    lv2:name "Filter 9 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 50;
-    lv2:symbol "filter10_gain";
-    lv2:name "Filter 10 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 51;
-    lv2:symbol "filter10_freq";
-    lv2:name "Filter 10 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 52;
-    lv2:symbol "filter10_q";
-    lv2:name "Filter 10 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 53;
-    lv2:symbol "filter10_type";
-    lv2:name "Filter 10 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 54;
-    lv2:symbol "filter10_enable";
-    lv2:name "Filter 10 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
-  [
     a lv2:ControlPort, lv2:OutputPort;
-    lv2:index 55;
-    lv2:symbol "in_vu_ctl";
-    lv2:name "In Vu CTL";
+    lv2:index 37;
+    lv2:symbol "in_1_vu_ctl";
+    lv2:name "In 1 Vu CTL";
     lv2:minimum 0;
     lv2:maximum 2;
   ],
 
   [
     a lv2:ControlPort, lv2:OutputPort;
-    lv2:index 56;
-    lv2:symbol "out_vu_ctl";
-    lv2:name "Out VU CTL";
+    lv2:index 38;
+    lv2:symbol "in_2_vu_ctl";
+    lv2:name "In 2 Vu CTL";
+    lv2:minimum 0;
+    lv2:maximum 2;
+  ],
+
+  [
+    a lv2:ControlPort, lv2:OutputPort;
+    lv2:index 39;
+    lv2:symbol "out_2_vu_ctl";
+    lv2:name "Out 1 VU CTL";
+    lv2:minimum 0;
+    lv2:maximum 2;
+  ],
+
+  [
+    a lv2:ControlPort, lv2:OutputPort;
+    lv2:index 40;
+    lv2:symbol "out_2_vu_ctl";
+    lv2:name "Out 2 VU CTL";
     lv2:minimum 0;
     lv2:maximum 2;
   ].

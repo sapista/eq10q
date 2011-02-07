@@ -3,21 +3,21 @@
 @prefix doap: <http://usefulinc.com/ns/doap#>.
 @prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
 ##LV2 GUI extension
-#<http://eq10q.sourceforge.net/eq/eq10qm/gui>
+#<http://eq10q.sourceforge.net/eq/eq6qm/gui>
 #  a guiext:GtkUI;
-#  guiext:binary <eq10qm_gui.so>;
+#  guiext:binary <eq6qm_gui.so>;
 #  guiext:requiredFeature guiext:makeResident.
 
 ##LV2 plugin binary
-<http://eq10q.sourceforge.net/eq/eq10qm>
+<http://eq10q.sourceforge.net/eq/eq6qm>
   a lv2:Plugin;
-  lv2:binary <eq10qm.so>;
-  doap:name "EQ10Q Mono";
+  lv2:binary <eq6qm.so>;
+  doap:name "EQ6Q Mono";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
 ###Uncoment the following line if do you have GUI extension for this plugin
-#  guiext:ui <http://eq10q.sourceforge.net/eq/eq10qm/gui>;
+#  guiext:ui <http://eq10q.sourceforge.net/eq/eq6qm/gui>;
 
 doap:maintainer [
       foaf:name "Pere Rafols Soler";
@@ -381,217 +381,9 @@ doap:maintainer [
     lv2:portProperty lv2:toggled;
   ],
 
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 35;
-    lv2:symbol "filter7_gain";
-    lv2:name "Filter 7 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 36;
-    lv2:symbol "filter7_freq";
-    lv2:name "Filter 7 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 37;
-    lv2:symbol "filter7_q";
-    lv2:name "Filter 7 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 38;
-    lv2:symbol "filter7_type";
-    lv2:name "Filter 7 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 39;
-    lv2:symbol "filter7_enable";
-    lv2:name "Filter 7 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 40;
-    lv2:symbol "filter8_gain";
-    lv2:name "Filter 8 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 41;
-    lv2:symbol "filter8_freq";
-    lv2:name "Filter 8 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 42;
-    lv2:symbol "filter8_q";
-    lv2:name "Filter 8 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 43;
-    lv2:symbol "filter8_type";
-    lv2:name "Filter 8 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 44;
-    lv2:symbol "filter8_enable";
-    lv2:name "Filter 8 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 45;
-    lv2:symbol "filter9_gain";
-    lv2:name "Filter 9 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 46;
-    lv2:symbol "filter9_freq";
-    lv2:name "Filter 9 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 47;
-    lv2:symbol "filter9_q";
-    lv2:name "Filter 9 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 48;
-    lv2:symbol "filter9_type";
-    lv2:name "Filter 9 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 49;
-    lv2:symbol "filter9_enable";
-    lv2:name "Filter 9 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 50;
-    lv2:symbol "filter10_gain";
-    lv2:name "Filter 10 Gain";
-    lv2:minimum -20;
-    lv2:maximum 20;
-    lv2:default 0;
-  ],
-
- [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 51;
-    lv2:symbol "filter10_freq";
-    lv2:name "Filter 10 Freq";
-    lv2:minimum 10;
-    lv2:maximum 20000;
-    lv2:default 1000;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort;
-    lv2:index 52;
-    lv2:symbol "filter10_q";
-    lv2:name "Filter 10 Q";
-    lv2:minimum 0.1;
-    lv2:maximum 16;
-    lv2:default 2;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 53;
-    lv2:symbol "filter10_type";
-    lv2:name "Filter 10 Type";
-    lv2:minimum 1;
-    lv2:maximum 12;
-    lv2:default 11;
-    lv2:portProperty lv2:integer;
-  ],
-
-  [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
-    lv2:index 54;
-    lv2:symbol "filter10_enable";
-    lv2:name "Filter 10 Enable";
-    lv2:minimum 0;
-    lv2:maximum 1;
-    lv2:default 0;
-    lv2:portProperty lv2:toggled;
-  ],
-
   [
     a lv2:ControlPort, lv2:OutputPort;
-    lv2:index 55;
+    lv2:index 35;
     lv2:symbol "in_vu_ctl";
     lv2:name "In Vu CTL";
     lv2:minimum 0;
@@ -600,7 +392,7 @@ doap:maintainer [
 
   [
     a lv2:ControlPort, lv2:OutputPort;
-    lv2:index 56;
+    lv2:index 36;
     lv2:symbol "out_vu_ctl";
     lv2:name "Out VU CTL";
     lv2:minimum 0;
