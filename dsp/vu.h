@@ -27,12 +27,9 @@ This file contains a VU meter definitions
 #ifndef  VU_H
   #define VU_H
 
-#define VU_MIN_FREQ 80
-
 typedef struct
 {
-  int vu_i, vu_max, vu_full;
-  float vu_value, vu_output, vu_toOutputPort;
+  float vu_value, vu_output, vu_max, m_min, m_decay;
 }Vu;
 
 //Initialize the VU meter
@@ -48,5 +45,5 @@ void resetVU(Vu *vu);
 inline void SetSample(Vu *vu, float sample);
 
 //Compute the VU's
-inline float ComputeVu(Vu *vu);
+inline float ComputeVu(Vu *vu, uint32_t nframes);
 #endif

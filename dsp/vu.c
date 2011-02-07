@@ -40,11 +40,11 @@ Vu *VuInit(double rate)
   Vu *vu = (Vu *)malloc(sizeof(Vu));
 
   vu->vu_value = 0.0;
-  vu->vu_toOutputPort = 0.0;
-  vu->vu_i = 0;
-  vu->vu_full = 0;
-  vu->vu_max = (int)(rate/VU_MIN_FREQ);
-
+  vu->vu_max = 0.0;
+  
+  m_min = (1.0 / 256);
+  m_decay = exp(log(m_min) / (1 * rate));
+ 
   return vu;
 #ifdef IS_DEBUG_
   printf("Vu ready\n\r");
@@ -66,28 +66,18 @@ void VuClean(Vu *vu){
 //Inputs a sample to VU
 inline void SetSample(Vu *vu, float sample)
 {
-  vu->vu_value += fabsf(sample);
-  vu->vu_i++;
-
-  if(vu->vu_i == vu->vu_max)
-  {
-    vu->vu_output = vu->vu_value;
-    vu->vu_value = 0.0;
-    vu->vu_i = 0;
-    vu->vu_full = 1;
-  }
+  vu->vu_value = fabsf(sample);
+  vu->vu_max = vu->vu_value > vu->vu_max ? vu->vu_value :  vu->vu_max;
 }
 
 //Compute the VU's
-inline float ComputeVu(Vu *vu)
+inline float ComputeVu(Vu *vu, uint32_t nframes)
 {
-
-  if(vu->vu_full)
-  {
-    vu->vu_toOutputPort = vu->vu_output/((float)vu->vu_max);
-    vu->vu_toOutputPort = 20 * log10(vu->vu_toOutputPort) + 0.92; //0.92 is a offset compensation
-    vu->vu_full = 0;
-  }
-
-  return vu->vu_toOutputPort;
+  const float fVuOut = vu_max > m_min ? vu_max : 0;
+      if (vu_max > m_min)
+		vu_max *= pow(m_decay, nframes);
+      else
+	vu_max = 0.0;
+	
+  return fVuOut;
 }
