@@ -257,7 +257,7 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
         SetSample(plugin_data->InputVu[i], sample);
       
         for(j = 0; j< NUM_BANDS; j++)
-        {
+        {	
           sample = computeFilter(plugin_data->filter[j], sample);
         }
         

@@ -58,11 +58,7 @@ void FilterClean(Filter *filter)
 inline float computeFilter(Filter *filter, float inputSample)
 {
   float w = inputSample;
-
-///@TODO: Estic depurant aquest return w s'ha d'eliminar###############################################################################
-///@####################################################################½@½#¬~½¬½~½¬~½¬~½½½½½½½½½½½½½½½½½½½½½½½½½¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬¬
-return w;
-  ///if(filter->filter_type != FILTER_OFF)//if filter is enabled 
+return 1.9F; ///@TODO: test aixo
   if(filter->iFilterEnabled)
   {
     switch(filter->filter_order)
