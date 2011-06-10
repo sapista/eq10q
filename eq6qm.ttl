@@ -26,13 +26,14 @@ doap:maintainer [
    ] ;
 
   lv2:port [
-    a lv2:ControlPort, lv2:InputPort;
+    a lv2:ControlPort, lv2:InputPort, lv2:integer;
     lv2:index 0;
     lv2:symbol "bypass";
     lv2:name "Bypass";
     lv2:minimum 0;
     lv2:maximum 1;
     lv2:default 0;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
@@ -135,8 +136,8 @@ doap:maintainer [
     a lv2:ControlPort, lv2:InputPort;
     lv2:index 11;
     lv2:symbol "filter1_freq";
-    lv2:name "Filter Freq";
-    lv2:minimum 10;
+    lv2:name "Filter 1 Freq";
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -146,7 +147,7 @@ doap:maintainer [
     lv2:index 12;
     lv2:symbol "filter2_freq";
     lv2:name "Filter 2 Freq";
-    lv2:minimum 10;
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -156,7 +157,7 @@ doap:maintainer [
     lv2:index 13;
     lv2:symbol "filter3_freq";
     lv2:name "Filter 3 Freq";
-    lv2:minimum 10;
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -166,7 +167,7 @@ doap:maintainer [
     lv2:index 14;
     lv2:symbol "filter4_freq";
     lv2:name "Filter 4 Freq";
-    lv2:minimum 10;
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -176,7 +177,7 @@ doap:maintainer [
     lv2:index 15;
     lv2:symbol "filter5_freq";
     lv2:name "Filter 5 Freq";
-    lv2:minimum 10;
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -186,7 +187,7 @@ doap:maintainer [
     lv2:index 16;
     lv2:symbol "filter6_freq";
     lv2:name "Filter 6 Freq";
-    lv2:minimum 10;
+    lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 1000;
   ],
@@ -392,8 +393,8 @@ doap:maintainer [
     lv2:index 35;
     lv2:symbol "in_vu_ctl";
     lv2:name "In Vu CTL";
-    lv2:minimum 0;
-    lv2:maximum 2;
+    lv2:minimum -50;
+    lv2:maximum 12;
   ],
 
   [
@@ -401,6 +402,6 @@ doap:maintainer [
     lv2:index 36;
     lv2:symbol "out_vu_ctl";
     lv2:name "Out VU CTL";
-    lv2:minimum 0;
-    lv2:maximum 2;
+    lv2:minimum -50;
+    lv2:maximum 12;
   ].

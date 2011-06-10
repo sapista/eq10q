@@ -24,9 +24,6 @@ This plugin is inside the Sapista Plugins Bundle
 This file tryies to implement functionalities for a large numbers of equalizers
 ****************************************************************************/
 
-//Enable this for debugin mode
-//#define IS_DEBUG_
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +34,7 @@ This file tryies to implement functionalities for a large numbers of equalizers
 
 #include "eq.h"
 #include "dsp/filter.h"
+#include "dsp/smooth.h"
 #include "dsp/vu.h"
 
 static LV2_Descriptor *eqDescriptor = NULL;
@@ -55,9 +53,10 @@ typedef struct {
   float *fOutput[NUM_CHANNELS];
   float *fVuIn[NUM_CHANNELS];
   float *fVuOut[NUM_CHANNELS];
-  
+
   //Plugin DSP
   Filter *filter[NUM_BANDS];
+  Smooth *smooth[NUM_BANDS][3]; //3 smooth per cada banda (Gain, Freq, Q)
   Vu *InputVu[NUM_CHANNELS];
   Vu *OutputVu[NUM_CHANNELS];
 } EQ;
@@ -65,9 +64,13 @@ typedef struct {
 static void cleanupEQ(LV2_Handle instance)
 {
   EQ *plugin = (EQ *)instance;
-  int i;
+  int i,j;
   for(i=0; i<NUM_BANDS; i++)
+  {
     FilterClean(plugin->filter[i]);
+    for(j=0;j<3;j++) SmoothClean(plugin->smooth[i][j]);
+  }
+
   for(i=0; i<NUM_CHANNELS; i++)
   {
     VuClean(plugin->InputVu[i]);
@@ -78,9 +81,6 @@ static void cleanupEQ(LV2_Handle instance)
 
 static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
 {
-#ifdef IS_DEBUG_
-  printf("Starting connecting port %d... \n\r", port);
-#endif
   EQ *plugin = (EQ *)instance;
 
   //Connect standar ports
@@ -158,14 +158,13 @@ static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
 
 static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
 {
-#ifdef IS_DEBUG_
-  printf("Starting EQ1Q Mono instantce...\n\r");
-#endif
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));
-  int i;
+
+  int i, j;
   for(i=0; i<NUM_BANDS; i++)
   {
-    plugin_data->filter[i] = FilterInit( s_rate);
+    plugin_data->filter[i] = FilterInit(s_rate);
+    for(j=0;j<3;j++) plugin_data->smooth[i][j] = SmoothInit(s_rate);
   }
 
   for(i=0; i<NUM_CHANNELS; i++)
@@ -173,9 +172,6 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
     plugin_data->InputVu[i] = VuInit(s_rate);
     plugin_data->OutputVu[i] = VuInit(s_rate);
   }
-#ifdef IS_DEBUG_
-  printf("EQ1Q Mono instantiated OK\n\r");
-#endif
   return (LV2_Handle)plugin_data;
 }
 
@@ -184,9 +180,6 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
 
 static void runEQ(LV2_Handle instance, uint32_t sample_count)
 {
-#ifdef IS_DEBUG_
-  printf("EQ1Q running... \n\r");
-#endif
   EQ *plugin_data = (EQ *)instance;
 
   //Get values of control ports
@@ -203,22 +196,17 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
   int i, j, pos; //loop index
   float sample; //actual processing sample
 
-#if IS_DBUS == 1
-//Filter params from DBUS
-///@TODO com fem l'adaptador a DBUS??? Realment cal aixo???
-
-#else
 //Filter parameters from ports
   if(NUM_BANDS > 0)
   {
     for(i = 0; i<NUM_BANDS; i++)
     {
-      fBandGain[i] = *(plugin_data->fBandGain[i]);
-      fBandFreq[i] = *(plugin_data->fBandFreq[i]);
-      fBandParam[i] = *(plugin_data->fBandParam[i]);
+      fBandGain[i] = computeSmooth(plugin_data->smooth[i][0], *(plugin_data->fBandGain[i]));
+      fBandFreq[i] = computeSmooth(plugin_data->smooth[i][1], *(plugin_data->fBandFreq[i]));
+      fBandParam[i] = computeSmooth(plugin_data->smooth[i][2], *(plugin_data->fBandParam[i]));
+
       iBandType[i] = (int)(*(plugin_data->fBandType[i]));
       iBandEnabled[i] = (int)(*(plugin_data->fBandEnabled[i]));
-
       if(checkBandChange(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]))
       {
         setFilterParams(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]);
@@ -227,7 +215,6 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
 
     }
   }
-#endif
 
   //Get the audio input and output buffers
   float *fInput[NUM_CHANNELS];
@@ -240,22 +227,21 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
   }
 
   //STEP2: Compute the filter
-
   for (pos = 0; pos < sample_count; pos++) 
   {
     for(i = 0; i<NUM_CHANNELS; i++)
     { 
       sample = fInput[i][pos];
-    
+
       //Process every band
       if(iBypass != 1)
       {
         //The input amplifier
         sample *= fInGain;
-        
+
         //Update VU input sample
         SetSample(plugin_data->InputVu[i], sample);
-      
+        
         for(j = 0; j< NUM_BANDS; j++)
         {	
           sample = computeFilter(plugin_data->filter[j], sample);
@@ -287,9 +273,6 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
 
 static void init()
 {
-#ifdef IS_DEBUG_
-  printf("EQ1Q Mono init()...\n\r");
-#endif
   eqDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
 
   eqDescriptor->URI = EQ_URI;
@@ -300,9 +283,6 @@ static void init()
   eqDescriptor->instantiate = instantiateEQ;
   eqDescriptor->run = runEQ;
   eqDescriptor->extension_data = NULL;
-#ifdef IS_DEBUG_
-  printf("EQ1Q Mono init() OK\n\r");
-#endif
 }
 
 LV2_SYMBOL_EXPORT

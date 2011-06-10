@@ -22,21 +22,17 @@
 This file contains a VU meter implementation
 ****************************************************************************/
 
-//Enable this for debugin mode
-//#define IS_DEBUG_
-
 #include "vu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
+//Constant to dBu conversion is sqrt(2)
+#define CONSTANT_VU 1.4142136
+
 //Initialize the VU meter
 Vu *VuInit(double rate)
 {
-#ifdef IS_DEBUG_
-  printf("Vu Init...\n\r");
-#endif
-
   Vu *vu = (Vu *)malloc(sizeof(Vu));
 
   vu->vu_value = 0.0;
@@ -44,17 +40,14 @@ Vu *VuInit(double rate)
   
   vu->m_min = (1.0 / 256);
   vu->m_decay = exp(log(vu->m_min) / (1 * rate));
- 
+  
   return vu;
-#ifdef IS_DEBUG_
-  printf("Vu ready\n\r");
-#endif
 }
 
 //Clear the VU
 void resetVU(Vu *vu)
 {
-  vu->vu_max = 1;
+  vu->vu_max = 0.0;
   vu->vu_value = 0.0;
 }
 
@@ -78,6 +71,6 @@ inline float ComputeVu(Vu *vu, uint32_t nframes)
 		vu->vu_max *= pow(vu->m_decay, nframes);
       else
 	vu->vu_max = 0.0;
-	
-  return fVuOut;
+
+  return 20*log10(fVuOut/CONSTANT_VU);
 }

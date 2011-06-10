@@ -18,9 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-//Enable this for debugin mode
-//#define IS_DEBUG_
-
 #include "filter.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,24 +26,17 @@
 //Initialize filter
 Filter *FilterInit(double rate)
 {
-
-#ifdef IS_DEBUG_
-  printf("Initialize filter...\n\r");
-#endif
-
   Filter *filter = (Filter *)malloc(sizeof(Filter));
 
   filter->gain = GAIN_DEFAULT;
   filter->freq = FREQ_MIN;
   filter->Q = PEAK_Q_DEFAULT;
   filter->filter_type = NOT_SET;
+  filter->iFilterEnabled = 0;
   flushBuffers(filter);
   filter->fs=(float)rate;
 
   return filter;
-#ifdef IS_DEBUG_
-  printf("Filter ready\n\r");
-#endif
 }
 
 //Destroy a filter instance
@@ -58,7 +48,7 @@ void FilterClean(Filter *filter)
 inline float computeFilter(Filter *filter, float inputSample)
 {
   float w = inputSample;
-return 1.9F; ///@TODO: test aixo
+
   if(filter->iFilterEnabled)
   {
     switch(filter->filter_order)
@@ -288,11 +278,11 @@ void flushBuffers(Filter *filter)
 //Check a Change on a band and return 1 if change exist, otherwise return 0
 int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
 {
-  if(filter->gain != fGain)
+  if(filter->gain < fGain - 0.05 || filter->gain > fGain + 0.05)
     return 1;
-  if(filter->freq != fFreq) 
+  if(filter->freq < fFreq * 0.9999 || filter->freq > fFreq * 1.0001) 
     return 1;
-  if(filter->Q != fQ)
+  if(filter->Q < fQ - 0.05 || filter->Q > fQ + 0.05)
     return 1;
   if(filter->filter_type != int2FilterType(iType))
     return 1;

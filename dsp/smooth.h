@@ -19,70 +19,34 @@
  ***************************************************************************/
 
 /***************************************************************************
-This file contains the filter definitions
+ This file contains the smooth definitions
+smooth consist of a low pas filter in order to minimize fast transitions in a
+control port. With this idea we get a filter that can be used with automotion
+without care of the speed of the automation control.
 ****************************************************************************/
 
-#ifndef  FILTER_H
-  #define FILTER_H
+#ifndef  SMOOTH_H
+  #define SMOOTH_H
 
-//Constants definitions
+//Cut off frequency of the LPF filter, this freq is adjusted experimentally
+#define F_CUT_OFF 500
 #define PI 3.1416
-#define GAIN_DEFAULT 0.0
-#define FREQ_MIN 20.0
-#define PEAK_Q_DEFAULT 2.0
-
-typedef enum
-{
-  NOT_SET,
-  LPF_ORDER_1,
-  LPF_ORDER_2,
-  LPF_ORDER_3,
-  LPF_ORDER_4,
-  HPF_ORDER_1,
-  HPF_ORDER_2,
-  HPF_ORDER_3,
-  HPF_ORDER_4,
-  LOW_SHELF,
-  HIGH_SHELF,
-  PEAK,
-  NOTCH,
-}FilterType;
 
 typedef struct
 {
-  float b0, b1, b2, a1, a2; //Second Order coeficients
   float b1_0, b1_1, a1_1; //First order coeficients
-  float buffer[3];  //second order buffers
-  float buffer1[2]; //First order buffers
-  float buffer_extra[3]; //4st order buffers
-  FilterType filter_type; //filter type
-  int iFilterEnabled; //1 if filter is enabled
-  int filter_order;  //filter order
-  float gain, freq, Q; //analog filter parameters
+  float buffer[2]; //First order buffers
   float fs; //sample rate
-}Filter;
 
-//Initialize filter instance
-Filter *FilterInit(double rate);
+} Smooth;
 
-//Destroy a filter instance
-void FilterClean(Filter *f);
+//Initialize smooth instance
+Smooth *SmoothInit(double rate);
 
-//Compute filter coeficients acording the order and type
-inline void calcCoefs(Filter *f);
-
-//Clean buffers
-void flushBuffers(Filter *f);
+//Destroy a smooth instance
+void SmoothClean(Smooth *s);
 
 //The DSP processor
-inline float computeFilter(Filter *filter, float inputSample);
+inline float computeSmooth(Smooth *s, float inputSample);
 
-//Check a Change on a band and return 1 if change exisit, otherwise return 0
-int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);
-
-//Convert float to FilterType
-FilterType int2FilterType(int iType);
-
-//Save filter data
-void setFilterParams(Filter *f, float fGain, float fFreq, float fQ, int iType, int iEnabled);
 #endif
