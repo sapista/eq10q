@@ -1,0 +1,20 @@
+EQ10Q Project Developent road map for version 2
+==========================================================================
+
+TODO list:
+- Split all files in gui folder in diferents files, any class needs its own file
+- Add the following directives to all headers files 
+	#ifndef foo 
+		#define foo 
+		
+	#endif 
+- Update all files in gui folder acording new GUI needs and improve coding structure
+	
+===============================================================================
+Files that are in progress....
+	*ctlbutton.c ctlbutton.h
+	*eqbutton.c eqbutton.h (new file)
+
+===============================================================================
+Files completly updated
+

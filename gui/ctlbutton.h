@@ -18,26 +18,26 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#ifndef CTL_BUTTON_H
+	#define CTL_BUTTON_H
+	
 #include <iostream>
-
 #include <iomanip>
-
 #include <cmath>
 
+///TODO: comprobar que tots aquest include son necessaris
 #include <gtkmm/button.h>
 #include <gtkmm/box.h>
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/alignment.h>
 
-#include "constants.h"
+#include "eqbutton.h"
 
 #define GAIN_TYPE 0
 #define FREQ_TYPE 1
 #define Q_TYPE    2
 
 #define ACCELERATION 15
-
-class EQButton;
 
 class CtlButton : public Gtk::Button{
   public:
@@ -64,31 +64,4 @@ class CtlButton : public Gtk::Button{
     EQButton *eqbutton_ref_ptr;
 };
 
-class EQButton : public Gtk::VBox{
-  public:
-    EQButton(int type, float *f, sigc::slot<void> m_slot, int *semafor);
-    virtual ~EQButton();
-    virtual void set_value(float val);
-    virtual float get_value();
-    virtual void set_freq_ptr(float index);
-    virtual void hide_spin();
-    virtual void set_spin_number();
-   
-    
-  protected:
-    Gtk::Alignment button_align;
-    Gtk::SpinButton text_entry;
-    CtlButton *ctlbutton;
-    
-
-    virtual bool on_button_double_clicked(GdkEventButton* event);
-    virtual void on_enter_pressed();
-    virtual void on_spin_change();
-    //Funtion per sobreescriure en segons tipus de butto
-
-    
-  private:
-    int filter_type;
-    float value, *f_ptr; //punter a on guardem el valor
-    int *stop;
-};
+#endif
