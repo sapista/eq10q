@@ -21,7 +21,8 @@
 #include "eqbutton.h"
 
 EQButton::EQButton(int iType, float *fPtr, sigc::slot<void> slot, int *iSemafor):
-m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
+m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0)
+{
   m_fValue=0;
   m_ptr_f=fPtr;
   m_iStop=iSemafor;
@@ -32,7 +33,8 @@ m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
   m_TextEntry.set_numeric(true); //nomes permet numeros
   m_iFilterType = iType;
   
-  switch (m_iFilterType){
+  switch (m_iFilterType)
+  {
     case GAIN_TYPE:
       m_TextEntry.set_range(GAIN_MIN, GAIN_MAX); ///TODO: Aquest limits han de sortir d'algun lloc, el mes logic seria usar el fitxer de config del LV2 *.ttl
       m_TextEntry.set_digits(1);
@@ -52,13 +54,15 @@ m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
   m_TextEntry.set_increments(0.1, 1.0);
   
 
-  if(m_iFilterType == FREQ_TYPE){
+  if(m_iFilterType == FREQ_TYPE)
+  {
     set_size_request(70,25);
     m_ptr_CtlButton->set_size_request(70,25); ///TODO: Un cop mes el putu punter que no se quin sentit te!!!!!!!!!!!!!!!!!!!
     m_TextEntry.set_size_request(70,25);
   }
 
-  else {
+  else 
+  {
     set_size_request(45,25);
     m_ptr_CtlButton->set_size_request(50,25); ///TODO: Un cop mes el putu punter que no se quin sentit te!!!!!!!!!!!!!!!!!!!
     m_TextEntry.set_size_request(50,25);
@@ -79,101 +83,80 @@ m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
 
 }
 
-EQButton::~EQButton(){
-
+EQButton::~EQButton()
+{
+	//Empty distructor
 }
 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> I'm working here
-void EQButton::set_value(float val){
-  int isota = 0, isobre = NUM_POINTS-1;
-  bool OUT = false;
-  value = val;
-  //Limitem el valor dins del rang segons el tipus de filtre
-    switch(m_iFilterType){
+void EQButton::setValue(float fVal)
+{
+  bool bOut = false;
+  fValue = fVal;
+  
+  //Limit the value between rang acording filter type
+  switch(m_iFilterType)
+  {
     case GAIN_TYPE:
-      if (value > GAIN_MAX) value = GAIN_MAX;
-      else if (value < GAIN_MIN) value = GAIN_MIN;
+      if (m_fValue > GAIN_MAX) m_fValue = GAIN_MAX;
+      else if (m_fValue < GAIN_MIN) m_fValue = GAIN_MIN;
     break;
     
     case FREQ_TYPE:
-      for(int i = 0; i< NUM_POINTS && !OUT; i++){
-        if(f_ptr[i] <= value ){
-          isota = i;
-        }
-        else OUT = true;
-       }
-        OUT = false;
-        
-      for(int i = NUM_POINTS-1; i>=0 && !OUT; i--){
-        if(f_ptr[i] >= value ){
-          isobre = i;
-        }
-        else OUT = true;
-      }
-      
-      if((value - f_ptr[isota]) > (f_ptr[isobre] - value)){
-        value = f_ptr[isobre];
-        m_ptr_CtlButton->set_freq_index(isobre);
-       }
-       
-       else {
-        value = f_ptr[isota];
-        m_ptr_CtlButton->set_freq_index(isota);
-        }
+	  if (m_fValue > FREQ_MAX) m_fValue = FREQ_MAX;
+      else if (m_fValue < FREQ_MIN) m_fValue = FREQ_MIN;
     break;
     
     case Q_TYPE:
-      if (value > PEAK_Q_MAX) value = PEAK_Q_MAX;
-      else if (value < PEAK_Q_MIN) value = PEAK_Q_MIN;
+      if (m_fValue > PEAK_Q_MAX) m_fValue = PEAK_Q_MAX;
+      else if (m_fValue < PEAK_Q_MIN) m_fValue = PEAK_Q_MIN;
     break;
-   }
-   m_ptr_CtlButton->set_button_number(value);
+  }
+  
+   m_ptr_CtlButton->set_button_number(m_fValue); ///TODO: Pero que fot!??????!?!!?#######################
 
-   //m_TextEntry.set_value(value);
-   set_spin_number();
+   //m_TextEntry.set_value(m_fValue); ///TODO: Revisar PQ aixo esta comentat
+   setSpinNumber();
 //std::cout<<"EQButton::set_value(float val)"<<"  Type: "<<m_iFilterType<<" VAL: "<<val<<std::endl;
 }
 
-float EQButton::get_value(){
-//std::cout<<"EQButton::get_value()"<<"  Type: "<<m_iFilterType<<" VALUE: "<<value<<std::endl;
-  if(m_iFilterType != FREQ_TYPE)return value;
-  else return m_ptr_CtlButton->get_freq_ptr();
-
+float EQButton::getValue()
+{
+//std::cout<<"EQButton::get_value()"<<"  Type: "<<m_iFilterType<<" VALUE: "<<m_fValue<<std::endl;
+	return m_fValue;
 }
 
-void EQButton::set_freq_ptr(float index){
-  //m_ptr_CtlButton->set_freq_index((int) index);
-  set_value(f_ptr[(int) index]);
-}
-
-bool EQButton::on_button_double_clicked(GdkEventButton* event){
- if(*stop == 0){
+bool EQButton::onButtonDoubleClicked(GdkEventButton* event)
+{
+ if(*m_iStop == 0){
    
       if((event->type == GDK_2BUTTON_PRESS) && (event->button == 1)){
        *stop = 1;
-      m_ptr_CtlButton->hide();
-      m_ptr_CtlButton->set_depress();
-      m_TextEntry.set_value((double)value);
+      m_ptr_CtlButton->hide(); ///TODO: El punter a nivell superior!!! perque perque!!!!!!!!!!!!!
+      m_ptr_CtlButton->set_depress(); ///TODO: El punter a nivell superior!!! perque perque!!!!!!!!!!!!!
+      m_TextEntry.setValue((double)m_fValue);
       m_TextEntry.show();
       m_TextEntry.grab_focus();
       }
  
     else if(event->button == 1){
-      m_ptr_CtlButton->set_press();
+      m_ptr_CtlButton->set_press();///TODO: El punter a nivell superior!!! perque perque!!!!!!!!!!!!!
     }
     
   }
- return true;
+ return true; //Sempre retorna true!!! a mi que m'ho expliquin
 }
 
-void EQButton::on_enter_pressed(){
-  float aux=value;
-  //float val = (float)m_TextEntry.get_value();
-  //set_value(val);
-  m_ptr_CtlButton->show();
+///TODO: Aquesta funcio esta molt malament, la variables fAux no te cap sentit i el comentari (1) tampoc!
+void EQButton::onEnterPressed()
+{
+  float fAux = m_fValue;
+  //float val = (float)m_TextEntry.get_value(); ///TODO: Estudiar pq esta comentat
+  //set_value(val); ///TODO: Estudiar pq esta comentat
+  m_ptr_CtlButton->show(); ///TODO: El punter a nivell superior!!! perque perque!!!!!!!!!!!!!
   m_TextEntry.hide();
-  *stop = 0;
+  *m_iStop = 0;
   
+  ///TODO: Aixo es el comentari (1)
   /*El SLOT te un problema amb la tecla enter, el cas es ke
   En premer enter no senvia al valor actual capturat per value
   sino el valor anterior k ha pillat el spinbutton.
@@ -183,21 +166,24 @@ void EQButton::on_enter_pressed(){
   al final fem un set_value per restaurar la resta de witgets i variables
   amb el valor correcte de value 
   */
-  m_TextEntry.set_value((double)(value*1.1+0.1));
+  //Fi del comentari(1)
+  
+  m_TextEntry.setValue((double)(value*1.1+0.1)); ///TODO: ?¿?¿?¿?
   set_value(aux);
   
 }
 
-void EQButton::hide_spin(){ //Amaga els SPIN Buttons
+void EQButton::hide_spin()
+{
   m_TextEntry.hide();
-  m_ptr_CtlButton->show();
+  m_ptr_CtlButton->show();  ///TODO: El punter a nivell superior!!! perque perque!!!!!!!!!!!!!
 }
 
-void EQButton::on_spin_change(){
-  float val = (float)m_TextEntry.get_value();
-  set_value(val);
+void EQButton::onSpinChange()
+{
+  setValue((float)m_TextEntry.get_value());
 }
 
-void EQButton::set_spin_number(){
-  m_TextEntry.set_value((double)value);
+void EQButton::setSpinNumber(){
+  m_TextEntry.set_value((double)m_fValue);
 }
