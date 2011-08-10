@@ -25,43 +25,35 @@
 #include <iomanip>
 #include <cmath>
 
-///TODO: comprobar que tots aquest include son necessaris
 #include <gtkmm/button.h>
-#include <gtkmm/box.h>
-#include <gtkmm/spinbutton.h>
-#include <gtkmm/alignment.h>
 
 #include "eqbutton.h"
-
-#define GAIN_TYPE 0
-#define FREQ_TYPE 1
-#define Q_TYPE    2
 
 #define ACCELERATION 15
 
 class CtlButton : public Gtk::Button{
   public:
-    CtlButton(int type, float *value, float *f, EQButton *m_eqbutton);
+    CtlButton(int iType); ///TODO: PQ tenim un punter MouseValue des de constructor?
     virtual ~CtlButton();
-    void set_press();
-    void set_depress();
-    void set_button_number(float num);
-    void set_freq_index(int index);
-    virtual float get_freq_ptr();
-  
+	
+	///TODO: verificar que les funcions setPress()  setDepress() no fan falta
+    //void setPress();
+    //void setDepress();
+	
+    void setButtonNumber(float num);
+	float getButtonNumber(); ///TODO: Crec que falta un funcio per configurar el valor des d'un objecte exterior
     
   protected:
-    virtual void on_button_depressed();
-    virtual bool on_mouse_move(GdkEventMotion* event);
-    
-    
-    virtual void set_value(int x, int y);
+    virtual void onButtonPressed();
+    virtual void onButtonDepressed();
+    virtual bool onMouseMove(GdkEventMotion* event);
+    virtual float computeValue(int x, int y);
   
   private:  
-    bool press,x_direction, first_time;
-    int  act_val, ant_val, filter_type, ptr, acumula;
-    float  *mouse_value, *f_ptr; //ptr es l'index de la taula, el fet k sigui float es un trukillu pel calcul de l'acceleracio
-    EQButton *eqbutton_ref_ptr;
+    bool m_bPress, m_bIsXDirection, m_bFirstTime; ///TODO: Aju amb aquest first time, sembla error de inicialització!
+    int  m_iActValue, m_iAntValue, m_iFilterType;
+    float  m_fValue;
+    //EQButton *eqbutton_ref_m_iPtr; ///TODO: Punter a EQButton, no ho veig clar que aixo vingui per constructor, investigar si te sentit -> Aquest punter no s'usa enlloc!!!
 };
 
 #endif

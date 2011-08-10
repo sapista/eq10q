@@ -20,138 +20,139 @@
 
 #include "ctlbutton.h"
 
-CtlButton::CtlButton(int type, float *value, float *f, EQButton *m_eqbutton):
-act_val(0), ant_val(0), ptr(0), acumula(0), eqbutton_ref_ptr(m_eqbutton)
+CtlButton::CtlButton(int iType):
+/*m_bPress(false), */ m_iActValue(0), m_iAntValue(0), m_fValue(0.0), ///TODO test del sigc block, si txuta eliminar el m_bPress
 {
-  filter_type=type;
-  if(filter_type == GAIN_TYPE) x_direction=false;
-  else x_direction=true;
+  m_iFilterType = iType;
+  if(m_iFilterType == GAIN_TYPE) m_bIsXDirection = false;
+  else m_bIsXDirection = true;
   
-  f_ptr=f;
-  press=false;
-
-  mouse_value=value; //un lloc on deixar el k es captura del mouse
-  
-  /*//Posem alguns valors per defecte
-  switch(filter_type){
-    case GAIN_TYPE:
-      *mouse_value=GAIN_DEFAULT;
-    break;
-    
-    case FREQ_TYPE:
-      *mouse_value=f_ptr[PEAK_FREQ_PTR_DEFAULT];
-      ptr= PEAK_FREQ_PTR_DEFAULT;
-    break;
-    
-    case Q_TYPE:
-      *mouse_value=PEAK_Q_DEFAULT;
-    break;
-  }
-  */
-  
-  set_button_number(*mouse_value);
-  
-
-  signal_released().connect( sigc::mem_fun(*this,&CtlButton::on_button_depressed));
-  
-  signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::on_mouse_move),false);
+  signal_pressed().connect( sigc::mem_fun(*this,&CtlButton::onButtonPressed));
+  signal_released().connect( sigc::mem_fun(*this,&CtlButton::onButtonDepressed));
+  signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
+  signal_motion_notify_event().block(); ///TODO: Test aixo
   
   add_events(Gdk::POINTER_MOTION_MASK); 
 }
 
-CtlButton::~CtlButton(){
+CtlButton::~CtlButton()
+{
 
 }
 
-
-void CtlButton::set_press(){
-  press=true;
-  first_time=true;
+void CtlButton::onButtonPressed()
+{
+  //m_bPress = true;
+  signal_motion_notify_event().unblock();///TODO: Test aixo
+  
+  m_bFirstTime = true;
+}
+void CtlButton::onButtonDepressed()
+{
+  //m_bPress=false;
+  signal_motion_notify_event().block();///TODO: Test aixo
+  
+  m_iAntValue=0;
+  m_iActValue=0;
 }
 
-void CtlButton::on_button_depressed(){
-  press=false;
-  ant_val=0;
-  act_val=0;
+///TODO: verificar que les funcions setPress()  setDepress() no fan falta
+/*void CtlButton::setPress()
+{
+  m_bPress = true;
+  m_bFirstTime = true;
 }
 
-void CtlButton::set_depress(){
-  press=false;
-}
+void CtlButton::setDepress()
+{
+  m_bPress=false;
+}*/
 
-bool CtlButton::on_mouse_move(GdkEventMotion* event){
-  if(press){
-    int x,y;
+bool CtlButton::onMouseMove(GdkEventMotion* event)
+{
+  int x,y;
+  //if(m_bPress) ///TODO: Test aixo, si el block() unlock() txuta eliminar definitivament aquest if 
+  //{
     get_pointer(x, y);
-    set_value(x,y);
-   }
+	setButtonNumber(computeValue(x,y));
+  //}
+   
   return true;
 }
 
-void CtlButton::set_value(int x, int y){
-  ant_val=act_val;
+float CtlButton::computeValue(int x, int y)
+{
+  float fValue;
+  m_iAntValue=m_iActValue;
 
-  if(x_direction) act_val=x;
-  else act_val=(-1)*y;
-  if (first_time){
-    if(act_val>0) ant_val=act_val-1;
-    else if(act_val<0) ant_val=act_val+1;
-    first_time=false;
+  if(m_bIsXDirection) m_iActValue = x;
+  else m_iActValue =( -1)*y;
+  
+  if (m_bFirstTime) ///TODO: Investigar que fa aquest bool
+  {
+    if(m_iActValue > 0) m_iAntValue = m_iActValue - 1;
+    else if(m_iActValue<0) m_iAntValue = m_iActValue + 1;
+    m_bFirstTime = false;
   }
 
-  switch(filter_type){
+  fValue =  fValue + (float)(m_iActValue-m_iAntValue)/ACCELERATION;
+
+///TODO: els limits MAX i MIN han de venir del fitxer *.TTL   propi de LV2
+  switch(m_iFilterType)
+  {
     case GAIN_TYPE:
-       *mouse_value =  *mouse_value + (float)(act_val-ant_val)/ACCELERATION;
-      if (*mouse_value > GAIN_MAX) *mouse_value = GAIN_MAX;
-      else if (*mouse_value < GAIN_MIN) *mouse_value = GAIN_MIN;
+      if (fValue > GAIN_MAX) fValue = GAIN_MAX;
+      else if (fValue < GAIN_MIN) fValue = GAIN_MIN;
     break;
     
     case FREQ_TYPE:
-      acumula=acumula+ (act_val-ant_val);
-      if (acumula >= 6) ptr++;
-      else if (acumula <= -6) ptr--;
-      acumula = acumula %6;
-      if (ptr >= NUM_POINTS) ptr = NUM_POINTS -1;
-      else if (ptr < 0) ptr = 0;
-      *mouse_value = f_ptr[ptr];
+      if (fValue > GAIN_MAX) fValue = FREQ_MAX;
+      else if (fValue < GAIN_MIN) fValue = FREQ_MIN;
     break;
     
     case Q_TYPE:
-      *mouse_value =  *mouse_value + (float)(act_val-ant_val)/ACCELERATION;
-      if (*mouse_value > PEAK_Q_MAX) *mouse_value = PEAK_Q_MAX;
-      else if (*mouse_value < PEAK_Q_MIN) *mouse_value = PEAK_Q_MIN;
+      if (fValue > PEAK_Q_MAX) fValue = PEAK_Q_MAX;
+      else if (fValue < PEAK_Q_MIN) fValue = PEAK_Q_MIN;
     break;
-   }
+  }
    
-  //set_button_number(*mouse_value);
-  eqbutton_ref_ptr->set_value(*mouse_value);
-  eqbutton_ref_ptr->set_spin_number();
-  //std::cout<<"val: "<<*mouse_value<<std::endl;
+   ///TODO: en el següent TODO s'explica la solucio correcte
+  //setButtonNumber(m_fValue);
+  ///eqbutton_ref_m_iPtr->setValue(m_fValue);
+  ///eqbutton_ref_m_iPtr->set_spin_number();
+  
+  
+  ///TODO: CTLButton es objecte de nivell inferior a EQButton i per tant no pot contenir un punter a EQButton ja que aquest no existeix en el seu context.
+	///  La solució es un callback, serà que CTLButton llenci un nou event en aquest punts. Aquest event sera capturat per un slot de EQButton per invocar a
+	/// setValue(m_fValue); i set_spin_number();
+	///El valor m_ptr_fMouseValue no se com passar-lo via event pots el mes facil es que es fagi un getButtonNumber des de EQbutton
 
   
+  //std::cout<<"val: "<<m_fValue<<std::endl;
+  
+  return fValue;
 }
 
-void CtlButton::set_button_number(float num){
+void CtlButton::setButtonNumber(float fNum)
+{
+  m_fValue = fNum;
   Glib::ustring button_text;
   
-  switch(filter_type){
+  switch(m_iFilterType)
+  {
     case GAIN_TYPE:
     case FREQ_TYPE:
-    button_text = Glib::ustring::format(std::fixed, std::setprecision(1), num);
+    button_text = Glib::ustring::format(std::fixed, std::setprecision(1), m_fValue);
     break;
 
     case Q_TYPE:
-    button_text = Glib::ustring::format(std::fixed, std::setprecision(2), num);
+    button_text = Glib::ustring::format(std::fixed, std::setprecision(2), m_fValue);
     break;
-    }
+  }
   set_label(button_text);
-  
 }
 
-void CtlButton::set_freq_index(int index){
-  ptr = index;
-}
-
-float CtlButton::get_freq_ptr(){
-  return  (float)ptr;
+float CtlButton::getButtonNumber()
+{
+  return m_fValue;
 }

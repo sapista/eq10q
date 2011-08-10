@@ -23,11 +23,15 @@
 	
 #include <iostream>
 #include <iomanip>
-#include <cmath>
+//#include <cmath> ///TODO: Aixo segurament no cal
 
 #include <gtkmm/box.h>
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/alignment.h>
+
+#define GAIN_TYPE 0
+#define FREQ_TYPE 1
+#define Q_TYPE    2
 
 class EQButton : public Gtk::VBox{
   public:
@@ -35,14 +39,12 @@ class EQButton : public Gtk::VBox{
     virtual ~EQButton();
     virtual void setValue(float fVal);
     virtual float getValue();
-    virtual void hideSpin();
-    virtual void setSpinNumber();
+    //virtual void hideSpin(); ///TODO: Pq volem una funcio public que fagi aixo?
+    //virtual void setSpinNumber(); ///TODO: Crec que es pot treure
     
   protected:
     Gtk::Alignment m_ButtonAlign;
     Gtk::SpinButton m_TextEntry;
-	
-	///TODO: Pq un punter a un objecte de nivell superior? Aixo sembla que no te sentit
     CtlButton *m_ptr_CtlButton;
 
 	//GTK signal handlers
