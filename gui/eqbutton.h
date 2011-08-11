@@ -35,7 +35,7 @@
 
 class EQButton : public Gtk::VBox{
   public:
-    EQButton(int iType, float *fPtr, sigc::slot<void> slot, int *iSemafor);
+    EQButton(int iType, /*float *fPtr,*/ /*sigc::slot<void> slot,*/ int *iSemafor);
     virtual ~EQButton();
     virtual void setValue(float fVal);
     virtual float getValue();
@@ -54,7 +54,7 @@ class EQButton : public Gtk::VBox{
     
   private:
     int m_iFilterType;
-    float m_fValue, *m_ptr_f; //punter a on guardem el valor ///TODO: Que fa aquest punter
-    int *m_iStop; ///TODO: Que es quest STOP???
+    float m_fValue /*, *m_ptr_f*/; //punter a on guardem el valor ///TODO: Que fa aquest punter
+    int *m_iStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
 };
 #endif

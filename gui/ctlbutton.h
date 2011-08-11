@@ -30,6 +30,9 @@
 #include "eqbutton.h"
 
 #define ACCELERATION 15
+#define GAIN_TYPE 0 ///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
+#define FREQ_TYPE 1
+#define Q_TYPE    2
 
 class CtlButton : public Gtk::Button{
   public:
@@ -50,7 +53,7 @@ class CtlButton : public Gtk::Button{
     virtual float computeValue(int x, int y);
   
   private:  
-    bool m_bPress, m_bIsXDirection, m_bFirstTime; ///TODO: Aju amb aquest first time, sembla error de inicialització!
+    bool /*m_bPress,*/ m_bIsXDirection, m_bFirstTime; ///TODO: si realment es pot, eliminar m_bPress
     int  m_iActValue, m_iAntValue, m_iFilterType;
     float  m_fValue;
     //EQButton *eqbutton_ref_m_iPtr; ///TODO: Punter a EQButton, no ho veig clar que aixo vingui per constructor, investigar si te sentit -> Aquest punter no s'usa enlloc!!!

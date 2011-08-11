@@ -43,17 +43,16 @@ CtlButton::~CtlButton()
 void CtlButton::onButtonPressed()
 {
   //m_bPress = true;
-  signal_motion_notify_event().unblock();///TODO: Test aixo
-  
   m_bFirstTime = true;
+  signal_motion_notify_event().unblock();///TODO: Test aixo
 }
+
 void CtlButton::onButtonDepressed()
 {
   //m_bPress=false;
   signal_motion_notify_event().block();///TODO: Test aixo
-  
-  m_iAntValue=0;
-  m_iActValue=0;
+  m_iAntValue = 0;
+  m_iActValue = 0;
 }
 
 ///TODO: verificar que les funcions setPress()  setDepress() no fan falta
@@ -83,7 +82,7 @@ bool CtlButton::onMouseMove(GdkEventMotion* event)
 float CtlButton::computeValue(int x, int y)
 {
   float fValue;
-  m_iAntValue=m_iActValue;
+  m_iAntValue = m_iActValue;
 
   if(m_bIsXDirection) m_iActValue = x;
   else m_iActValue =( -1)*y;
