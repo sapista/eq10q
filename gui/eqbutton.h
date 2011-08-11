@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2009 by Pere RÃ fols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -29,9 +29,18 @@
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/alignment.h>
 
+#include "ctlbutton.h"
+
 #define GAIN_TYPE 0
 #define FREQ_TYPE 1
 #define Q_TYPE    2
+
+#define GAIN_MIN -15.0///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
+#define GAIN_MAX 15.0
+#define FREQ_MIN 20.0
+#define FREQ_MAX 20000.0
+#define PEAK_Q_MIN 0.02
+#define PEAK_Q_MAX 16.0
 
 class EQButton : public Gtk::VBox{
   public:
@@ -47,7 +56,7 @@ class EQButton : public Gtk::VBox{
     Gtk::SpinButton m_TextEntry;
     CtlButton *m_ptr_CtlButton;
 
-	//GTK signal handlers
+    //GTK signal handlers
     virtual bool onButtonDoubleClicked(GdkEventButton* event);
     virtual void onEnterPressed();
     virtual void onSpinChange();

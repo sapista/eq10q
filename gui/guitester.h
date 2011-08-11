@@ -4,6 +4,7 @@
 //#include <gtkmm/button.h>
 #include <gtkmm/window.h>
 #include  "eqbutton.h"
+#include "ctlbutton.h"
 
 class HelloWorld : public Gtk::Window
 {
@@ -18,7 +19,9 @@ protected:
 
   //Member widgets:
   //Gtk::Button m_button;
-  EQButton *m_EqButton;
+  //EQButton *m_EqButton;
+  CtlButton *m_CtlButton;
+  
   int m_iMutex;
 };
 

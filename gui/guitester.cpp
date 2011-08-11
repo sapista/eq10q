@@ -1,34 +1,31 @@
-#include "helloworld.h"
+#include "guitester.h"
 #include <gtkmm/main.h>
 #include <iostream>
 
 HelloWorld::HelloWorld()
-: m_button("Hello World")   // creates a new button with label "Hello World".
 {
-  // Sets the border width of the window.
-  set_border_width(10);
 
-  /*
-  // When the button receives the "clicked" signal, it will call the
-  // on_button_clicked() method defined below.
-  m_button.signal_clicked().connect(sigc::mem_fun(*this,
-              &HelloWorld::on_button_clicked));
 
-  // This packs the button into the Window (a container).
-  add(m_button);
-  */
   
+  /*
   m_iMutex = 0;
   m_EqButton = Gtk::manage(new EQButton(0, &m_iMutex));
   add(*m_EqButton);
+  m_EqButton->setValue(0.0);
+  m_EqButton->show();*/
+  
+   m_CtlButton = Gtk::manage(new CtlButton(1));
+  add(*m_CtlButton);
+  m_CtlButton->setButtonNumber(2);
+  m_CtlButton->show();
+  
 
-  // The final step is to display this newly created widget...
-  //m_button.show();
 }
 
 HelloWorld::~HelloWorld()
 {
-	delete m_EqButton;
+  //delete m_EqButton;
+  delete m_CtlButton;
 }
 
 /*

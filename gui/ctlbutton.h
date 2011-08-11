@@ -19,32 +19,30 @@
  ***************************************************************************/
 
 #ifndef CTL_BUTTON_H
-	#define CTL_BUTTON_H
-	
-#include <iostream>
-#include <iomanip>
-#include <cmath>
+  #define CTL_BUTTON_H
 
 #include <gtkmm/button.h>
-
-#include "eqbutton.h"
 
 #define ACCELERATION 15
 #define GAIN_TYPE 0 ///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
 #define FREQ_TYPE 1
 #define Q_TYPE    2
 
+///TODO: els limits MAX i MIN han de venir del fitxer *.TTL   propi de LV2
+#define GAIN_MIN -15.0///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
+#define GAIN_MAX 15.0
+#define FREQ_MIN 20.0
+#define FREQ_MAX 20000.0
+#define PEAK_Q_MIN 0.02
+#define PEAK_Q_MAX 16.0
+
 class CtlButton : public Gtk::Button{
   public:
-    CtlButton(int iType); ///TODO: PQ tenim un punter MouseValue des de constructor?
+    CtlButton(int iType);
     virtual ~CtlButton();
-	
-	///TODO: verificar que les funcions setPress()  setDepress() no fan falta
-    //void setPress();
-    //void setDepress();
-	
+
     void setButtonNumber(float num);
-	float getButtonNumber(); ///TODO: Crec que falta un funcio per configurar el valor des d'un objecte exterior
+    float getButtonNumber();
     
   protected:
     virtual void onButtonPressed();
@@ -53,10 +51,10 @@ class CtlButton : public Gtk::Button{
     virtual float computeValue(int x, int y);
   
   private:  
-    bool /*m_bPress,*/ m_bIsXDirection, m_bFirstTime; ///TODO: si realment es pot, eliminar m_bPress
+    bool m_bIsXDirection;
     int  m_iActValue, m_iAntValue, m_iFilterType;
     float  m_fValue;
-    //EQButton *eqbutton_ref_m_iPtr; ///TODO: Punter a EQButton, no ho veig clar que aixo vingui per constructor, investigar si te sentit -> Aquest punter no s'usa enlloc!!!
+    sigc::connection m_MouseSignal;
 };
 
 #endif

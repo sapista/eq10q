@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2009 by Pere RÃ fols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -75,7 +75,7 @@ m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0)
   
   m_ptr_CtlButton->signal_button_press_event().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked),false);
   m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));	
-  //m_TextEntry.signal_value_changed().connect(slot); ///TODO: Buscar una explicacio a perque cal passar el punter a slot des de fora? -> sembla que sigui per actualitzar la gràfica i el port! Seria millor utilitzar aquest connect per generar un nou event especific
+  //m_TextEntry.signal_value_changed().connect(slot); ///TODO: Buscar una explicacio a perque cal passar el punter a slot des de fora? -> sembla que sigui per actualitzar la grï¿½fica i el port! Seria millor utilitzar aquest connect per generar un nou event especific
   m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
 }
 
@@ -146,7 +146,7 @@ bool EQButton::onButtonDoubleClicked(GdkEventButton* event)
 ///TODO: Aquesta funcio esta molt malament, la variables fAux no te cap sentit i el comentari (1) tampoc!
 void EQButton::onEnterPressed()
 {
-  ((float fAux = m_fValue;
+  //float fAux = m_fValue;
   //float val = (float)m_TextEntry.get_value(); ///TODO: Estudiar pq esta comentat
   //set_value(val); ///TODO: Estudiar pq esta comentat
   
@@ -169,7 +169,7 @@ void EQButton::onEnterPressed()
   
   //Fi del comentari(1)
   
-  m_TextEntry.setValue((double)(m_fValue*1.1+0.1)); ///TODO: ?¿?¿?¿?
+  m_TextEntry.setValue((double)(m_fValue*1.1+0.1)); ///TODO: ?ï¿½?ï¿½?ï¿½?
   setValue(aux);
   */
   

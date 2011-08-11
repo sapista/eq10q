@@ -19,9 +19,12 @@
  ***************************************************************************/
 
 #include "ctlbutton.h"
+#include <cmath>
+#include <iostream>
+#include <iomanip>
 
 CtlButton::CtlButton(int iType):
-/*m_bPress(false), */ m_iActValue(0), m_iAntValue(0), m_fValue(0.0), ///TODO test del sigc block, si txuta eliminar el m_bPress
+m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
 {
   m_iFilterType = iType;
   if(m_iFilterType == GAIN_TYPE) m_bIsXDirection = false;
@@ -29,9 +32,7 @@ CtlButton::CtlButton(int iType):
   
   signal_pressed().connect( sigc::mem_fun(*this,&CtlButton::onButtonPressed));
   signal_released().connect( sigc::mem_fun(*this,&CtlButton::onButtonDepressed));
-  signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
-  signal_motion_notify_event().block(); ///TODO: Test aixo
-  
+   
   add_events(Gdk::POINTER_MOTION_MASK); 
 }
 
@@ -42,61 +43,46 @@ CtlButton::~CtlButton()
 
 void CtlButton::onButtonPressed()
 {
-  //m_bPress = true;
-  m_bFirstTime = true;
-  signal_motion_notify_event().unblock();///TODO: Test aixo
+  m_iAntValue = 0;
+  m_iActValue = 0;
+  m_MouseSignal = signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
 }
 
 void CtlButton::onButtonDepressed()
 {
-  //m_bPress=false;
-  signal_motion_notify_event().block();///TODO: Test aixo
+  m_MouseSignal.disconnect();
   m_iAntValue = 0;
   m_iActValue = 0;
 }
 
-///TODO: verificar que les funcions setPress()  setDepress() no fan falta
-/*void CtlButton::setPress()
-{
-  m_bPress = true;
-  m_bFirstTime = true;
-}
-
-void CtlButton::setDepress()
-{
-  m_bPress=false;
-}*/
-
 bool CtlButton::onMouseMove(GdkEventMotion* event)
 {
   int x,y;
-  //if(m_bPress) ///TODO: Test aixo, si el block() unlock() txuta eliminar definitivament aquest if 
-  //{
-    get_pointer(x, y);
-	setButtonNumber(computeValue(x,y));
-  //}
-   
+  get_pointer(x, y);
+  setButtonNumber(computeValue(x,y));
   return true;
 }
 
 float CtlButton::computeValue(int x, int y)
 {
-  float fValue;
+
+  float fValue = m_fValue;
   m_iAntValue = m_iActValue;
 
   if(m_bIsXDirection) m_iActValue = x;
   else m_iActValue =( -1)*y;
   
-  if (m_bFirstTime) ///TODO: Investigar que fa aquest bool
+  if(m_iFilterType != FREQ_TYPE)
+  { 
+    //Gain and Q variation
+    fValue =  fValue + (float)(m_iActValue-m_iAntValue)/ACCELERATION;
+  }
+  else
   {
-    if(m_iActValue > 0) m_iAntValue = m_iActValue - 1;
-    else if(m_iActValue<0) m_iAntValue = m_iActValue + 1;
-    m_bFirstTime = false;
+    //Freq variaton is logarithimc
+    fValue = fValue + (fValue/7)*((float)(m_iActValue-m_iAntValue)/ACCELERATION);
   }
 
-  fValue =  fValue + (float)(m_iActValue-m_iAntValue)/ACCELERATION;
-
-///TODO: els limits MAX i MIN han de venir del fitxer *.TTL   propi de LV2
   switch(m_iFilterType)
   {
     case GAIN_TYPE:
@@ -105,8 +91,8 @@ float CtlButton::computeValue(int x, int y)
     break;
     
     case FREQ_TYPE:
-      if (fValue > GAIN_MAX) fValue = FREQ_MAX;
-      else if (fValue < GAIN_MIN) fValue = FREQ_MIN;
+      if (fValue > FREQ_MAX) fValue = FREQ_MAX;
+      else if (fValue < FREQ_MIN) fValue = FREQ_MIN;
     break;
     
     case Q_TYPE:
@@ -115,20 +101,6 @@ float CtlButton::computeValue(int x, int y)
     break;
   }
    
-   ///TODO: en el següent TODO s'explica la solucio correcte
-  //setButtonNumber(m_fValue);
-  ///eqbutton_ref_m_iPtr->setValue(m_fValue);
-  ///eqbutton_ref_m_iPtr->set_spin_number();
-  
-  
-  ///TODO: CTLButton es objecte de nivell inferior a EQButton i per tant no pot contenir un punter a EQButton ja que aquest no existeix en el seu context.
-	///  La solució es un callback, serà que CTLButton llenci un nou event en aquest punts. Aquest event sera capturat per un slot de EQButton per invocar a
-	/// setValue(m_fValue); i set_spin_number();
-	///El valor m_ptr_fMouseValue no se com passar-lo via event pots el mes facil es que es fagi un getButtonNumber des de EQbutton
-
-  
-  //std::cout<<"val: "<<m_fValue<<std::endl;
-  
   return fValue;
 }
 
