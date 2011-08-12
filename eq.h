@@ -29,14 +29,10 @@ This plugin is inside the Sapista Plugins Bundle
 * this file must define the following simbols, otherwise there will be compilation errors
 * #define NUM_CHANNELS <integer>
 * #define NUM_BANDS <integer>
-* #define IS_DBUS <boolean>
 * #define EQ_URI       "http://lv2plug.in/plugins/example_amp"; 
 *
 * NUM_CHANNELS is the number of audio inputs/outputs of the plugin
 * NUM_BANDS is the number of equalitzation bands of the plugin
-* IS_DBUS is NULL value if the plugin is controlled using LV2 control port
-*         if IS_DBUS is diferent than NULL, DBUS control is assumed and no LV2 control port is created
-*         is recomended to use DBUS if the EQ plugins have a lot of bands
 * EQ_URI the LV2 URI of the plugin
 **/
 

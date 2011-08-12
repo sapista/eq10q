@@ -30,7 +30,7 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   if(m_iFilterType == GAIN_TYPE) m_bIsXDirection = false;
   else m_bIsXDirection = true;
   
-  signal_pressed().connect( sigc::mem_fun(*this,&CtlButton::onButtonPressed));
+  signal_button_press_event().connect(sigc::mem_fun(*this, &CtlButton::onButtonDoubleClicked),false);
   signal_released().connect( sigc::mem_fun(*this,&CtlButton::onButtonDepressed));
    
   add_events(Gdk::POINTER_MOTION_MASK); 
@@ -39,6 +39,24 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
 CtlButton::~CtlButton()
 {
 
+}
+
+bool CtlButton::onButtonDoubleClicked(GdkEventButton* event)
+{
+  if(event->button == 1)
+  {
+    if(event->type == GDK_2BUTTON_PRESS) //Double click on the 1st button
+    {
+      //Emit signal button click
+      onButtonDepressed();
+      m_doubleClickSignal.emit();
+    }
+    else
+    {
+      onButtonPressed();
+    }
+  }
+  return true;
 }
 
 void CtlButton::onButtonPressed()
@@ -126,4 +144,9 @@ void CtlButton::setButtonNumber(float fNum)
 float CtlButton::getButtonNumber()
 {
   return m_fValue;
+}
+
+CtlButton::ctlButton_double_clicked CtlButton::signal_double_clicked()
+{
+  return m_doubleClickSignal;
 }

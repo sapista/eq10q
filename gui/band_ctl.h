@@ -24,36 +24,37 @@
 #include <gtkmm/box.h>
 #include <gtkmm/label.h>
 #include <gtkmm/togglebutton.h>
-//#include <gtkmm/comboboxtext.h>
 #include <gtkmm/scale.h>
 #include <gtkmm/alignment.h>
 
 
-class BandCtl : public Gtk::VBox{
+class BandCtl : public Gtk::VBox
+{
   public:
-    BandCtl(); //constructor cutre
-    BandCtl( float *freq, const int band_num,
+    BandCtl(); //dummy constructor
+    BandCtl( const int band_num,
             sigc::slot<void> gain_slot,
             sigc::slot<void> freq_slot,
             sigc::slot<void> Q_slot,
             sigc::slot<void> type_slot, int *semafor
             );
     virtual ~BandCtl();
-    float get_gain();
-    float get_freq();
-    float get_Q();
-    float get_filter_type();
+    float getGain();
+    float getFreq();
+    float getQ();
+    float getFilterType();
+    //bool get_enabled(); ///TODO: No trobu la implementacio!!!! es pot treure?????
+    
     void set_gain(float g);
     void set_freq(float f);
-    void set_freq_direct(float f);
     void set_Q(float q);
     void set_filter_type(float t);
+    void set_enabled(bool isEnabled);
     void hide_spins();
     
   protected:
     Gtk::Label band_label;
     Gtk::ToggleButton m_on_button;
-    //Gtk::ComboBoxText m_filter_sel;
     PixMapCombo m_filter_sel;
     Gtk::Alignment button_align, combo_align;
     EQButton *m_gain, *m_freq, *m_Q;
@@ -66,11 +67,13 @@ class BandCtl : public Gtk::VBox{
     
     
   private:
-    int filter_type, ant_filter;
-    float *f;
-    bool vic_de_set;
+    int filter_type;
+
 };
 
+
+
+///TODO: GainCtl Ha d'estar en un altre fitxer separat
 class  GainCtl : public Gtk::VBox{
   public:
     GainCtl(const Glib::ustring title, sigc::slot<void> m_slot);

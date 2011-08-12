@@ -21,16 +21,16 @@
 #include "eqbutton.h"
 
 EQButton::EQButton(int iType, /*float *fPtr, *//*sigc::slot<void> slot,*/ int *iSemafor):
-m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0)
+m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
+m_iStop(iSemafor), ///TODO: Potser la sync aquest s'hauria de fer amb events? Es a dir, el widget que rep doble click emet un event que bloqueia a la resta de widgets
+m_iFilterType(iType)
 {
-  m_fValue = 0;
-  //m_ptr_f = fPtr; ///TODO: Sentit d'aquest punter?
-  //m_iStop=iSemafor; ///TODO: Sentit de stop?
+  m_fValue = 0; ///TODO: Aixo hauria de venir pel port LV2 no?????
   
   m_ptr_CtlButton = Gtk::manage(new CtlButton(iType));
+  m_ptr_CtlButton->setButtonNumber(m_fValue);
   
   m_TextEntry.set_numeric(true);
-  m_iFilterType = iType;
   
   switch (m_iFilterType)
   {
@@ -73,15 +73,14 @@ m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0)
   m_ptr_CtlButton->show();
   m_ButtonAlign.show();
   
-  m_ptr_CtlButton->signal_button_press_event().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked),false);
-  m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));	
-  //m_TextEntry.signal_value_changed().connect(slot); ///TODO: Buscar una explicacio a perque cal passar el punter a slot des de fora? -> sembla que sigui per actualitzar la gr�fica i el port! Seria millor utilitzar aquest connect per generar un nou event especific
+  m_ptr_CtlButton->signal_double_clicked().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked));
+  m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));
   m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
 }
 
 EQButton::~EQButton()
 {
-	delete m_ptr_CtlButton;
+  delete m_ptr_CtlButton;
 }
 
 void EQButton::setValue(float fVal)
@@ -108,90 +107,34 @@ void EQButton::setValue(float fVal)
   }
   
   m_TextEntry.set_value((double)m_fValue);
-   //m_ptr_CtlButton->setButtonNumber(m_fValue); ///TODO: Verificar que es pot suprimir aquest linea
-   
-//std::cout<<"EQButton::set_value(float val)"<<"  Type: "<<m_iFilterType<<" VAL: "<<val<<std::endl;
 }
 
 float EQButton::getValue()
 {
-//std::cout<<"EQButton::get_value()"<<"  Type: "<<m_iFilterType<<" VALUE: "<<m_fValue<<std::endl;
-	return m_fValue;
+  return m_fValue;
 }
 
-bool EQButton::onButtonDoubleClicked(GdkEventButton* event)
+void EQButton::onButtonDoubleClicked()
 {
   if(*m_iStop == 0)
   {
-   
-    if((event->type == GDK_2BUTTON_PRESS) && (event->button == 1)) //Double click on the 1st button
-	{
       *m_iStop = 1;
       m_ptr_CtlButton->hide();
-      //m_ptr_CtlButton->setDepress(); ///TODO: Verificar que amb la nova implementacio aquesta linia no cal
       setValue(m_ptr_CtlButton->getButtonNumber());
       m_TextEntry.show();
       m_TextEntry.grab_focus();
-    }
- 
-	///TODO: Verificar que amb la nova implementacio aquesta bloc no cal
-    //else if(event->button == 1)
-	//{
-     // m_ptr_CtlButton->setPress();
-    //}
   }
-  return true; ///TODO: Sempre retorna true!!! a mi que m'ho expliquin: Explico, els events de buttons necessiten un prototip amb retorn boolea,
 }
 
-///TODO: Aquesta funcio esta molt malament, la variables fAux no te cap sentit i el comentari (1) tampoc!
 void EQButton::onEnterPressed()
 {
-  //float fAux = m_fValue;
-  //float val = (float)m_TextEntry.get_value(); ///TODO: Estudiar pq esta comentat
-  //set_value(val); ///TODO: Estudiar pq esta comentat
-  
   m_ptr_CtlButton->setButtonNumber(m_fValue);
   m_ptr_CtlButton->show();
   m_TextEntry.hide();
   *m_iStop = 0;
-  
-  ///TODO: Crec que tot el que ve ara es pot treure
-  /*
-  ///TODO: Aixo es el comentari (1)
-  El SLOT te un problema amb la tecla enter, el cas es ke
-  En premer enter no senvia al valor actual capturat per value
-  sino el valor anterior k ha pillat el spinbutton.
-  Amb la seguent instruccio forzem el spin a moures a un valor
-  k segur k es diferent k el seu valor actual, aixi la connexio 
-  capura el valor anterio (k es el k ens interesa)  osigui "value"
-  al final fem un set_value per restaurar la resta de witgets i variables
-  amb el valor correcte de value 
-  
-  //Fi del comentari(1)
-  
-  m_TextEntry.setValue((double)(m_fValue*1.1+0.1)); ///TODO: ?�?�?�?
-  setValue(aux);
-  */
-  
 }
-
-///TODO: Pq volem aixo?
-/*void EQButton::hideSpin()
-{
-  m_TextEntry.hide();
-  m_ptr_CtlButton->show();
-}*/
 
 void EQButton::onSpinChange()
 {
-  //setValue((float)m_TextEntry.get_value()); ///TODO: Verificar que es pot quedar aixi
   m_fValue = (float)m_TextEntry.get_value();
 }
-
-
-///TODO: Crec que es pot treure
-/*
-void EQButton::setSpinNumber(){
-  m_TextEntry.set_value((double)m_fValue);
-}
-*/

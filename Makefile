@@ -24,7 +24,7 @@ eq1qm.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 1" > eq_type.h
 	echo "#define NUM_BANDS 1" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq1qm"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -35,7 +35,7 @@ eq1qs.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 2" > eq_type.h
 	echo "#define NUM_BANDS 1" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq1qs"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -46,7 +46,7 @@ eq4qm.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 1" > eq_type.h
 	echo "#define NUM_BANDS 4" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq4qm"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -57,7 +57,7 @@ eq4qs.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 2" > eq_type.h
 	echo "#define NUM_BANDS 4" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq4qs"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -68,7 +68,7 @@ eq6qm.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 1" > eq_type.h
 	echo "#define NUM_BANDS 6" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq6qm"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -79,7 +79,7 @@ eq6qs.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 2" > eq_type.h
 	echo "#define NUM_BANDS 6" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq6qs"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -90,7 +90,7 @@ eq10qm.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 1" > eq_type.h
 	echo "#define NUM_BANDS 10" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq10qm"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core
@@ -101,7 +101,7 @@ eq10qs.so: eq.c dsp/filter.c dsp/vu.c
 	#Step1: Generate the header file
 	echo "#define NUM_CHANNELS 2" > eq_type.h
 	echo "#define NUM_BANDS 10" >> eq_type.h
-	echo "#define IS_DBUS 0" >> eq_type.h
+	
 	echo "#define EQ_URI      "'"http://eq10q.sourceforge.net/eq/eq10qs"'";" >> eq_type.h
 	
 	#Setp2: Compile the plugin core

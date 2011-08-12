@@ -18,13 +18,14 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "band_ctl.h"
+#include "gui/band_ctl.h"
 
 BandCtl::BandCtl(){
-  //constructor buit
+  //empty constructor
 }
 
-BandCtl::BandCtl(float *freq, const int band_num,
+//True constructor
+BandCtl::BandCtl( const int band_num,
   sigc::slot<void> gain_slot,
   sigc::slot<void> freq_slot,
   sigc::slot<void> Q_slot,
@@ -33,14 +34,10 @@ BandCtl::BandCtl(float *freq, const int band_num,
 button_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 combo_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
   Glib::ustring text;
-  
-  f=freq;
-  ant_filter = FILTER_OFF;
-
+ 
   m_gain = Gtk::manage(new EQButton(GAIN_TYPE, f, gain_slot, semafor));
   m_freq = Gtk::manage(new EQButton(FREQ_TYPE, f, freq_slot, semafor));
   m_Q = Gtk::manage(new EQButton(Q_TYPE, f, Q_slot, semafor));
-  
 
   text = Glib::ustring::compose("Band %1", band_num);
   band_label.set_label(text);
@@ -74,21 +71,6 @@ combo_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
   m_on_button.set_label("ON");
   m_on_button.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::on_button_clicked));
  
-  /*m_filter_sel.append_text("None"); //0
-  m_filter_sel.append_text("LPF 1"); //1
-  m_filter_sel.append_text("LPF 2"); //2
-  m_filter_sel.append_text("LPF 3"); //3
-  m_filter_sel.append_text("LPF 4"); //4
-  m_filter_sel.append_text("HPF 1"); //5
-  m_filter_sel.append_text("HPF 2"); //6
-  m_filter_sel.append_text("HPF 3"); //7
-  m_filter_sel.append_text("HPF 4"); //8
-  m_filter_sel.append_text("LoShelv"); //9
-  m_filter_sel.append_text("HiShelv"); //10
-  m_filter_sel.append_text("Peak"); //11
-  m_filter_sel.append_text("Notch"); //12
-  */
-
   m_filter_sel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::on_combo_changed));
   //posa els buttons com hagin d'estar al principi
   //config_sensitive();
@@ -102,20 +84,20 @@ combo_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
   
 }
 
-//Funcions de consulta de parametres
-float BandCtl::get_gain(){
+//Data accesors
+float BandCtl::getGain(){
   return m_gain->get_value();
 }
 
-float BandCtl::get_freq(){
+float BandCtl::getFreq(){
   return m_freq->get_value();
 }
 
-float BandCtl::get_Q(){
+float BandCtl::getQ(){
   return m_Q->get_value();
 }
 
-float BandCtl::get_filter_type(){
+float BandCtl::getFilterType(){
   return (float)filter_type;
 }
 
