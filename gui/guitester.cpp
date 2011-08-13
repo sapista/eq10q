@@ -10,27 +10,27 @@
 
 HelloWorld::HelloWorld()
 {
-
-
-  
-  
-  m_iMutex = 0;
-  m_EqButton = Gtk::manage(new EQButton(0, &m_iMutex));
-  add(*m_EqButton);
-  m_EqButton->setValue(0.0);
-  m_EqButton->show();
+ 
+//   m_iMutex = 0;
+//   m_EqButton = Gtk::manage(new EQButton(0, &m_iMutex));
+//   add(*m_EqButton);
+//   m_EqButton->setValue(0.0);
+//   m_EqButton->show();
   
    /*m_CtlButton = Gtk::manage(new CtlButton(1));
   add(*m_CtlButton);
   m_CtlButton->setButtonNumber(2);
   m_CtlButton->show();*/
+   
+   add(m_combo);
+   m_combo.show();
   
 
 }
 
 HelloWorld::~HelloWorld()
 {
-  delete m_EqButton;
+  //delete m_EqButton;
   //delete m_CtlButton;
 }
 

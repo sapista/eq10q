@@ -18,111 +18,107 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "gui/band_ctl.h"
+#include "band_ctl.h"
 
-BandCtl::BandCtl(){
-  //empty constructor
-}
-
-//True constructor
-BandCtl::BandCtl( const int band_num,
-  sigc::slot<void> gain_slot,
-  sigc::slot<void> freq_slot,
-  sigc::slot<void> Q_slot,
-  sigc::slot<void> type_slot, int *semafor
-   ):
-button_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
-combo_align(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0){
-  Glib::ustring text;
+BandCtl::BandCtl( const int iBandNum, int *semafor):
+m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
+m_ComboAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
+m_iBandNum(iBandNum)
+{
+  Glib::ustring sText;
  
-  m_gain = Gtk::manage(new EQButton(GAIN_TYPE, f, gain_slot, semafor));
-  m_freq = Gtk::manage(new EQButton(FREQ_TYPE, f, freq_slot, semafor));
-  m_Q = Gtk::manage(new EQButton(Q_TYPE, f, Q_slot, semafor));
+  m_Gain = Gtk::manage(new EQButton(GAIN_TYPE, semafor));
+  m_Freq = Gtk::manage(new EQButton(FREQ_TYPE, semafor));
+  m_Q = Gtk::manage(new EQButton(Q_TYPE, semafor));
 
-  text = Glib::ustring::compose("Band %1", band_num);
-  band_label.set_label(text);
+  sText = Glib::ustring::compose("Band %1", m_iBandNum);
+  m_BandLabel.set_label(sText);
 
-  pack_start(band_label, Gtk::PACK_SHRINK );
-  pack_start(combo_align, Gtk::PACK_EXPAND_PADDING );
-  pack_start(*m_gain, Gtk::PACK_EXPAND_PADDING );
-  pack_start(*m_freq, Gtk::PACK_EXPAND_PADDING );
+  pack_start(m_BandLabel, Gtk::PACK_SHRINK );
+  pack_start(m_ComboAlign, Gtk::PACK_EXPAND_PADDING );
+  pack_start(*m_Gain, Gtk::PACK_EXPAND_PADDING );
+  pack_start(*m_Freq, Gtk::PACK_EXPAND_PADDING );
   pack_start(*m_Q, Gtk::PACK_EXPAND_PADDING );
-  pack_start(button_align, Gtk::PACK_EXPAND_PADDING );
+  pack_start(m_ButtonAlign, Gtk::PACK_EXPAND_PADDING );
 
-  m_on_button.set_size_request(35,-1);
-  button_align.add(m_on_button);
+  m_OnButton.set_size_request(35,-1);
+  m_ButtonAlign.add(m_OnButton);
   
   set_spacing(2);
   set_homogeneous(false);
   set_size_request(80,-1);
 
-  m_filter_sel.set_size_request(60,-1);
-  combo_align.add(m_filter_sel);
+  m_FilterSel.set_size_request(60,-1);
+  m_ComboAlign.add(m_FilterSel);
   
-  band_label.show();
-  m_on_button.show();
-  m_filter_sel.show();
-  m_gain->show();
-  m_freq->show();
+  m_BandLabel.show();
+  m_OnButton.show();
+  m_FilterSel.show();
+  m_Gain->show();
+  m_Freq->show();
   m_Q->show();
-  button_align.show();
+  m_ButtonAlign.show();
   show();
 
-  m_on_button.set_label("ON");
-  m_on_button.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::on_button_clicked));
+  m_OnButton.set_label("ON");
+  m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
+   m_FilterSel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
  
-  m_filter_sel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::on_combo_changed));
-  //posa els buttons com hagin d'estar al principi
+   ///TODO: k es aixo que esta comentat
+   //posa els buttons com hagin d'estar al principi
   //config_sensitive();
+  //vic_de_set=false;
 
-  vic_de_set=false;
-
+  ///TODO: Com comuniquem aquest objecte amb l'exterior?
   //connexions externes
-  m_filter_sel.signal_changed().connect(type_slot);
-  m_on_button.signal_clicked().connect(type_slot);
+  //m_filter_sel.signal_changed().connect(type_slot);
+  //m_on_button.signal_clicked().connect(type_slot);
 
   
 }
 
 //Data accesors
 float BandCtl::getGain(){
-  return m_gain->get_value();
+  return m_Gain->getValue();
 }
 
 float BandCtl::getFreq(){
-  return m_freq->get_value();
+  return m_Freq->getValue();
 }
 
 float BandCtl::getQ(){
-  return m_Q->get_value();
+  return m_Q->getValue();
 }
 
 float BandCtl::getFilterType(){
-  return (float)filter_type;
+  return (float)m_iFilterType;
 }
 
-
-//Funcions de salvar parametres
-void BandCtl::set_gain(float g){
-  m_gain->set_value(g);
+bool BandCtl::getEnabled()
+{
+  return m_bBandIsEnabled;
 }
 
-void BandCtl::set_freq(float f){
-  m_freq->set_freq_ptr(f);
+void BandCtl::setGain(float fGain){
+  m_Gain->setValue(fGain);
 }
 
-void BandCtl::set_freq_direct(float f){
-  m_freq->set_value(f);
+void BandCtl::setFreq(float fFreq){
+  m_Freq->setValue(fFreq);
 }
 
-void BandCtl::set_Q(float q){
-  m_Q->set_value(q);
+void BandCtl::setQ(float fQ){
+  m_Q->setValue(fQ);
 }
 
-void BandCtl::set_filter_type(float t){
-  filter_type = (int)t;
-  vic_de_set=true;
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>I'm here
+void BandCtl::setFilterType(float fType){
+  m_iFilterType = (int)fType;
+  m_FilterSel.set_active(m_iFilterType);
+  
+  ///vic_de_set=true; ///TODO: k es aixo??????
 
+///TODO: FilterType no te res a veure amb si esta ON o OFF
   if( filter_type == 0)m_on_button.set_active(false);
   else{
     m_on_button.set_active(true);
@@ -135,19 +131,27 @@ void BandCtl::set_filter_type(float t){
 
 }
 
-void BandCtl::on_button_clicked(){
-  config_type();
+void BandCtl::setEnabled(bool bIsEnabled)
+{
+  m_bBandIsEnabled = bIsEnabled;
+}
+
+//GTK signal Handlers
+void BandCtl::onButtonClicked(){
+  config_type(); ///TODO: pq esta en una funcio aillada???
 
   if(m_on_button.get_active() && ant_filter != FILTER_OFF){
     m_filter_sel.set_active(ant_filter);
   }
 }
 
-void BandCtl::on_combo_changed(){
-config_type();
+void BandCtl::onComboChanged(){
+config_type(); ///TODO: pq esta en una funcio aillada???
 }
 
-void BandCtl::config_type(){
+
+///TODO: What is this????
+void BandCtl::configType(){
   if(filter_type != FILTER_OFF) ant_filter = filter_type;
 
   if(m_on_button.get_active()) {
@@ -158,7 +162,7 @@ void BandCtl::config_type(){
   config_sensitive();
 }
 
-void BandCtl::config_sensitive(){
+void BandCtl::configSensitive(){
   switch(filter_type){
     case FILTER_OFF:
        m_Q->set_sensitive(false);

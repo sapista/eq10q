@@ -31,43 +31,40 @@
 class BandCtl : public Gtk::VBox
 {
   public:
-    BandCtl(); //dummy constructor
-    BandCtl( const int band_num,
-            sigc::slot<void> gain_slot,
-            sigc::slot<void> freq_slot,
-            sigc::slot<void> Q_slot,
-            sigc::slot<void> type_slot, int *semafor
-            );
+    BandCtl( const int iBandNum,int *semafor); ///TODO: Aixo hauria de canviar, sistema senyal-slot
+    
     virtual ~BandCtl();
     float getGain();
     float getFreq();
     float getQ();
     float getFilterType();
-    //bool get_enabled(); ///TODO: No trobu la implementacio!!!! es pot treure?????
+    bool getEnabled();
     
-    void set_gain(float g);
-    void set_freq(float f);
-    void set_Q(float q);
-    void set_filter_type(float t);
-    void set_enabled(bool isEnabled);
-    void hide_spins();
+    void setGain(float fGain);
+    void setFreq(float fFreq);
+    void setQ(float fQ);
+    void setFilterType(float fType);
+    void setEnabled(bool bIsEnabled);
+    void hide_spins(); ///TODO: pq volem aixo???
     
   protected:
-    Gtk::Label band_label;
-    Gtk::ToggleButton m_on_button;
-    PixMapCombo m_filter_sel;
-    Gtk::Alignment button_align, combo_align;
-    EQButton *m_gain, *m_freq, *m_Q;
+    Gtk::Label m_BandLabel;
+    Gtk::ToggleButton m_OnButton;
+    PixMapCombo m_FilterSel;
+    Gtk::Alignment m_ButtonAlign, m_ComboAlign;
+    EQButton *m_Gain, *m_Freq, *m_Q;
     
-    void on_button_clicked();
-    void on_combo_changed();
-    void config_type();
-    void config_sensitive();
-    void reset_Q(float q);
+    void onButtonClicked();
+    void onComboChanged();
+    void configType(); ///TODO: pq serveix?
+    void configSensitive();///TODO: Es per activar/desactivar els botons que no apliquen a un tipus de filtre
+    void reset_Q(float q);///TODO: pq serveix?
     
     
   private:
-    int filter_type;
+    int m_iFilterType;
+    int m_iBandNum;
+    bool m_bBandIsEnabled;
 
 };
 

@@ -25,12 +25,8 @@ PixMapCombo::PixMapCombo(){
   m_refTreeModel = Gtk::ListStore::create(m_Columns);
   set_model(m_refTreeModel);
   
-  //Enganxar una imatge al pixbuf
-  Glib::RefPtr<Gdk::Pixbuf> m_refTopixbuf= Gdk::Pixbuf::create_from_file(RUTA_OFF);
-  
-  //Fill the ComboBox Tree Model
-  Gtk::TreeModel::Row row = *(m_refTreeModel->append());
-  row[m_Columns.m_col_pix] = m_refTopixbuf;
+  Glib::RefPtr<Gdk::Pixbuf> m_refTopixbuf;
+  Gtk::TreeModel::Row row;
   
   //Enganxar una imatge al pixbuf
   m_refTopixbuf= Gdk::Pixbuf::create_from_file(RUTA_LPF1);
@@ -119,10 +115,8 @@ PixMapCombo::PixMapCombo(){
    //add to combo
    pack_start(m_Columns.m_col_pix);
    
-   
-   
+      
    show_all_children();
-
 }
 
 PixMapCombo::~PixMapCombo(){
