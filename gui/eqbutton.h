@@ -19,11 +19,10 @@
  ***************************************************************************/
 
 #ifndef EQ_BUTTON_H
-	#define EQ_BUTTON_H
-	
+  #define EQ_BUTTON_H
+
 #include <iostream>
 #include <iomanip>
-//#include <cmath> ///TODO: Aixo segurament no cal
 
 #include <gtkmm/box.h>
 #include <gtkmm/spinbutton.h>
@@ -44,7 +43,7 @@
 
 class EQButton : public Gtk::VBox{
   public:
-    EQButton(int iType, int *iSemafor);
+    EQButton(int iType, bool *bSemafor);
     virtual ~EQButton();
     virtual void setValue(float fVal);
     virtual float getValue();
@@ -62,6 +61,6 @@ class EQButton : public Gtk::VBox{
   private:
     int m_iFilterType;
     float m_fValue;
-    int *m_iStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
+    bool *m_bStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
 };
 #endif

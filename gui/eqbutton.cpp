@@ -20,13 +20,12 @@
  
 #include "eqbutton.h"
 
-EQButton::EQButton(int iType, /*float *fPtr, *//*sigc::slot<void> slot,*/ int *iSemafor):
+EQButton::EQButton(int iType, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
-m_iStop(iSemafor), ///TODO: Potser la sync aquest s'hauria de fer amb events? Es a dir, el widget que rep doble click emet un event que bloqueia a la resta de widgets
+m_bStop(bSemafor),
 m_iFilterType(iType)
 {
-  m_fValue = 0; ///TODO: Aixo hauria de venir pel port LV2 no?????
-  
+  *m_bStop = false;
   m_ptr_CtlButton = Gtk::manage(new CtlButton(iType));
   m_ptr_CtlButton->setButtonNumber(m_fValue);
   
@@ -107,6 +106,7 @@ void EQButton::setValue(float fVal)
   }
   
   m_TextEntry.set_value((double)m_fValue);
+  m_ptr_CtlButton->setButtonNumber(m_fValue);
 }
 
 float EQButton::getValue()
@@ -116,9 +116,9 @@ float EQButton::getValue()
 
 void EQButton::onButtonDoubleClicked()
 {
-  if(*m_iStop == 0)
+  if(!*m_bStop)
   {
-      *m_iStop = 1;
+      *m_bStop = true;
       m_ptr_CtlButton->hide();
       setValue(m_ptr_CtlButton->getButtonNumber());
       m_TextEntry.show();
@@ -131,7 +131,7 @@ void EQButton::onEnterPressed()
   m_ptr_CtlButton->setButtonNumber(m_fValue);
   m_ptr_CtlButton->show();
   m_TextEntry.hide();
-  *m_iStop = 0;
+  *m_bStop = false;
 }
 
 void EQButton::onSpinChange()

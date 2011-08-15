@@ -18,51 +18,39 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef CTL_BUTTON_H
-  #define CTL_BUTTON_H
+GainCtl::GainCtl(const Glib::ustring title, sigc::slot<void> m_slot){
+  gain_scale.set_digits(1);
+  gain_scale.set_draw_value(true);
+  gain_scale.set_value_pos(Gtk::POS_TOP);
+  gain_scale.set_inverted(true);
+  gain_scale.set_range(GAIN_MIN, GAIN_MAX);
+  gain_scale.set_value(GAIN_DEFAULT);
+  gain_scale.signal_value_changed().connect(m_slot);
 
-#include <gtkmm/button.h>
-
-#define ACCELERATION 15
-#define GAIN_TYPE 0 ///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
-#define FREQ_TYPE 1
-#define Q_TYPE    2
-
-///TODO: els limits MAX i MIN han de venir del fitxer *.TTL   propi de LV2
-#define GAIN_MIN -15.0///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
-#define GAIN_MAX 15.0
-#define FREQ_MIN 20.0
-#define FREQ_MAX 20000.0
-#define PEAK_Q_MIN 0.02
-#define PEAK_Q_MAX 16.0
-
-class CtlButton : public Gtk::Button{
-  public:
-    CtlButton(int iType);
-    virtual ~CtlButton();
-
-    void setButtonNumber(float num);
-    float getButtonNumber();
-    
-    //signal accessor:
-    typedef sigc::signal<void> ctlButton_double_clicked;
-    ctlButton_double_clicked signal_double_clicked();
-    
-  protected:
-    virtual void onButtonPressed();
-    virtual void onButtonDepressed();
-    virtual bool onMouseMove(GdkEventMotion* event);
-    virtual bool onButtonDoubleClicked(GdkEventButton* event);
-    virtual float computeValue(int x, int y);
   
-  private:  
-    bool m_bIsXDirection;
-    int  m_iActValue, m_iAntValue, m_iFilterType;
-    float  m_fValue;
-    sigc::connection m_MouseSignal;
-    
-    //Double click signal
-    ctlButton_double_clicked m_doubleClickSignal;
-};
+  gain_label.set_label(title);
+  
+  pack_start(gain_label);
+  pack_start(gain_scale);
+  
+  set_spacing(2);
+  set_homogeneous(false);
+  
+  gain_scale.set_size_request(40,100); 
 
-#endif
+  gain_label.show();
+  gain_scale.show();
+  show();
+}
+
+void GainCtl::set_gain(float g){
+  gain_scale.set_value((double) g);
+}
+
+float GainCtl::get_gain(){
+  return (float)gain_scale.get_value();
+}
+
+GainCtl::~GainCtl(){
+
+}

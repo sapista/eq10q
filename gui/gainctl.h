@@ -18,68 +18,18 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "ctlbutton.h"
-#include "pixmapcombo.h"
-
-#include <gtkmm/box.h>
-#include <gtkmm/label.h>
-#include <gtkmm/togglebutton.h>
-#include <gtkmm/scale.h>
-#include <gtkmm/alignment.h>
-
-
-class BandCtl : public Gtk::VBox
-{
-  public:
-    BandCtl( const int iBandNum,int *semafor); ///TODO: Aixo hauria de canviar, sistema senyal-slot
-    
-    virtual ~BandCtl();
-    float getGain();
-    float getFreq();
-    float getQ();
-    float getFilterType();
-    bool getEnabled();
-    
-    void setGain(float fGain);
-    void setFreq(float fFreq);
-    void setQ(float fQ);
-    void setFilterType(float fType);
-    void setEnabled(bool bIsEnabled);
-    void hide_spins(); ///TODO: pq volem aixo???
-    
-  protected:
-    Gtk::Label m_BandLabel;
-    Gtk::ToggleButton m_OnButton;
-    PixMapCombo m_FilterSel;
-    Gtk::Alignment m_ButtonAlign, m_ComboAlign;
-    EQButton *m_Gain, *m_Freq, *m_Q;
-    
-    void onButtonClicked();
-    void onComboChanged();
-    void configType(); ///TODO: pq serveix?
-    void configSensitive();///TODO: Es per activar/desactivar els botons que no apliquen a un tipus de filtre
-    void reset_Q(float q);///TODO: pq serveix?
-    
-    
-  private:
-    int m_iFilterType;
-    int m_iBandNum;
-    bool m_bBandIsEnabled;
-
-};
-
-
-
-///TODO: GainCtl Ha d'estar en un altre fitxer separat
+#ifndef GAIN_CTL_H
+  #define GAIN_CTL_H
 class  GainCtl : public Gtk::VBox{
   public:
     GainCtl(const Glib::ustring title, sigc::slot<void> m_slot);
     virtual ~GainCtl();
-    void set_gain(float g);
-    float get_gain();
+    void set_Gain(float g);
+    float get_Gain();
   
   protected:
     Gtk::VScale gain_scale;
     Gtk::Label gain_label;
 
 };
+#endif

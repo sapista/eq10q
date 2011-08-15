@@ -11,7 +11,6 @@
 HelloWorld::HelloWorld()
 {
  
-//   m_iMutex = 0;
 //   m_EqButton = Gtk::manage(new EQButton(0, &m_iMutex));
 //   add(*m_EqButton);
 //   m_EqButton->setValue(0.0);
@@ -22,9 +21,18 @@ HelloWorld::HelloWorld()
   m_CtlButton->setButtonNumber(2);
   m_CtlButton->show();*/
    
-   add(m_combo);
-   m_combo.show();
+   //add(m_combo);
+   //m_combo.show();
   
+   m_BandCtl = Gtk::manage(new BandCtl(0, &m_bMutex));
+   add(*m_BandCtl);
+   m_BandCtl->show();
+   
+   m_BandCtl->setEnabled(true);
+   m_BandCtl->setGain(5.0);
+   m_BandCtl->setFreq(500);
+   m_BandCtl->setQ(2.5);
+   m_BandCtl->setFilterType(PEAK);
 
 }
 
