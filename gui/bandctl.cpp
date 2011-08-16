@@ -18,6 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "guiconstants.h"
 #include "bandctl.h"
 
 BandCtl::BandCtl( const int iBandNum, bool *bSemafor):
@@ -62,6 +63,9 @@ m_iBandNum(iBandNum)
   m_OnButton.set_label("ON");
   m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
   m_FilterSel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
+  m_Gain.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
+  m_Freq.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
+  m_Q.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
 }
 
 BandCtl::~BandCtl(){
@@ -118,12 +122,31 @@ void BandCtl::onButtonClicked()
 {
   m_bBandIsEnabled = m_OnButton.get_active();
   configSensitive();
+  float fIsOn = 0;
+  if(m_bBandIsEnabled) fIsOn = 1;
+  m_bandChangedSignal.emit(m_iBandNum, ONOFF_TYPE, fIsOn);
 }
 
 void BandCtl::onComboChanged()
 {
   m_iFilterType = m_FilterSel.get_active_row_number();
   configSensitive();
+  m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_iFilterType);
+}
+
+void BandCtl::onGainChanged()
+{
+  m_bandChangedSignal.emit(m_iBandNum, GAIN_TYPE, getGain());
+}
+
+void BandCtl::onFreqChanged()
+{
+  m_bandChangedSignal.emit(m_iBandNum, FREQ_TYPE, getFreq());
+}
+
+void BandCtl::onQChanged()
+{
+  m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
 }
 
 void BandCtl::configSensitive()
@@ -175,4 +198,9 @@ void BandCtl::configSensitive()
       break;
     }
   }
+}
+
+BandCtl::signal_ctlBandChanged BandCtl::ctlBand_changed signal_changed()
+{
+	return m_bandChangedSignal;
 }

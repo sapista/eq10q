@@ -29,25 +29,6 @@
 #include <gtkmm/scale.h>
 #include <gtkmm/alignment.h>
 
-#define  LPF_ORDER_1 0
-#define  LPF_ORDER_2 1
-#define  LPF_ORDER_3 2
-#define  LPF_ORDER_4 3
-#define  HPF_ORDER_1 4
-#define  HPF_ORDER_2 5
-#define  HPF_ORDER_3 6
-#define  HPF_ORDER_4 7
-#define  LOW_SHELF   8
-#define  HIGH_SHELF  9
-#define  PEAK        10
-#define  NOTCH       11
-
-//Q default values ///TODO: Aixo ha de venir del .ttl
-#define HPF_LPF_Q_DEFAULT 0.7
-#define NOTCH_Q_DEFAULT 2
-#define HIGH_LOW_SHELF_Q_DEFAULT  0.7
-#define PEAK_Q_DEFAULT 2
-
 class BandCtl : public Gtk::VBox
 {
   public:
@@ -66,9 +47,13 @@ class BandCtl : public Gtk::VBox
     void setFilterType(float fType);
     void setEnabled(bool bIsEnabled);
     
-    //signal accessor:
-    typedef sigc::signal<int, int, float> ctlBand_changed;
-    ctlBand_changed signal_changed(); ///TODO: Definir aixo en el CPP i col·locar tots  els emtit() necessaris
+    //signal accessor: 
+	//Parameters:
+	//int -> BandNumber
+	//int -> field(gain, freq, Q, type, ON/OFF)
+	//Float -> value
+    typedef sigc::signal<int, int, float> signal_ctlBandChanged;
+    signal_ctlBandChanged signal_changed();
         
   protected:
     Gtk::Label m_BandLabel;
@@ -77,18 +62,22 @@ class BandCtl : public Gtk::VBox
     Gtk::Alignment m_ButtonAlign, m_ComboAlign;
     EQButton *m_Gain, *m_Freq, *m_Q;
     
+	//Signal Handlers
     void onButtonClicked();
     void onComboChanged();
-    void configSensitive();   
+	void onGainChanged();
+	void onFreqChanged();
+	void onQChanged();
     
   private:
     int m_iFilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
     
-    //Band change signal
-    ctlBand_changed m_bandChangedSignal;
-    
+	void configSensitive();
+	 
+	//Band change signal
+    signal_ctlBandChanged m_bandChangedSignal;
 
 };
 #endif

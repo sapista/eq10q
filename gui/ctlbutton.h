@@ -22,19 +22,7 @@
   #define CTL_BUTTON_H
 
 #include <gtkmm/button.h>
-
 #define ACCELERATION 15
-#define GAIN_TYPE 0 ///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
-#define FREQ_TYPE 1
-#define Q_TYPE    2
-
-///TODO: els limits MAX i MIN han de venir del fitxer *.TTL   propi de LV2
-#define GAIN_MIN -15.0///TODO: Aquest define replica codi, i veig venir que ho fara a totes les classes!!!
-#define GAIN_MAX 15.0
-#define FREQ_MIN 20.0
-#define FREQ_MAX 20000.0
-#define PEAK_Q_MIN 0.02
-#define PEAK_Q_MAX 16.0
 
 class CtlButton : public Gtk::Button{
   public:
@@ -47,6 +35,9 @@ class CtlButton : public Gtk::Button{
     //signal accessor:
     typedef sigc::signal<void> ctlButton_double_clicked;
     ctlButton_double_clicked signal_double_clicked();
+	
+	typedef sigc::signal<void> ctlButton_changed;
+    ctlButton_changed signal_changed();
     
   protected:
     virtual void onButtonPressed();
@@ -63,6 +54,9 @@ class CtlButton : public Gtk::Button{
     
     //Double click signal
     ctlButton_double_clicked m_doubleClickSignal;
+	
+	//Value Changed signal
+	ctlButton_changed m_ctlButtonChangedSignal;
 };
 
 #endif

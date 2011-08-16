@@ -17,7 +17,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
- 
+
+#include "guiconstants.h"
 #include "eqbutton.h"
 
 EQButton::EQButton(int iType, bool *bSemafor):
@@ -73,6 +74,7 @@ m_iFilterType(iType)
   m_ButtonAlign.show();
   
   m_ptr_CtlButton->signal_double_clicked().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked));
+  m_ptr_CtlButton->signal_changed().connect(sigc::mem_fun(*this, &EQButton::onCtlButtonChanged));
   m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));
   m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
 }
@@ -132,9 +134,22 @@ void EQButton::onEnterPressed()
   m_ptr_CtlButton->show();
   m_TextEntry.hide();
   *m_bStop = false;
+  m_EqButtonChangedSignal.emit();
 }
 
 void EQButton::onSpinChange()
 {
   m_fValue = (float)m_TextEntry.get_value();
+  m_EqButtonChangedSignal.emit();
+}
+
+void EQButton::onCtlButtonChanged()
+{
+  m_fValue = getButtonNumber();
+  m_EqButtonChangedSignal.emit();
+}
+
+EQButton::signal_EqButtonChanged EQButton::signal_changed()
+{
+  return m_EqButtonChangedSignal;
 }

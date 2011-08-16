@@ -18,6 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include "guiconstants.h"
 #include "ctlbutton.h"
 #include <cmath>
 #include <iostream>
@@ -78,6 +79,7 @@ bool CtlButton::onMouseMove(GdkEventMotion* event)
   int x,y;
   get_pointer(x, y);
   setButtonNumber(computeValue(x,y));
+  m_ctlButtonChangedSignal.emit();
   return true;
 }
 
@@ -149,4 +151,9 @@ float CtlButton::getButtonNumber()
 CtlButton::ctlButton_double_clicked CtlButton::signal_double_clicked()
 {
   return m_doubleClickSignal;
+}
+
+CtlButton::ctlButton_changed CtlButton::signal_changed()
+{
+  return m_ctlButtonChangedSignal;
 }
