@@ -26,7 +26,6 @@
 #include <gtkmm/box.h>
 #include <gtkmm/label.h>
 #include <gtkmm/togglebutton.h>
-#include <gtkmm/scale.h>
 #include <gtkmm/alignment.h>
 
 class BandCtl : public Gtk::VBox
@@ -52,7 +51,7 @@ class BandCtl : public Gtk::VBox
 	//int -> BandNumber
 	//int -> field(gain, freq, Q, type, ON/OFF)
 	//Float -> value
-    typedef sigc::signal<int, int, float> signal_ctlBandChanged;
+    typedef sigc::signal<void, int, int, float> signal_ctlBandChanged;
     signal_ctlBandChanged signal_changed();
         
   protected:
@@ -62,21 +61,21 @@ class BandCtl : public Gtk::VBox
     Gtk::Alignment m_ButtonAlign, m_ComboAlign;
     EQButton *m_Gain, *m_Freq, *m_Q;
     
-	//Signal Handlers
+    //Signal Handlers
     void onButtonClicked();
     void onComboChanged();
-	void onGainChanged();
-	void onFreqChanged();
-	void onQChanged();
+    void onGainChanged();
+    void onFreqChanged();
+    void onQChanged();
     
   private:
     int m_iFilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
     
-	void configSensitive();
-	 
-	//Band change signal
+    void configSensitive();
+      
+    //Band change signal
     signal_ctlBandChanged m_bandChangedSignal;
 
 };

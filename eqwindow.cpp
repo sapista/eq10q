@@ -18,234 +18,231 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include <stdlib.h>
 #include "eqwindow.hh"
+#include "gui/guiconstants.h"
 
 //Constructor
-EqMainWindow::EqMainWindow()
-  :Flat_Button("Flat"),
-  A_Button("A"),
-  B_Button("B"),
+EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands)
+  :m_FlatButton("Flat"),
+  m_AButton("A"),
+  m_BButton("B"),
+  m_BypassButton("Bypass"),
+  m_iNumOfChannels(iAudioChannels),
+  m_iNumOfBands(iNumBands),
+  m_bMutex(false)
 
 ///TODO: Molt xapusero!
-  image_logo_top_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top_top.png"),
-  image_logo_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top.png"),
-  image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
-  image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
-  image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
+//   image_logo_top_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top_top.png"),
+//   image_logo_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top.png"),
+//   image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
+//   image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
+//   image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
 {
-
-  //Slots
-  sigc::slot<void> bypass_slot, in_gain_slot, out_gain_slot;
-  sigc::slot<void> gain_slot[NUM_BANDS], freq_slot[NUM_BANDS], Q_slot[NUM_BANDS], type_slot[NUM_BANDS];
-
  //Buttons A,B i Flat
-  A_Button.set_size_request(40,-1);
-  B_Button.set_size_request(40,-1);
-  Flat_Button.set_size_request(60,-1); 
-  bypass_button.set_size_request(60,-1); 
+  m_AButton.set_size_request(25,23);
+  m_BButton.set_size_request(25,23);
+  m_AButton.set_active(true);
+  m_BButton.set_active(false);
+  m_FlatButton.set_size_request(40,23); 
+  m_BypassButton.set_size_request(55,23); 
   
-  buttonA_align.add(A_Button);
-  buttonB_align.add(B_Button);
+  m_ButtonAAlign.add(m_AButton);
+  m_ButtonBAlign.add(m_BButton);
+  m_BypassAlign.add(m_BypassButton);
+  m_ButtonAAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
+  m_ButtonBAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
+  m_BypassAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
 
-  buttonA_align.set(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0);
-  buttonB_align.set(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0);
-  
-  buttonA_align.show();
-  buttonB_align.show();
+  m_ABFlatBox.set_homogeneous(false);
+  m_FlatAlign.add(m_FlatButton);
+  m_FlatAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
+  m_ABFlatBox.pack_start(m_BypassAlign,Gtk::PACK_SHRINK);
+  m_ABFlatBox.pack_start(m_ButtonAAlign,Gtk::PACK_SHRINK);
+  m_ABFlatBox.pack_start(m_ButtonBAlign,Gtk::PACK_SHRINK);
+  //m_ABFlatBox.pack_start(image_logo_center); //TODO: the center image
+  m_ABFlatBox.pack_start(m_FlatAlign);
 
-  buttons_ABF.set_homogeneous(false);
   
-  buttons_ABF.pack_start(bypass_button,Gtk::PACK_EXPAND_PADDING);
-  buttons_ABF.pack_start(buttonA_align,Gtk::PACK_EXPAND_PADDING);
-  buttons_ABF.pack_start(buttonB_align,Gtk::PACK_EXPAND_PADDING);
-  buttons_ABF.set_size_request(230,-1);
-  buttons_ABF.set_spacing(2);
-  
-  Flat_align.add(Flat_Button);
-  AB_align.add(buttons_ABF);
-    
-  Flat_align.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER, 1.0, 0.0);
-  AB_align.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 1.0, 0.0);
-  
-  ABFlat_box.pack_start(AB_align,Gtk::PACK_EXPAND_PADDING);
-  ABFlat_box.pack_start(image_logo_center);
-  ABFlat_box.pack_start(Flat_align,Gtk::PACK_EXPAND_PADDING);
-  ABFlat_box.set_spacing(10);
+  m_InGain = Gtk::manage(new GainCtl("In", m_iNumOfChannels ,true));
+  m_GainBox.pack_start(*m_InGain, Gtk::PACK_SHRINK);
+  m_OutGain = Gtk::manage(new GainCtl("Out", m_iNumOfChannels, false));
+  m_GainBox.pack_start(*m_OutGain, Gtk::PACK_SHRINK);
+  m_GainBox.set_homogeneous(true);
+  m_GainBox.set_spacing(2);
+  m_GainBypassBox.pack_start(m_GainBox, Gtk::PACK_EXPAND_WIDGET);
+  m_GainBypassBox.set_homogeneous(false);
 
-  //connects
-  //dummy_box.signal_expose_event().connect(mem_fun(*this, &EqMainWindow::on_window_popup), false);
-  //dummy_box.set_sensitive(false);
-
-  bypass_button.signal_toggled().connect(bypass_slot);
-  bypass_button.set_label("Bypass");
-
-  in_gain = Gtk::manage(new GainCtl("In", in_gain_slot));
-  gain_box.pack_start(*in_gain, Gtk::PACK_SHRINK);
+  m_BandBox.pack_start(m_GainBypassBox,  Gtk::PACK_SHRINK);
+  m_BandBox.set_spacing(4);
+  m_BandBox.set_homogeneous(false);
+  m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
   
-  out_gain = Gtk::manage(new GainCtl("Out", out_gain_slot));
-  gain_box.pack_start(*out_gain, Gtk::PACK_SHRINK);
-
-  gain_box.set_homogeneous(true);
-  gain_box.set_spacing(2);
-  gain_box.show();
-  in_gain->show();
-  out_gain->show();
-  
-  gain_bypass_box.pack_start(gain_box, Gtk::PACK_EXPAND_WIDGET);
-  gain_bypass_box.set_homogeneous(false);
-  gain_bypass_box.show();
-  bypass_button.show();
-  
-  band_box.pack_start(gain_bypass_box,  Gtk::PACK_SHRINK);
-  
-  for (int i = 0; i< NUM_BANDS; i++){
-    m_banda[i] = Gtk::manage(new BandCtl(i+1,
-    gain_slot[i],
-    freq_slot[i],
-    Q_slot[i],
-    type_slot[i],
-    &stop
-    ));
-    band_box.pack_start(*m_banda[i], Gtk::PACK_SHRINK);
+  for (int i = 0; i< m_iNumOfBands; i++)
+  {
+    m_BandCtlArray[i] = Gtk::manage(new BandCtl(i, &m_bMutex));
+    m_BandBox.pack_start(*m_BandCtlArray[i], Gtk::PACK_SHRINK);
+    m_BandCtlArray[i] -> signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onBandChange));
   }
-   band_box.pack_start(dummy_box, Gtk::PACK_SHRINK); //afegim una caixa buida, serveix per invocar la fuincio expose
-  band_box.set_spacing(4);
-  band_box.set_homogeneous(false);
 
+  //m_MainBox.pack_start(image_logo_top); ///TODO: les imatges....
+  m_MainBox.pack_start(m_ABFlatBox,Gtk::PACK_EXPAND_PADDING);
+  //m_MainBox.pack_start(image_logo_bottom); //TODO: imatges
 
-  band_box.show();
-
-
-  main_box.pack_start(image_logo_top);
-  main_box.pack_start(ABFlat_box,Gtk::PACK_EXPAND_PADDING);
-  main_box.pack_start(image_logo_bottom);
-
-  image_logo_bottom.show();
-  image_logo_top.show();
-  image_logo_center.show();
-
-  ABFlat_box.show();
-  Flat_Button.show();
-  Flat_align.show();
-  AB_align.show();
-  buttons_ABF.show();
-  A_Button.show();
-  B_Button.show();
-  ABFlat_box.show();
+//TODO: imatges
+//   image_logo_bottom.show();
+//   image_logo_top.show();
+//   image_logo_center.show();
+  m_ABFlatBox.show();
+  m_FlatButton.show();
+  m_FlatAlign.show();
+  m_ABAlign.show();
+  m_BypassAlign.show();
+  m_AButton.show();
+  m_BButton.show();
+  m_GainBox.show();
+  m_InGain->show();
+  m_OutGain->show();
+  m_GainBypassBox.show();
+  m_BypassButton.show();
+  m_BandBox.show();
+  m_ButtonAAlign.show();
+  m_ButtonBAlign.show();
   
-  main_box.pack_start(band_box);
-  main_box.pack_start(image_logo_bottom_bottom);
-  main_box.set_spacing(0);
-
-  add(main_box);
-  main_box.show();
-
-
-  //SEnyals dels 3 botons A B FLAT
-  A_Button.set_active(true);
-  B_Button.set_active(false);
-  A_Button.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::on_button_A));
-  B_Button.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::on_button_B));
-  Flat_Button.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::on_button_FLAT));
- 
+  //Add some tooltips
+  m_AButton.set_tooltip_text("Switch to curve A");
+  m_BButton.set_tooltip_text("Switch to curve B");
+  m_BypassButton.set_tooltip_text("Bypass the equalizer");
+  m_FlatButton.set_tooltip_text("Reset all values to default");
+  m_InGain->set_tooltip_text("Adjust the input gain");
+  m_OutGain->set_tooltip_text("Adjust the output gain");
+  
+  m_MainBox.pack_start(m_BandBox);
+  //m_MainBox.pack_start(image_logo_bottom_bottom); //TODO: imatges
+  m_MainBox.set_spacing(0);
+  add(m_MainBox);
+  m_MainBox.show();
+  
+   //connect signals
+  m_BypassButton.signal_toggled().connect(mem_fun(*this, &EqMainWindow::onButtonBypass));
+  m_AButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonA));
+  m_BButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonB));
+  m_FlatButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFlat));
+  m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onGainChange));
+  m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onGainChange));
+  
+  //Load the EQ Parameters objects
+  m_AParams = new EqParams(m_iNumOfBands);
+  m_BParams = new EqParams(m_iNumOfBands);
+  m_CurParams = m_AParams;
+  
 }
 
-
-void EqMainWindow::AB_change_params(bool toA){
-  
-///Ho ignoro tot pq ara mateix no li veig cap sentit
-/*for(int i=0; i<NUM_OF_FILTERS;i++){
-    if(toA){
-      paramsB[i].type=(int)m_banda[i]->get_filter_type();
-      paramsB[i].gain=m_banda[i]->get_gain();
-      paramsB[i].freq=m_banda[i]->get_freq();
-      paramsB[i].Q=m_banda[i]->get_Q();
-      
-      m_banda[i]->set_filter_type((float)paramsA[i].type);
-      m_banda[i]->set_gain(paramsA[i].gain);
-      m_banda[i]->set_freq(paramsA[i].freq);
-      m_banda[i]->set_Q(paramsA[i].Q);
-      }
-    
-    else{
-      paramsA[i].type=(int)m_banda[i]->get_filter_type();
-      paramsA[i].gain=m_banda[i]->get_gain();
-      paramsA[i].freq=m_banda[i]->get_freq();
-      paramsA[i].Q=m_banda[i]->get_Q();
-      
-      m_banda[i]->set_filter_type((float)paramsB[i].type);
-      m_banda[i]->set_gain(paramsB[i].gain);
-      m_banda[i]->set_freq(paramsB[i].freq);
-      m_banda[i]->set_Q(paramsB[i].Q);
-    }
-  
-  
-  }*/
-}
-
-void EqMainWindow::on_button_A(){
-  if(A_Button.get_active()){
-    B_Button.set_active(false);
-    
-///No crec que sigui la millor forma
-    //guardem la corba B i Carregem la A
-    //AB_change_params(true);
+EqMainWindow::~EqMainWindow()
+{
+  delete m_AParams;
+  delete m_BParams;
+  delete m_InGain;
+  delete m_OutGain;
+  for(int i = 0; i < m_iNumOfBands; i++)
+  {
+    delete m_BandCtlArray[i];
   }
-  
-  else B_Button.set_active(true);
-  
+  free(m_BandCtlArray);
 }
 
-void EqMainWindow::on_button_B(){
-  if(B_Button.get_active()){
-    A_Button.set_active(false);
-    
-///No crec que sigui la millor forma
-    //guardem la corba A
-    //AB_change_params(false);
+void EqMainWindow::changeAB(EqParams *toBeCurrent)
+{
+  m_CurParams = toBeCurrent;
+  
+  //Reload All data
+  m_InGain->setGain(m_CurParams->getInputGain());
+  m_OutGain->setGain(m_CurParams->getOutputGain());
+  for(int i = 0; i < m_iNumOfBands; i++)
+  {
+    m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));
+    m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i));
+    m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
+    m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));
+    m_BandCtlArray[i]->setQ(m_CurParams->getBandQ(i));
+  }
+}
+
+void EqMainWindow::onButtonA()
+{
+  if(m_AButton.get_active())
+  {
+    m_BButton.set_active(false);
+    changeAB(m_AParams);
+  }
+  else m_BButton.set_active(true);
+}
+
+void EqMainWindow::onButtonB()
+{
+  if(m_BButton.get_active()){
+    m_AButton.set_active(false);
+    changeAB(m_BParams);
     }
-  else A_Button.set_active(true);
+  else m_AButton.set_active(true);
 }
 
-
-void EqMainWindow::on_button_FLAT(){
-  
+void EqMainWindow::onButtonFlat()
+{ 
   //Popup a waring message
-  Gtk::MessageDialog dialog((Gtk::Window&)(*this->get_toplevel()),"This will flat the EQ curve, are you sure?",
+  Gtk::MessageDialog dialog((Gtk::Window&)(*this->get_toplevel()),"This will flat the current curve, are you sure?",
           false /* use_markup */, Gtk::MESSAGE_QUESTION,
           Gtk::BUTTONS_OK_CANCEL);
 
-  int result = dialog.run();
-
-  if(result == Gtk::RESPONSE_OK)flat();
+  if(dialog.run() == Gtk::RESPONSE_OK)loadEqParams();
 }
 
-void EqMainWindow::flat(){
-///No em sembla elgant aquest flat
-/*for(int i=0; i< NUM_OF_FILTERS; i++){
-    paramsB[i].type=0;
-    paramsB[i].gain=0;
-    paramsB[i].freq=(i+1)*30-1;
-    paramsB[i].Q=2;
-    
-    paramsA[i].type=0;
-    paramsA[i].gain=0;
-    paramsA[i].freq=(i+1)*30-1;
-    paramsA[i].Q=2;
+void EqMainWindow::onButtonBypass()
+{
+  //TODO: complete this method
+}
 
-    m_banda[i]->set_filter_type((float)paramsA[i].type);
-    m_banda[i]->set_gain(paramsA[i].gain);
-    m_banda[i]->set_freq(paramsA[i].freq);
-    m_banda[i]->set_Q(paramsA[i].Q);
- }*/
+void EqMainWindow::onBandChange(int iBand, int iField, float fValue)
+{
+  //TODO: complete this method
   
-  in_gain->set_gain(0.0);
-  out_gain->set_gain(0.0);
-
-  A_Button.set_active(true);
-      
+  //Save data change
+  switch(iField)
+  {
+    case GAIN_TYPE: m_CurParams->setBandGain(iBand, fValue); break;
+    case FREQ_TYPE: m_CurParams->setBandFreq(iBand, fValue); break;
+    case Q_TYPE: m_CurParams->setBandQ(iBand, fValue); break;
+    case FILTER_TYPE: m_CurParams->setBandType(iBand, (int) fValue);
+    case ONOFF_TYPE: m_CurParams->setBandEnabled(iBand, (fValue > 0.5)); break;  
+  }
 }
 
-EqMainWindow::~EqMainWindow(){
+void EqMainWindow::onGainChange(bool bIn, float fGain)
+{
+  //TODO: complete this method
+  
+  //Save data Change
+  if(bIn) m_CurParams->setInputGain(fGain);
+  else m_CurParams->setOutputGain(fGain);
+}
 
+void EqMainWindow::loadEqParams()
+{
+  
+  ///TODO: Load from *.ttl file insted of global constants!
+  onGainChange(true, GAIN_DEFAULT);
+  onGainChange(false, GAIN_DEFAULT);
+  for(int i = 0; i< m_iNumOfBands; i++)
+  {
+    onBandChange(i, GAIN_TYPE, GAIN_DEFAULT);
+    onBandChange(i, FREQ_TYPE, FREQ_MIN);
+    onBandChange(i, Q_TYPE, PEAK_Q_DEFAULT);
+    onBandChange(i, FILTER_TYPE, PEAK);
+    onBandChange(i, ONOFF_TYPE, 0.0);
+  }
+  changeAB(m_CurParams);
+  
+  //TODO: estic provant amb una URI que funcioni
+  //m_CurParams->loadFromTtlFile("http://eq10q.sourceforge.net/eq/eq10qm");
+  m_CurParams->loadFromTtlFile("http://calf.sourceforge.net/plugins/Filter");
 }

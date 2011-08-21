@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2009 by Pere Rï¿½fols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -52,5 +52,6 @@
 #define NOTCH_Q_DEFAULT 2
 #define HIGH_LOW_SHELF_Q_DEFAULT  0.7
 #define PEAK_Q_DEFAULT 2
-  
+#define GAIN_DEFAULT 0.0
+
 #endif

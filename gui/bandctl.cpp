@@ -30,7 +30,7 @@ m_iBandNum(iBandNum)
   m_Freq = Gtk::manage(new EQButton(FREQ_TYPE, bSemafor));
   m_Q = Gtk::manage(new EQButton(Q_TYPE, bSemafor));
 
-  Glib::ustring sText = Glib::ustring::compose("Band %1", m_iBandNum);
+  Glib::ustring sText = Glib::ustring::compose("Band %1", m_iBandNum + 1);
   m_BandLabel.set_label(sText);
 
   pack_start(m_BandLabel, Gtk::PACK_SHRINK );
@@ -40,14 +40,14 @@ m_iBandNum(iBandNum)
   pack_start(*m_Q, Gtk::PACK_EXPAND_PADDING );
   pack_start(m_ButtonAlign, Gtk::PACK_EXPAND_PADDING );
 
-  m_OnButton.set_size_request(35,-1);
+  m_OnButton.set_size_request(35,20);
   m_ButtonAlign.add(m_OnButton);
   
-  set_spacing(2);
+  set_spacing(0);
   set_homogeneous(false);
-  set_size_request(80,-1);
+  //set_size_request(80,-1);
 
-  m_FilterSel.set_size_request(60,-1);
+  m_FilterSel.set_size_request(55,25);
   m_ComboAlign.add(m_FilterSel);
   
   m_ComboAlign.show();
@@ -59,13 +59,20 @@ m_iBandNum(iBandNum)
   m_Q->show();
   m_ButtonAlign.show();
   show();
+  
+  //Add some tooltips
+  m_ComboAlign.set_tooltip_text("Select the filter type for this band.");
+  m_Gain->set_tooltip_text("Press and drag to adjust gain.\nAlso you can double click to enter value.");
+  m_Freq->set_tooltip_text("Press and drag to adjust frequency.\nAlso you can double click to enter value.");
+  m_Q->set_tooltip_text("Press and drag to adjust Q.\nAlso you can double click to enter value.");
+  m_OnButton.set_tooltip_text("Enable/Disable this band");
 
   m_OnButton.set_label("ON");
   m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
   m_FilterSel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
-  m_Gain.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
-  m_Freq.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
-  m_Q.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
+  m_Gain->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
+  m_Freq->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
+  m_Q->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
 }
 
 BandCtl::~BandCtl(){
@@ -200,7 +207,7 @@ void BandCtl::configSensitive()
   }
 }
 
-BandCtl::signal_ctlBandChanged BandCtl::ctlBand_changed signal_changed()
+BandCtl::signal_ctlBandChanged BandCtl::signal_changed()
 {
 	return m_bandChangedSignal;
 }

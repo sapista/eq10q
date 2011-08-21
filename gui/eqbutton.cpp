@@ -35,17 +35,16 @@ m_iFilterType(iType)
   switch (m_iFilterType)
   {
     case GAIN_TYPE:
-      m_TextEntry.set_range(GAIN_MIN, GAIN_MAX); ///TODO: Aquest limits han de sortir d'algun lloc, el mes logic seria usar el fitxer de config del LV2 *.ttl
+      m_TextEntry.set_range(GAIN_MIN, GAIN_MAX);
       m_TextEntry.set_digits(1);
     break;
     
     case FREQ_TYPE:
-      m_TextEntry.set_range(FREQ_MIN, FREQ_MAX); ///TODO: Aquest limits han de sortir d'algun lloc, el mes logic seria usar el fitxer de config del LV2 *.ttl
-      m_TextEntry.set_digits(1);
+      m_TextEntry.set_range(FREQ_MIN, FREQ_MAX);
     break;
     
     case Q_TYPE:
-      m_TextEntry.set_range(PEAK_Q_MIN, PEAK_Q_MAX); ///TODO: Aquest limits han de sortir d'algun lloc, el mes logic seria usar el fitxer de config del LV2 *.ttl
+      m_TextEntry.set_range(PEAK_Q_MIN, PEAK_Q_MAX);
       m_TextEntry.set_digits(2);
     break;
   }
@@ -53,16 +52,16 @@ m_iFilterType(iType)
   
   if(m_iFilterType == FREQ_TYPE)
   {
-    set_size_request(70,25);
-    m_ptr_CtlButton->set_size_request(70,25);
-    m_TextEntry.set_size_request(70,25);
+    set_size_request(60,20);
+    m_ptr_CtlButton->set_size_request(60,20);
+    m_TextEntry.set_size_request(60,20);
   }
 
   else 
   {
-    set_size_request(45,25);
-    m_ptr_CtlButton->set_size_request(50,25);
-    m_TextEntry.set_size_request(50,25);
+    set_size_request(45,20);
+    m_ptr_CtlButton->set_size_request(50,20);
+    m_TextEntry.set_size_request(50,20);
   }
   
   m_ButtonAlign.add(*m_ptr_CtlButton);
@@ -145,7 +144,7 @@ void EQButton::onSpinChange()
 
 void EQButton::onCtlButtonChanged()
 {
-  m_fValue = getButtonNumber();
+  m_fValue = m_ptr_CtlButton->getButtonNumber();
   m_EqButtonChangedSignal.emit();
 }
 

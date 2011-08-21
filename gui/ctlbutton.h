@@ -29,7 +29,7 @@ class CtlButton : public Gtk::Button{
     CtlButton(int iType);
     virtual ~CtlButton();
 
-    void setButtonNumber(float num);
+    void setButtonNumber(float fNum);
     float getButtonNumber();
     
     //signal accessor:

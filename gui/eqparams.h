@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2011 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,52 +18,45 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "gainctl.h"
-#include "guiconstants.h"
-
-GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, bool bTrueIfIn):
-m_bTrueIfIn(bTrueIfIn),
-m_iNumOfChannels(iNumOfChannel)
+#ifndef EQ_PARAMS_H
+  #define EQ_PARAMS_H
+class EqParams
 {
-  m_GainScale.set_digits(1);
-  m_GainScale.set_draw_value(true);
-  m_GainScale.set_value_pos(Gtk::POS_TOP);
-  m_GainScale.set_inverted(true);
-  m_GainScale.set_range(GAIN_MIN, GAIN_MAX);
-  m_GainScale.set_value(GAIN_DEFAULT);
-  m_GainLabel.set_label(sTitle);
-  pack_start(m_GainLabel);
-  pack_start(m_GainScale);
-  set_spacing(2);
-  set_homogeneous(false);
-  m_GainScale.set_size_request(40,100); 
-///TODO: Invoke construtor for VUwidget
-  m_GainLabel.show();
-  m_GainScale.show();
-  show();
+  public:
+    EqParams(int iNumBands);
+    virtual ~EqParams();
+    
+    typedef struct
+    {
+      float fGain;
+      float fFreq;
+      float fQ;
+      int iType;
+      bool bIsEnabled;
+    } EqBandStruct;
+    
+    void setInputGain(float fInGain);
+    void setOutputGain(float fOutGain);
+    void setBandGain(int iBand, float fGain);
+    void setBandFreq(int iBand, float fFreq);
+    void setBandQ(int iBand, float fQ);
+    void setBandType(int iBand, int iType);
+    void setBandEnabled(int iBand, bool bIsEnabled);
+    
+    float getInputGain();
+    float getOutputGain();
+    float getBandGain(int iBand);
+    float getBandFreq(int iBand);
+    float getBandQ(int iBand);
+    int getBandType(int iBand);
+    bool getBandEnabled(int iBand);
+    
+    void loadFromTtlFile(const char *uri);
   
-  m_GainScale.signal_value_changed().connect(sigc::mem_fun(*this, &GainCtl::onGainChanged));
-}
-
-void GainCtl::setGain(float fValue){
-  m_GainScale.set_value((double) fValue);
-}
-
-float GainCtl::getGain(){
-  return (float)m_GainScale.get_value();
-}
-
-GainCtl::signal_GainChanged GainCtl::signal_changed()
-{
-  return m_GainChangedSignal;
-}
-
-void GainCtl::onGainChanged()
-{
-  m_GainChangedSignal.emit(m_bTrueIfIn, getGain());
-}
-
-
-GainCtl::~GainCtl(){
-///TODO: Delet the VU pointer
-}
+  private:
+    int m_iNumberOfBands;
+    EqBandStruct *m_ptr_BandArray;
+    float m_fInGain;
+    float m_fOutGain;    
+};
+#endif

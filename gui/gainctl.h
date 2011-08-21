@@ -20,16 +20,40 @@
 
 #ifndef GAIN_CTL_H
   #define GAIN_CTL_H
+
+#include <gtkmm/box.h>
+#include <gtkmm/scale.h>
+#include <gtkmm/label.h>
+///TODO: include the VU widget here
+
 class  GainCtl : public Gtk::VBox{
   public:
-    GainCtl(const Glib::ustring title, sigc::slot<void> m_slot);
+    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, bool bTrueIfIn);
     virtual ~GainCtl();
-    void set_Gain(float g);
-    float get_Gain();
+    void setGain(float fValue);
+    float getGain();
+    
+    //TODO: Methods for VU
+    //void setVuLevel(int iChannelNumber, float fValue);
   
+    //signal accessor:
+      //Parameters:
+      //bool: true if is the Input Gain control, false if Out
+      //flot: the value of gain
+    typedef sigc::signal<void, bool, float> signal_GainChanged;
+    signal_GainChanged signal_changed();
+    
   protected:
-    Gtk::VScale gain_scale;
-    Gtk::Label gain_label;
+    Gtk::VScale m_GainScale;
+    Gtk::Label m_GainLabel;
+    const int m_iNumOfChannels;
+    const bool m_bTrueIfIn;
+    
+    //Signal Handler
+    void onGainChanged();
+    
+    //Gain change signal
+    signal_GainChanged m_GainChangedSignal;
 
 };
 #endif

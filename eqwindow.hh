@@ -26,46 +26,57 @@
 #include <gtkmm/box.h>
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/alignment.h>
-#include <gtkmm/buttonbox.h>
 #include <gtkmm/button.h>
 #include <gtkmm/messagedialog.h>
-#include <gtkmm/fixed.h>
+//#include <gtkmm/fixed.h> //Amb el nou plot potser no caldara
 #include <gtkmm/image.h>
 
 #include <cmath>
 
-#include <gtkmm/window.h>
+#include "gui/bandctl.h"
+#include "gui/gainctl.h"
+#include "gui/eqparams.h"
+//#include "eq_type.h"  ///TODO: Estudiar aixo no cal, crec.
 
-#include "gui/band_ctl.h"
-#include "eq_type.h"
 
 using namespace sigc;
 
-
-class EqMainWindow : public Gtk::Window {
+class EqMainWindow : public Gtk::Box {
   public:
-    EqMainWindow();
+    EqMainWindow(int iAudioChannels, int iNumBands);
     virtual ~EqMainWindow();
 
 
   protected:
-    BandCtl *m_banda[10]; 
-    GainCtl *in_gain, *out_gain;
-    Gtk::HBox band_box, gain_box, ABFlat_box;
-    Gtk::VBox gain_bypass_box, main_box;
-    Gtk::ToggleButton bypass_button, dummy_box, A_Button, B_Button;
-    Gtk::HButtonBox buttons_ABF;
-    Gtk::Alignment Flat_align, AB_align, buttonA_align, buttonB_align;
-    Gtk::Button Flat_Button;
-    Gtk::Fixed plot_fix;
-    Gtk::Image image_logo_top_top, image_logo_top, image_logo_center, image_logo_bottom, image_logo_bottom_bottom;
+    EqParams *m_AParams, *m_BParams, *m_CurParams;
+    BandCtl **m_BandCtlArray; 
+    GainCtl *m_InGain, *m_OutGain;
+    Gtk::HBox m_BandBox, m_GainBox, m_ABFlatBox;
+    Gtk::VBox m_GainBypassBox, m_MainBox;
+    Gtk::ToggleButton m_BypassButton, m_AButton, m_BButton;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign;
+    Gtk::Button m_FlatButton;
+    ///Gtk::Fixed m_PlotFix; ///TODO: amb el nou sistema de plot potser no caldra
+    
+    ///TODO: Estudiar la millor forma de carrgar les imatges
+    //Gtk::Image image_logo_top_top, image_logo_top, image_logo_center, image_logo_bottom, image_logo_bottom_bottom;
 
-    void AB_change_params(bool toA); //toA = true => guardem B i carreguem A
-    void on_button_A();
-    void on_button_B();
-    void on_button_FLAT();
-    void flat();
-
+    void loadEqParams();
+    void changeAB(EqParams *toBeCurrent);
+    
+    //Signal Handlers
+    void onButtonA();
+    void onButtonB();
+    void onButtonFlat();
+    void onButtonBypass();
+    void onBandChange(int iBand, int iField, float fValue);
+    void onGainChange(bool bIn, float fGain);
+    //void onCurveChange(); //TODO: no se com ha de ser en handle de la curve
+    
+  private:
+    const int m_iNumOfChannels;
+    const int m_iNumOfBands;
+    bool m_bMutex;
 };
 
 #endif
