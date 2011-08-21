@@ -160,6 +160,7 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
   m_OutGain->setGain(m_CurParams->getOutputGain());
   for(int i = 0; i < m_iNumOfBands; i++)
   {
+    //TODO: crec que el setEnabled no esta funcionant be, es pot veure en fer canvi de A/B
     m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));
     m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i));
     m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
@@ -230,19 +231,20 @@ void EqMainWindow::loadEqParams()
 {
   
   ///TODO: Load from *.ttl file insted of global constants!
-  onGainChange(true, GAIN_DEFAULT);
-  onGainChange(false, GAIN_DEFAULT);
-  for(int i = 0; i< m_iNumOfBands; i++)
-  {
-    onBandChange(i, GAIN_TYPE, GAIN_DEFAULT);
-    onBandChange(i, FREQ_TYPE, FREQ_MIN);
-    onBandChange(i, Q_TYPE, PEAK_Q_DEFAULT);
-    onBandChange(i, FILTER_TYPE, PEAK);
-    onBandChange(i, ONOFF_TYPE, 0.0);
-  }
-  changeAB(m_CurParams);
+//   onGainChange(true, GAIN_DEFAULT);
+//   onGainChange(false, GAIN_DEFAULT);
+//   for(int i = 0; i< m_iNumOfBands; i++)
+//   {
+//     onBandChange(i, GAIN_TYPE, GAIN_DEFAULT);
+//     onBandChange(i, FREQ_TYPE, FREQ_MIN);
+//     onBandChange(i, Q_TYPE, PEAK_Q_DEFAULT);
+//     onBandChange(i, FILTER_TYPE, PEAK);
+//     onBandChange(i, ONOFF_TYPE, 0.0);
+//   }
+
+  //TODO: el punt ttl s'ha de modificar? esta el type de 1 a 12 i aqui el tinc de 0 a 11, com esta en el motor de audio?
+  //TODO: estic provant amb una URI que funcioni, la URI ha d'estar fora!
+  m_CurParams->loadFromTtlFile("http://eq10q.sourceforge.net/eq/eq10qm");
   
-  //TODO: estic provant amb una URI que funcioni
-  //m_CurParams->loadFromTtlFile("http://eq10q.sourceforge.net/eq/eq10qm");
-  m_CurParams->loadFromTtlFile("http://calf.sourceforge.net/plugins/Filter");
+  changeAB(m_CurParams);
 }
