@@ -95,7 +95,7 @@ float BandCtl::getQ(){
 }
 
 float BandCtl::getFilterType(){
-  return (float)m_FilterType;
+  return (float)m_FilterType + 1;
 }
 
 bool BandCtl::getEnabled()
@@ -116,7 +116,7 @@ void BandCtl::setQ(float fQ){
 }
 
 void BandCtl::setFilterType(float fType){
-  m_FilterSel.set_active((int)fType);
+  m_FilterSel.set_active((int)fType - 1);
 }
 
 void BandCtl::setEnabled(bool bIsEnabled)

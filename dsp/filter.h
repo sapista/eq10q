@@ -29,9 +29,9 @@ This file contains the filter definitions
 #define PI 3.1416
 
 ///TODO: No veig clar que aixo hagi d'existir en aquest context
-#define GAIN_DEFAULT 0.0
-#define FREQ_MIN 20.0
-#define PEAK_Q_DEFAULT 2.0
+// #define GAIN_DEFAULT 0.0
+// #define FREQ_MIN 20.0
+// #define PEAK_Q_DEFAULT 2.0
 
 typedef enum
 {

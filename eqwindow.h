@@ -44,9 +44,8 @@ using namespace sigc;
 
 class EqMainWindow : public Gtk::Box {
   public:
-    EqMainWindow(int iAudioChannels, int iNumBands);
+    EqMainWindow(int iAudioChannels, int iNumBands, const char *uri);
     virtual ~EqMainWindow();
-	void setPluginUri(const char *uri);
 
   protected:
     EqParams *m_AParams, *m_BParams, *m_CurParams;
@@ -78,7 +77,7 @@ class EqMainWindow : public Gtk::Box {
     const int m_iNumOfChannels;
     const int m_iNumOfBands;
     bool m_bMutex;
-	string m_pluginUri;
+    std::string m_pluginUri;
 };
 
 #endif

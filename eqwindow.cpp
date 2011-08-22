@@ -19,18 +19,19 @@
  ***************************************************************************/
 
 #include <stdlib.h>
-#include "eqwindow.hh"
+#include "eqwindow.h"
 #include "gui/guiconstants.h"
 
 //Constructor
-EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands)
+EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   :m_FlatButton("Flat"),
   m_AButton("A"),
   m_BButton("B"),
   m_BypassButton("Bypass"),
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
-  m_bMutex(false)
+  m_bMutex(false),
+  m_pluginUri(uri)
 
 ///TODO: Molt xapusero!
 //   image_logo_top_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top_top.png"),
@@ -135,7 +136,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands)
   m_AParams = new EqParams(m_iNumOfBands);
   m_BParams = new EqParams(m_iNumOfBands);
   m_CurParams = m_AParams;
-  
+  m_BParams->loadFromTtlFile(m_pluginUri.c_str());
 }
 
 EqMainWindow::~EqMainWindow()
@@ -149,11 +150,6 @@ EqMainWindow::~EqMainWindow()
     delete m_BandCtlArray[i];
   }
   free(m_BandCtlArray);
-}
-
-void EqMainWindow::setPluginUri(const char *uri)
-{
-	m_pluginUri = uri;
 }
 
 void EqMainWindow::changeAB(EqParams *toBeCurrent)
@@ -178,8 +174,8 @@ void EqMainWindow::onButtonA()
 {
   if(m_AButton.get_active())
   {
-    m_BButton.set_active(false);
     changeAB(m_AParams);
+    m_BButton.set_active(false);
   }
   else m_BButton.set_active(true);
 }
@@ -187,8 +183,8 @@ void EqMainWindow::onButtonA()
 void EqMainWindow::onButtonB()
 {
   if(m_BButton.get_active()){
-    m_AButton.set_active(false);
     changeAB(m_BParams);
+    m_AButton.set_active(false);
     }
   else m_AButton.set_active(true);
 }

@@ -5,7 +5,7 @@
 
 
 //Build
-//g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp ../eqwindow.cpp -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`
+//g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp ../eqwindow.cpp ../dsp/filter.c -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`
 
 
 
@@ -43,9 +43,8 @@ HelloWorld::HelloWorld()
 //   
 //   m_GainCtl->signal_changed().connect( sigc::mem_fun(*this, &HelloWorld::onGainChange));
 
-  m_EqWin = Gtk::manage(new EqMainWindow(1, 10));
+  m_EqWin = Gtk::manage(new EqMainWindow(1, 10,"http://eq10q.sourceforge.net/eq/eq10qm"));
   add(*m_EqWin);
-  m_EqWin->setPluginUri("http://eq10q.sourceforge.net/eq/eq10qm");
   m_EqWin->show();
 }
 

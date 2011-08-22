@@ -28,9 +28,9 @@ Filter *FilterInit(double rate)
 {
   Filter *filter = (Filter *)malloc(sizeof(Filter));
 
-  filter->gain = GAIN_DEFAULT;
-  filter->freq = FREQ_MIN;
-  filter->Q = PEAK_Q_DEFAULT;
+  filter->gain = 0.0;
+  filter->freq = 20.0;
+  filter->Q = 2.0;
   filter->filter_type = NOT_SET;
   filter->iFilterEnabled = 0;
   flushBuffers(filter);
@@ -124,8 +124,6 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
   float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, a1_0, a1_1;
 
   switch((int)filter->filter_type){
-    case NOT_SET: //Do nothing
-    break;
 
     case HPF_ORDER_1:
       b1_0 = 2; //b0
@@ -296,7 +294,7 @@ int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iTyp
 FilterType int2FilterType(int iType)
 {
   FilterType f;
-  f = iType;
+  f = (FilterType)iType;
 
   return f;
 }
@@ -315,10 +313,7 @@ void setFilterParams(Filter *filter, float fGain, float fFreq, float fQ, int iTy
     //Get filter order
     switch((int)filter->filter_type)
     {
-      case NOT_SET:
-        //Do nothing
-      break;
-  
+ 
       case LPF_ORDER_1: case HPF_ORDER_1:
         filter->filter_order = 1;
       break;
