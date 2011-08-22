@@ -29,6 +29,7 @@
 #include <gtkmm/alignment.h>
 
 #include "ctlbutton.h"
+#include "../dsp/filter.h"
 
 class EQButton : public Gtk::VBox{
   public:
@@ -53,7 +54,8 @@ class EQButton : public Gtk::VBox{
 	virtual void onCtlButtonChanged();
     
   private:
-    int m_iFilterType;
+    //int m_iFilterType; //TODO: check this can be remove
+	FilterType m_FilterType;
     float m_fValue;
     bool *m_bStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
 	

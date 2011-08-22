@@ -151,6 +151,11 @@ EqMainWindow::~EqMainWindow()
   free(m_BandCtlArray);
 }
 
+void EqMainWindow::setPluginUri(const char *uri)
+{
+	m_pluginUri = uri;
+}
+
 void EqMainWindow::changeAB(EqParams *toBeCurrent)
 {
   m_CurParams = toBeCurrent;
@@ -244,7 +249,7 @@ void EqMainWindow::loadEqParams()
 
   //TODO: el punt ttl s'ha de modificar? esta el type de 1 a 12 i aqui el tinc de 0 a 11, com esta en el motor de audio?
   //TODO: estic provant amb una URI que funcioni, la URI ha d'estar fora!
-  m_CurParams->loadFromTtlFile("http://eq10q.sourceforge.net/eq/eq10qm");
+  m_CurParams->loadFromTtlFile(m_pluginUri.c_str());
   
   changeAB(m_CurParams);
 }

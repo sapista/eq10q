@@ -22,6 +22,7 @@
   #define EQ_MAIN_WIN_H
 
 #include <iostream>
+#include <string>
 
 #include <gtkmm/box.h>
 #include <gtkmm/togglebutton.h>
@@ -45,7 +46,7 @@ class EqMainWindow : public Gtk::Box {
   public:
     EqMainWindow(int iAudioChannels, int iNumBands);
     virtual ~EqMainWindow();
-
+	void setPluginUri(const char *uri);
 
   protected:
     EqParams *m_AParams, *m_BParams, *m_CurParams;
@@ -77,6 +78,7 @@ class EqMainWindow : public Gtk::Box {
     const int m_iNumOfChannels;
     const int m_iNumOfBands;
     bool m_bMutex;
+	string m_pluginUri;
 };
 
 #endif

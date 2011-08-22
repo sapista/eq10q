@@ -27,6 +27,8 @@ This file contains the filter definitions
 
 //Constants definitions
 #define PI 3.1416
+
+///TODO: No veig clar que aixo hagi d'existir en aquest context
 #define GAIN_DEFAULT 0.0
 #define FREQ_MIN 20.0
 #define PEAK_Q_DEFAULT 2.0
@@ -80,7 +82,7 @@ inline float computeFilter(Filter *filter, float inputSample);
 //Check a Change on a band and return 1 if change exisit, otherwise return 0
 int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);
 
-//Convert float to FilterType
+//Convert int to FilterType
 FilterType int2FilterType(int iType);
 
 //Save filter data

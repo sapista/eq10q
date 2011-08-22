@@ -95,7 +95,7 @@ float BandCtl::getQ(){
 }
 
 float BandCtl::getFilterType(){
-  return (float)m_iFilterType;
+  return (float)m_FilterType;
 }
 
 bool BandCtl::getEnabled()
@@ -121,6 +121,7 @@ void BandCtl::setFilterType(float fType){
 
 void BandCtl::setEnabled(bool bIsEnabled)
 {
+//TODO: It don't works properly, breakpoint here and see what happens
   m_OnButton.set_active(bIsEnabled);
 }
 
@@ -136,9 +137,10 @@ void BandCtl::onButtonClicked()
 
 void BandCtl::onComboChanged()
 {
-  m_iFilterType = m_FilterSel.get_active_row_number();
+  //m_iFilterType = m_FilterSel.get_active_row_number();
+  m_FilterType = int2FilterType(m_FilterSel.get_active_row_number());
   configSensitive();
-  m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_iFilterType);
+  m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
 }
 
 void BandCtl::onGainChanged()
@@ -166,7 +168,7 @@ void BandCtl::configSensitive()
   }
   else
   {
-    switch(m_iFilterType)
+    switch((int)m_FilterType)
     {
       case LPF_ORDER_1:
       case HPF_ORDER_1:

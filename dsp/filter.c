@@ -292,7 +292,7 @@ int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iTyp
   return 0;
 }
 
-//Convert float to FilterType
+//Convert int  to FilterType
 FilterType int2FilterType(int iType)
 {
   FilterType f;

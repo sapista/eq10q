@@ -45,6 +45,7 @@ HelloWorld::HelloWorld()
 
   m_EqWin = Gtk::manage(new EqMainWindow(1, 10));
   add(*m_EqWin);
+  m_EqWin->setPluginUri("http://eq10q.sourceforge.net/eq/eq10qm");
   m_EqWin->show();
 }
 

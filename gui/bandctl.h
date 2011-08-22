@@ -22,6 +22,7 @@
   #define BAND_CTL_H
 #include "eqbutton.h"
 #include "pixmapcombo.h"
+#include "../dsp/filter.h"
 
 #include <gtkmm/box.h>
 #include <gtkmm/label.h>
@@ -69,7 +70,8 @@ class BandCtl : public Gtk::VBox
     void onQChanged();
     
   private:
-    int m_iFilterType;
+    //int m_iFilterType; //TODO: check this can be remove
+	FilterType m_FilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
     

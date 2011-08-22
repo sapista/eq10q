@@ -6,7 +6,7 @@
 //#include "pixmapcombo.h"
 //#include "bandctl.h"
 //#include "gainctl.h"
-#include "../eqwindow.hh"
+#include "../eqwindow.h"
 
 class HelloWorld : public Gtk::Window
 {

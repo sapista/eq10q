@@ -24,7 +24,7 @@
 EQButton::EQButton(int iType, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_bStop(bSemafor),
-m_iFilterType(iType)
+m_FilterType(int2FilterType(iType))
 {
   *m_bStop = false;
   m_ptr_CtlButton = Gtk::manage(new CtlButton(iType));
@@ -32,7 +32,7 @@ m_iFilterType(iType)
   
   m_TextEntry.set_numeric(true);
   
-  switch (m_iFilterType)
+  switch ((int)m_FilterType)
   {
     case GAIN_TYPE:
       m_TextEntry.set_range(GAIN_MIN, GAIN_MAX);
@@ -50,7 +50,7 @@ m_iFilterType(iType)
   }
   m_TextEntry.set_increments(0.1, 1.0);
   
-  if(m_iFilterType == FREQ_TYPE)
+  if(m_FilterType == FREQ_TYPE)
   {
     set_size_request(60,20);
     m_ptr_CtlButton->set_size_request(60,20);
@@ -88,7 +88,7 @@ void EQButton::setValue(float fVal)
   m_fValue = fVal;
   
   //Limit the value between rang acording filter type
-  switch(m_iFilterType)
+  switch((int)m_FilterType)
   {
     case GAIN_TYPE:
       if (m_fValue > GAIN_MAX) m_fValue = GAIN_MAX;
