@@ -107,7 +107,6 @@ void EqParams::setOutputGain(float fOutGain)
   m_fOutGain = fOutGain;
 }
 
-///TODO: la URI ha de venir pel constructor d'objecte de nivell mes superior
 void EqParams::loadFromTtlFile(const char *uri)
 {
   //Load from ttl

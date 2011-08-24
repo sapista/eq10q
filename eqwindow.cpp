@@ -214,7 +214,7 @@ void EqMainWindow::onBandChange(int iBand, int iField, float fValue)
     case GAIN_TYPE: m_CurParams->setBandGain(iBand, fValue); break;
     case FREQ_TYPE: m_CurParams->setBandFreq(iBand, fValue); break;
     case Q_TYPE: m_CurParams->setBandQ(iBand, fValue); break;
-    case FILTER_TYPE: m_CurParams->setBandType(iBand, (int) fValue);
+    case FILTER_TYPE: m_CurParams->setBandType(iBand, (int) fValue); break;
     case ONOFF_TYPE: m_CurParams->setBandEnabled(iBand, (fValue > 0.5)); break;  
   }
 }

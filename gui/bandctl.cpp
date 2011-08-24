@@ -121,7 +121,7 @@ void BandCtl::setFilterType(float fType){
 
 void BandCtl::setEnabled(bool bIsEnabled)
 {
-//TODO: It don't works properly, breakpoint here and see what happens
+//TODO: This don't works properly, breakpoint here and see what happens
   m_OnButton.set_active(bIsEnabled);
 }
 
