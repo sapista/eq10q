@@ -71,7 +71,7 @@ class BandCtl : public Gtk::VBox
     
   private:
     //int m_iFilterType; //TODO: check this can be remove
-	FilterType m_FilterType;
+    FilterType m_FilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
     

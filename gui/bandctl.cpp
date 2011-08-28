@@ -95,7 +95,7 @@ float BandCtl::getQ(){
 }
 
 float BandCtl::getFilterType(){
-  return (float)m_FilterType + 1;
+  return (float)m_FilterType;
 }
 
 bool BandCtl::getEnabled()
@@ -138,7 +138,7 @@ void BandCtl::onButtonClicked()
 void BandCtl::onComboChanged()
 {
   //m_iFilterType = m_FilterSel.get_active_row_number();
-  m_FilterType = int2FilterType(m_FilterSel.get_active_row_number());
+  m_FilterType = int2FilterType(m_FilterSel.get_active_row_number() + 1);
   configSensitive();
   m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
 }
@@ -211,5 +211,5 @@ void BandCtl::configSensitive()
 
 BandCtl::signal_ctlBandChanged BandCtl::signal_changed()
 {
-	return m_bandChangedSignal;
+  return m_bandChangedSignal;
 }
