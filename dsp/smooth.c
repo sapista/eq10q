@@ -45,7 +45,11 @@ Smooth *SmoothInit(double rate)
 
   //Flush the buffer to zero
   int i;
-  for(i=0; i < 2; i++) s->buffer[i] = 0.0;
+  for(i=0; i < 2; i++)
+  {
+    s->bufferA[i] = 0.0;
+	s->bufferB[i] = 0.0;
+  }
   return s;
 }
 
@@ -60,13 +64,23 @@ inline float computeSmooth(Smooth *s, float inputSample)
 {
   float w = inputSample;
 
+  //First Stage
   //w(n)=x(n)-a1*w(n-1)
-  s->buffer[0] = w-s->a1_1*s->buffer[1];
+  s->bufferA[0] = w-s->a1_1*s->bufferA[1];
 
   //y(n)=bo*w(n)+b1*w(n-1)
-  w = s->b1_0*s->buffer[0] + s->b1_1*s->buffer[1];
+  w = s->b1_0*s->bufferA[0] + s->b1_1*s->bufferA[1];
 
-  s->buffer[1] = s->buffer[0];
+  s->bufferA[1] = s->bufferA[0];
+  
+  //Second Stage
+  //w(n)=x(n)-a1*w(n-1)
+  s->bufferB[0] = w-s->a1_1*s->bufferB[1];
+
+  //y(n)=bo*w(n)+b1*w(n-1)
+  w = s->b1_0*s->bufferB[0] + s->b1_1*s->bufferB[1];
+
+  s->bufferB[1] = s->bufferB[0];
 
 return w;
 

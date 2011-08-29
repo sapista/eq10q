@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+//TODO: Pero quina animalada es aquest include de tota la gtkmm!
 #include <gtkmm.h>
 
 

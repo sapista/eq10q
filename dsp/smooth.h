@@ -35,7 +35,8 @@ without care of the speed of the automation control.
 typedef struct
 {
   float b1_0, b1_1, a1_1; //First order coeficients
-  float buffer[2]; //First order buffers
+  float bufferA[2]; //First order buffers for the first stage
+  float bufferB[2]; //First order buffers for the second stage
   float fs; //sample rate
 
 } Smooth;
