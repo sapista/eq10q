@@ -1,53 +1,44 @@
-/****************************************************************************
-    
-    vuwidget.cpp - simple VU meter
-    
-    Copyright (C) 2006-2007 Lars Luthman <lars.luthman@gmail.com>
-    
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
-    
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor,
-    Boston, MA  02110-1301  USA
-
-****************************************************************************/
+/***************************************************************************
+ *   Copyright (C) 2011 by Pere Ràfols Soler                               *
+ *   sapista2@gmail.com                                                    *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
 
 #include <iostream>
+#include "vuwidget.h"
 
-#include "vuwidget.hpp"
-
-
-VUWidget::VUWidget(unsigned channels, float min) 
-  : m_channels(channels),
-    m_min(min),
-    m_values(new float[m_channels]),
-    m_peaks(new float[m_channels]),
-    m_peak_connections(new sigc::connection[m_channels]) {
+VUWidget::VUWidget(int uChannels, float fMin) 
+  :m_uChannels(uChannels),
+  m_fMin(fMin),
+  m_fValues(new float[m_fChannels]),
+  m_fPeaks(new float[m_fChannels]),
+  m_peak_connections(new sigc::connection[m_iChannels])
+{
   
-  for (unsigned c = 0; c < m_channels; ++c) {
-    m_values[c] = 0.0;
-    m_peaks[c] = 0.0;
+  for (int i = 0; i < m_channels; i++) {
+    m_values[i] = 0.0;
+    m_peaks[i] = 0.0;
   }
   
   set_size_request(4 + 12 * m_channels, 150);
-  m_bg.set_rgb(10000, 10000, 15000);
-  m_shadow.set_rgb(3000, 3000, 5000);
-  m_light.set_rgb(30000, 30000, 30000);
-  m_fg1.set_rgb(0, 65000, 45000);
-  m_fg2.set_rgb(65000, 45000, 10000);
-  m_fg3.set_rgb(65000, 0, 0);
-  m_fg1b.set_rgb(8500, 16000, 26000);
-  m_fg2b.set_rgb(16000, 14000, 12500);
-  m_fg3b.set_rgb(16000, 8500, 12500);
+ 
+  ///TODO: Configura some colors here
+  
+  ///TODO: Aixo cal?
   Glib::RefPtr<Gdk::Colormap> cmap = Gdk::Colormap::get_system();
   cmap->alloc_color(m_bg);
   cmap->alloc_color(m_shadow);
@@ -61,33 +52,74 @@ VUWidget::VUWidget(unsigned channels, float min)
 }
 
 
-VUWidget::~VUWidget() {
-  delete [] m_values;
-  delete [] m_peaks;
-  delete [] m_peak_connections;
+VUWidget::~VUWidget()
+{
+  delete [] m_fValues;
+  delete [] m_fPeaks;
+  delete [] m_peak_connections; ///TODO: what's this?
 }
 
-  
-void VUWidget::set_value(unsigned channel, float value) {
-  m_values[channel] = value;
-  if (m_values[channel] > m_peaks[channel]) {
-    m_peaks[channel] = m_values[channel];
-    m_peak_connections[channel].disconnect();
-    m_peak_connections[channel] = Glib::signal_timeout().
-      connect(bind_return(bind(mem_fun(*this, &VUWidget::clear_peak), channel),
-			  false), 3000);
+inline float VUWidget::mapToLog(float fInput)
+{
+  float fResult = 0.0;
+  if (fInput > m_fMin)
+  {
+    fResult = std::log(fInput) / (-std::log(m_fMin)) + 1; ///TODO: No se si aquest formula es correcte...
   }
-  queue_draw();
+  return result;
 }
   
+void VUWidget::setValue(int iChannel, float fValue)
+{
+  m_fValues[iChannel] = fValue;
+  if (m_fValues[iChannel] > m_fPeaks[iChannel]) {
+    m_fPeaks[iChannel] = m_fValues[iChannel];
+    //m_peak_connections[channel].disconnect(); ///TODO: En principi ja no cal ja que usare la funció connect at once
+    m_peak_connections[channel] = Glib::signal_timeout().connect_once(bind_return(bind(mem_fun(*this, &VUWidget::clearPeak), iChannel), false), 3000);
+  }
+  queue_draw(); ///TODO: com es fara el draw dels nous valors???
+}
+ 
+void VUWidget::clearPeak(int iChannel)
+{
+  m_fPeaks[iChannel] = 0.0;
+  queue_draw();
+} 
 
+///TODO Aixo nomes es un exemple cutre
+bool VUWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
+{
+  Gtk::Allocation allocation = get_allocation();
+  const int width = allocation.get_width();
+  const int height = allocation.get_height();
+
+  // coordinates for the center of the window
+  int xc, yc;
+  xc = width / 2;
+  yc = height / 2;
+
+  cr->set_line_width(10.0);
+
+  // draw red lines out from the center of the window
+  cr->set_source_rgb(0.8, 0.0, 0.0);
+  cr->move_to(0, 0);
+  cr->line_to(xc, yc);
+  cr->line_to(0, height);
+  cr->move_to(xc, yc);
+  cr->line_to(width, yc);
+  cr->stroke();
+
+  return true;
+}
+
+///TODO: funcio a subtituir segons exemple
 bool VUWidget::on_expose_event(GdkEventExpose* event) {
   Glib::RefPtr<Gdk::Window> win = get_window();
   Glib::RefPtr<Gdk::GC> gc = Gdk::GC::create(win);
   
   gc->set_foreground(m_bg);
   win->draw_rectangle(gc, true, 0, 0, get_width(), get_height());
-  unsigned int n = (get_height() - 4) / 3;
+  int int n = (get_height() - 4) / 3;
   
   gc->set_foreground(m_light);
   win->draw_line(gc, 0, get_height() - 1, get_width() - 1, get_height() - 1);
@@ -96,14 +128,14 @@ bool VUWidget::on_expose_event(GdkEventExpose* event) {
   win->draw_line(gc, 0, 0, get_width(), 0);
   win->draw_line(gc, 0, 0, 0, get_height());
   
-  for (unsigned c = 0; c < m_channels; ++c) {
+  for (int c = 0; c < m_channels; ++c) {
     float mapped_value = map_to_log(m_values[c]);
     int x = 2 + c * ((get_width() - 3) / m_channels);
     int w = (get_width() - 3) / m_channels - 2;
     gc->set_foreground(m_fg1);
     int level = 1;
     bool active = true;
-    for (unsigned i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
       if (mapped_value * 0.8 * n <= i) {
 	active = false;
 	if (level == 1)
@@ -132,7 +164,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event) {
     
     if (m_peaks[c] > 0) {
       float mapped_value = map_to_log(m_peaks[c]);
-      unsigned i = mapped_value * 0.8 * n;
+      int i = mapped_value * 0.8 * n;
       if (i >= n)
 	i = n - 1;
       if (mapped_value * 0.8 <= 0.6)
@@ -145,10 +177,3 @@ bool VUWidget::on_expose_event(GdkEventExpose* event) {
     }
   }
 }
-
-
-void VUWidget::clear_peak(unsigned channel) {
-  m_peaks[channel] = 0.0;
-  queue_draw();
-}
-
