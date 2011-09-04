@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2011 by Pere RÃ fols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -20,160 +20,222 @@
 
 #include <iostream>
 #include "vuwidget.h"
+#include <cmath>
+#include <cstdio>
 
-VUWidget::VUWidget(int uChannels, float fMin) 
-  :m_uChannels(uChannels),
+#define BAR_SEPARATION 0.004
+#define TEXT_OFFSET 15
+#define CHANNEL_WIDTH 4
+#define GREEN_BARS 20
+#define YELLOW_BARS 5
+#define RED_BARS 4
+
+VUWidget::VUWidget(int iChannels, float fMin) 
+  :m_iChannels(iChannels),
   m_fMin(fMin),
-  m_fValues(new float[m_fChannels]),
-  m_fPeaks(new float[m_fChannels]),
-  m_peak_connections(new sigc::connection[m_iChannels])
+  m_fValues(new float[m_iChannels]),
+  m_fPeaks(new float[m_iChannels])
 {
   
-  for (int i = 0; i < m_channels; i++) {
-    m_values[i] = 0.0;
-    m_peaks[i] = 0.0;
+  for (int i = 0; i < m_iChannels; i++) {
+    m_fValues[i] = 0.0;
+    m_fPeaks[i] = 0.0;
   }
   
-  set_size_request(4 + 12 * m_channels, 150);
+  set_size_request(TEXT_OFFSET +  CHANNEL_WIDTH* m_iChannels, 150);
  
-  ///TODO: Configura some colors here
-  
-  ///TODO: Aixo cal?
-  Glib::RefPtr<Gdk::Colormap> cmap = Gdk::Colormap::get_system();
-  cmap->alloc_color(m_bg);
-  cmap->alloc_color(m_shadow);
-  cmap->alloc_color(m_light);
-  cmap->alloc_color(m_fg1);
-  cmap->alloc_color(m_fg2);
-  cmap->alloc_color(m_fg3);
-  cmap->alloc_color(m_fg1b);
-  cmap->alloc_color(m_fg2b);
-  cmap->alloc_color(m_fg3b);
-}
+  m_fBarWidth = 1.0/(float)(GREEN_BARS+YELLOW_BARS+RED_BARS) - BAR_SEPARATION;
+  m_fBarStep = BAR_SEPARATION + m_fBarWidth;
 
+}
 
 VUWidget::~VUWidget()
 {
   delete [] m_fValues;
   delete [] m_fPeaks;
-  delete [] m_peak_connections; ///TODO: what's this?
-}
-
-inline float VUWidget::mapToLog(float fInput)
-{
-  float fResult = 0.0;
-  if (fInput > m_fMin)
-  {
-    fResult = std::log(fInput) / (-std::log(m_fMin)) + 1; ///TODO: No se si aquest formula es correcte...
-  }
-  return result;
 }
   
 void VUWidget::setValue(int iChannel, float fValue)
 {
   m_fValues[iChannel] = fValue;
-  if (m_fValues[iChannel] > m_fPeaks[iChannel]) {
+  if (m_fValues[iChannel] > m_fPeaks[iChannel])
+  {
     m_fPeaks[iChannel] = m_fValues[iChannel];
-    //m_peak_connections[channel].disconnect(); ///TODO: En principi ja no cal ja que usare la funció connect at once
-    m_peak_connections[channel] = Glib::signal_timeout().connect_once(bind_return(bind(mem_fun(*this, &VUWidget::clearPeak), iChannel), false), 3000);
+    Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &VUWidget::onTimeout), 3000);
   }
-  queue_draw(); ///TODO: com es fara el draw dels nous valors???
+  redraw();
 }
- 
+
+void VUWidget::onTimeout()
+{
+  for(int i = 0; i < m_iChannels; i++)
+  {
+    clearPeak(i);
+  }
+}
+
 void VUWidget::clearPeak(int iChannel)
 {
   m_fPeaks[iChannel] = 0.0;
-  queue_draw();
+  redraw();
 } 
 
-///TODO Aixo nomes es un exemple cutre
-bool VUWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
+void VUWidget::redraw()
 {
-  Gtk::Allocation allocation = get_allocation();
-  const int width = allocation.get_width();
-  const int height = allocation.get_height();
-
-  // coordinates for the center of the window
-  int xc, yc;
-  xc = width / 2;
-  yc = height / 2;
-
-  cr->set_line_width(10.0);
-
-  // draw red lines out from the center of the window
-  cr->set_source_rgb(0.8, 0.0, 0.0);
-  cr->move_to(0, 0);
-  cr->line_to(xc, yc);
-  cr->line_to(0, height);
-  cr->move_to(xc, yc);
-  cr->line_to(width, yc);
-  cr->stroke();
-
-  return true;
+  Glib::RefPtr<Gdk::Window> win = get_window();
+  if(win)
+  {
+    Gdk::Rectangle r(0, 0, get_allocation().get_width(), get_allocation().get_height());
+    win->invalidate_rect(r, false);
+  }
 }
 
-///TODO: funcio a subtituir segons exemple
-bool VUWidget::on_expose_event(GdkEventExpose* event) {
-  Glib::RefPtr<Gdk::Window> win = get_window();
-  Glib::RefPtr<Gdk::GC> gc = Gdk::GC::create(win);
+bool VUWidget::on_expose_event(GdkEventExpose* event)
+{
+  Glib::RefPtr<Gdk::Window> window = get_window();
+  if(window)
+  {
   
-  gc->set_foreground(m_bg);
-  win->draw_rectangle(gc, true, 0, 0, get_width(), get_height());
-  int int n = (get_height() - 4) / 3;
+    Gtk::Allocation allocation = get_allocation();
+    const int width = allocation.get_width();
+    const int height = allocation.get_height();
+
+    //Compute number of bars for each zone
+    float fdBValue[m_iChannels];
+    float fdBPeak[m_iChannels];
+    int iActiveVu;
+    float fTextOffset = TEXT_OFFSET/(float)width;
+    float fTextHeight = TEXT_OFFSET/(float)height;
+    float fChannelWidth = (1 - fTextOffset)/(float)m_iChannels;
   
-  gc->set_foreground(m_light);
-  win->draw_line(gc, 0, get_height() - 1, get_width() - 1, get_height() - 1);
-  win->draw_line(gc, get_width() - 1, 0, get_width() - 1, get_height() - 1);
-  gc->set_foreground(m_shadow);
-  win->draw_line(gc, 0, 0, get_width(), 0);
-  win->draw_line(gc, 0, 0, 0, get_height());
-  
-  for (int c = 0; c < m_channels; ++c) {
-    float mapped_value = map_to_log(m_values[c]);
-    int x = 2 + c * ((get_width() - 3) / m_channels);
-    int w = (get_width() - 3) / m_channels - 2;
-    gc->set_foreground(m_fg1);
-    int level = 1;
-    bool active = true;
-    for (int i = 0; i < n; ++i) {
-      if (mapped_value * 0.8 * n <= i) {
-	active = false;
-	if (level == 1)
-	  gc->set_foreground(m_fg1b);
-	else if (level == 2)
-	  gc->set_foreground(m_fg2b);
-	if (level == 3)
-	  gc->set_foreground(m_fg3b);
-      }
-      if (level == 1 && 0.6 * n <= i) {
-	if (active)
-	  gc->set_foreground(m_fg2);
-	else
-	  gc->set_foreground(m_fg2b);
-	level = 2;
-      }
-      if (level == 2 && 0.8 * n <= i) {
-	if (active)
-	  gc->set_foreground(m_fg3);
-	else
-	  gc->set_foreground(m_fg3b);
-	level = 3;
-      }
-      win->draw_rectangle(gc, true, x, get_height() - (2 + 3 * i + 3), w, 2);
+    //Translate input to dBu
+    for(int i = 0; i<m_iChannels; i++)
+    {
+      fdBValue[i] = 10*log10(m_fValues[i]);
+      fdBPeak[i] = 10*log10(m_fPeaks[i]);
+      fdBPeak[i] = fdBPeak[i] > 4.0 ? 4.0 : fdBPeak[i];
     }
     
-    if (m_peaks[c] > 0) {
-      float mapped_value = map_to_log(m_peaks[c]);
-      int i = mapped_value * 0.8 * n;
-      if (i >= n)
-	i = n - 1;
-      if (mapped_value * 0.8 <= 0.6)
-	gc->set_foreground(m_fg1);
-      else if (mapped_value * 0.8 <= 0.8)
-	gc->set_foreground(m_fg2);
-      else
-	gc->set_foreground(m_fg3);
-      win->draw_rectangle(gc, true, x, get_height() - (2 + 3 * i + 3), w, 2);
+    Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
+
+    //Clip inside acording the expose event
+    cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
+    cr->clip();
+    cr->scale(width, height);
+    cr->translate(0, 1);
+    cr->set_line_width(m_fBarWidth);
+    cr->paint(); //Fill all with dark color
+    
+
+ 
+//      //Draw text to the Vu
+//     cr->set_source_rgb(0.9, 0.9, 0.9);
+//     cr->set_font_size(0.15);
+//     for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
+//     {
+//       cr->save();
+//       std::stringstream ss;
+//       ss<<(i-24);
+// //       cr->rectangle(0.0, -i*m_fBarStep - fTextHeight, fTextOffset, fTextHeight);
+// //       cr->clip();
+// //       //cr->set_source_rgb(0.9, 0.0, 0.0);
+// //       //cr->paint();
+//       cr->move_to(0.0,  -i*m_fBarStep - fTextHeight);
+//       cr->show_text(ss.str());
+//       cr->restore();
+//     }
+ 
+        
+    for(int c; c < m_iChannels; c++)
+    {
+      //draw active VU in green
+      cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
+      for(int i = 0; i< GREEN_BARS; i++)
+      {
+	if(fdBValue[c] >= (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+	  
+      //draw inactive VU in green
+      cr->set_source_rgba(0.0, 0.9, 0.3, 0.4);
+      for(int i = 0; i< GREEN_BARS; i++)
+      {
+	if(fdBValue[c] < (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+      
+      //draw active VU in yellow
+      cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
+      for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
+      { 
+	if(fdBValue[c] >= (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+      
+      //draw inactive VU in yellow
+      cr->set_source_rgba(0.9, 0.9, 0.0, 0.4);
+      for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
+      { 
+	if(fdBValue[c] < (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+      
+      //draw active VU in red
+      cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
+      for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
+      {
+	if(fdBValue[c] >= (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+      
+      //draw inactive VU in red
+      cr->set_source_rgba(0.9, 0.1, 0.0, 0.4);
+      for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
+      {
+	if(fdBValue[c] < (float)i - 24)
+	{
+	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	}
+      }
+      cr->stroke();
+      
+      //draw peak VU
+      if (fdBPeak[c] + 24 < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
+      else if(fdBPeak[c] + 24 < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
+      else  cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
+      cr->move_to(fTextOffset + c*fChannelWidth, -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->stroke();
     }
+    //Draw text with pango
+    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
+    cr->move_to(0.5,-0.5);
+    pangoLayout->set_text("HOLA");
+    pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
+    pangoLayout->add_to_cairo_context(cr);       //adds text to cairos stack of stuff to be drawn
+    cr->stroke();                                //tells Cairo to render it's stack
+
   }
+  return true;  
 }

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2011 by Pere Rï¿½fols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -30,20 +30,23 @@
 class VUWidget : public Gtk::DrawingArea
 {
   public:
-    VUWidget(int uChannels, float fMin = 1.0 / 256);
+    VUWidget(int iChannels, float fMin = 1.0 / 256);
     ~VUWidget();
-    void setValue(int uChannel, float fValue);
+    void setValue(int iChannel, float fValue);
   
 protected:
   //Override default signal handler:
-  virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+  virtual bool on_expose_event(GdkEventExpose* event);
+  void onTimeout();
   void clearPeak(int uChannel);
-  float mapToLog(float fInput);
+  void redraw();
   
-  int m_uChannels;
+  int m_iChannels;
   float m_fMin;
   float* m_fValues;
   float* m_fPeaks;
-  sigc::connection* m_peak_connections;
+  float m_fBarWidth;
+  float m_fBarStep;
+  //sigc::connection* m_peak_connections;
 };
 #endif

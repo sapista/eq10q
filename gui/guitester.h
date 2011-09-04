@@ -2,11 +2,15 @@
 #define GTKMM_EXAMPLE_HELLOWORLD_H
 
 #include <gtkmm/window.h>
+#include <gtkmm/box.h>
+#include <gtkmm/scale.h>
 //#include  "eqbutton.h"
 //#include "pixmapcombo.h"
 //#include "bandctl.h"
 //#include "gainctl.h"
+#include "vuwidget.h"
 #include "../eqwindow.h"
+
 
 class HelloWorld : public Gtk::Window
 {
@@ -25,8 +29,12 @@ protected:
   //PixMapCombo m_combo;
   //BandCtl *m_BandCtl;
   //GainCtl *m_GainCtl;
-  EqMainWindow *m_EqWin;
-  
+  //EqMainWindow *m_EqWin;
+  VUWidget *m_Vu;
+  Gtk::VScale m_ScaleL, m_ScaleR;
+  Gtk::HBox m_Box;
+  void onGainLChanged();
+  void onGainRChanged();
   //bool m_bMutex;
 };
 
