@@ -24,7 +24,7 @@
 #include <cstdio>
 
 #define BAR_SEPARATION 0.004
-#define TEXT_OFFSET 15
+#define TEXT_OFFSET 17
 #define CHANNEL_WIDTH 4
 #define GREEN_BARS 20
 #define YELLOW_BARS 5
@@ -121,10 +121,35 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Clip inside acording the expose event
     cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
     cr->clip();
+    cr->paint(); //Fill all with dark color
+    
+    //Draw text with pango
+    cr->save();
+    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
+    Pango::FontDescription font_desc("sans 7");
+    pangoLayout->set_font_description(font_desc);
+  
+    cr->move_to(0.5,10);
+    cr->set_source_rgba(0.9, 0.9, 1.0, 1.0);
+
+    pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
+   
+    
+    for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
+    {
+      std::stringstream ss;
+      ss<<(i-24);
+      cr->move_to(1, height - (i+1)*height*m_fBarStep);
+      pangoLayout->set_text(ss.str());
+      pangoLayout->show_in_cairo_context(cr);
+      cr->stroke();  
+    }
+    
+    cr->restore();
     cr->scale(width, height);
     cr->translate(0, 1);
     cr->set_line_width(m_fBarWidth);
-    cr->paint(); //Fill all with dark color
+    
     
 
  
@@ -145,7 +170,6 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
 //       cr->restore();
 //     }
  
-        
     for(int c; c < m_iChannels; c++)
     {
       //draw active VU in green
@@ -228,14 +252,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
       cr->stroke();
     }
-    //Draw text with pango
-    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    cr->move_to(0.5,-0.5);
-    pangoLayout->set_text("HOLA");
-    pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
-    pangoLayout->add_to_cairo_context(cr);       //adds text to cairos stack of stuff to be drawn
-    cr->stroke();                                //tells Cairo to render it's stack
-
+    
+    //TODO: incual
+    //TODO: sncfp
+    //TODO: reconocimiento y acreditacion de cualificaciones profesionales
   }
   return true;  
 }
