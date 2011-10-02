@@ -63,7 +63,7 @@ HelloWorld::HelloWorld()
     m_ScaleR.set_value(0.0);
     m_ScaleR.signal_value_changed().connect(sigc::mem_fun(*this, &HelloWorld::onGainRChanged));
     
-    m_Vu = Gtk::manage(new VUWidget(2));
+    m_Vu = Gtk::manage(new VUWidget(1));
     
     m_Box.pack_start(m_ScaleL);
     m_Box.pack_start(m_ScaleR);

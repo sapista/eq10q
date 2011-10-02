@@ -25,6 +25,7 @@
 
 #define BAR_SEPARATION 0.004
 #define TEXT_OFFSET 17
+#define MARGIN 0.02
 #define CHANNEL_WIDTH 4
 #define GREEN_BARS 20
 #define YELLOW_BARS 5
@@ -44,7 +45,7 @@ VUWidget::VUWidget(int iChannels, float fMin)
   
   set_size_request(TEXT_OFFSET +  CHANNEL_WIDTH* m_iChannels, 150);
  
-  m_fBarWidth = 1.0/(float)(GREEN_BARS+YELLOW_BARS+RED_BARS) - BAR_SEPARATION;
+  m_fBarWidth = (1.0 - 2*MARGIN)/(float)(GREEN_BARS+YELLOW_BARS+RED_BARS) - BAR_SEPARATION;
   m_fBarStep = BAR_SEPARATION + m_fBarWidth;
 
 }
@@ -106,7 +107,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     int iActiveVu;
     float fTextOffset = TEXT_OFFSET/(float)width;
     float fTextHeight = TEXT_OFFSET/(float)height;
-    float fChannelWidth = (1 - fTextOffset)/(float)m_iChannels;
+    float fChannelWidth = (1 - fTextOffset - 2*MARGIN)/(float)m_iChannels;
   
     //Translate input to dBu
     for(int i = 0; i<m_iChannels; i++)
@@ -126,15 +127,15 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Draw text with pango
     cr->save();
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 7");
+    Pango::FontDescription font_desc("sans 6.5");
     pangoLayout->set_font_description(font_desc);
-  
+    pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
+
     cr->move_to(0.5,10);
     cr->set_source_rgba(0.9, 0.9, 1.0, 1.0);
 
     pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
-   
-    
+    std::string sConcatena = "";
     for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
     {
       std::stringstream ss;
@@ -144,31 +145,13 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       pangoLayout->show_in_cairo_context(cr);
       cr->stroke();  
     }
-    
+   
+   
     cr->restore();
     cr->scale(width, height);
     cr->translate(0, 1);
     cr->set_line_width(m_fBarWidth);
     
-    
-
- 
-//      //Draw text to the Vu
-//     cr->set_source_rgb(0.9, 0.9, 0.9);
-//     cr->set_font_size(0.15);
-//     for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
-//     {
-//       cr->save();
-//       std::stringstream ss;
-//       ss<<(i-24);
-// //       cr->rectangle(0.0, -i*m_fBarStep - fTextHeight, fTextOffset, fTextHeight);
-// //       cr->clip();
-// //       //cr->set_source_rgb(0.9, 0.0, 0.0);
-// //       //cr->paint();
-//       cr->move_to(0.0,  -i*m_fBarStep - fTextHeight);
-//       cr->show_text(ss.str());
-//       cr->restore();
-//     }
  
     for(int c; c < m_iChannels; c++)
     {
@@ -178,8 +161,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       {
 	if(fdBValue[c] >= (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -190,8 +173,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       {
 	if(fdBValue[c] < (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -202,8 +185,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       { 
 	if(fdBValue[c] >= (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -214,8 +197,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       { 
 	if(fdBValue[c] < (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -226,8 +209,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       {
 	if(fdBValue[c] >= (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -238,8 +221,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       {
 	if(fdBValue[c] < (float)i - 24)
 	{
-	  cr->move_to(fTextOffset + c*fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -248,14 +231,41 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       if (fdBPeak[c] + 24 < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
       else if(fdBPeak[c] + 24 < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
       else  cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-      cr->move_to(fTextOffset + c*fChannelWidth, -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
-      cr->line_to(fTextOffset + c*fChannelWidth + fChannelWidth, -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
       cr->stroke();
     }
     
-    //TODO: incual
-    //TODO: sncfp
-    //TODO: reconocimiento y acreditacion de cualificaciones profesionales
+    //draw a rectangle arrounf the VU
+    //cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+    //light horitzontal line
+    cr->set_source_rgb(0.9, 0.9, 0.9);
+    cr->set_line_width(0.008);
+    cr->move_to(MARGIN + fTextOffset, -MARGIN); 
+    cr->line_to(1 - MARGIN, -MARGIN);
+    cr->stroke();
+    
+    //ligth vertical line
+    cr->set_line_width(0.04);
+    cr->move_to(1 - MARGIN, -MARGIN);
+    cr->line_to(1 - MARGIN, -1 + MARGIN);
+    cr->stroke();
+    
+    //Dark Horitzontal line
+    cr->set_line_width(0.008);
+    cr->set_source_rgb(0.5, 0.5, 0.5);
+    cr->move_to(1 - MARGIN, -1 + MARGIN);
+    cr->line_to(MARGIN + fTextOffset, -1 + MARGIN);
+    cr->stroke();
+    
+    //Dark Vertical line_to
+    cr->set_line_width(0.04);
+    cr->move_to(MARGIN + fTextOffset, -1 + MARGIN);
+    cr->line_to(MARGIN + fTextOffset, -MARGIN);
+    cr->stroke();
+    
+    //cr->rectangle(MARGIN + fTextOffset, -MARGIN, fChannelWidth*m_iChannels, -1 + 2*MARGIN);
+    //cr->stroke();
   }
   return true;  
 }

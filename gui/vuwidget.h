@@ -48,5 +48,7 @@ protected:
   float m_fBarWidth;
   float m_fBarStep;
   //sigc::connection* m_peak_connections;
+private:
+    void pangoLayout();
 };
 #endif
