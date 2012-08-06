@@ -24,7 +24,6 @@
 #include <gtkmm/box.h>
 #include <gtkmm/scale.h>
 #include <gtkmm/label.h>
-///TODO: include the VU widget here
 
 class  GainCtl : public Gtk::VBox{
   public:
@@ -32,10 +31,7 @@ class  GainCtl : public Gtk::VBox{
     virtual ~GainCtl();
     void setGain(float fValue);
     float getGain();
-    
-    //TODO: Methods for VU
-    //void setVuLevel(int iChannelNumber, float fValue);
-  
+     
     //signal accessor:
       //Parameters:
       //bool: true if is the Input Gain control, false if Out

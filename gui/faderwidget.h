@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2012 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,52 +18,37 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "gainctl.h"
-#include "guiconstants.h"
+#ifndef FADER_WIDGET_H
+  #define FADER_WIDGET_H
 
-GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, bool bTrueIfIn):
-m_bTrueIfIn(bTrueIfIn),
-m_iNumOfChannels(iNumOfChannel)
+#include <gtkmm/drawingarea.h>
+
+#define FADER_ICON_FILE "knobs/fader_white.png"
+#define FADER_INITAL_HIGHT 250
+#define FADER_MARGIN 5
+
+class  FaderWidget : public Gtk::DrawingArea
 {
-  m_GainScale.set_digits(1);
-  m_GainScale.set_draw_value(true);
-  m_GainScale.set_value_pos(Gtk::POS_TOP);
-  m_GainScale.set_inverted(true);
-  m_GainScale.set_range(GAIN_MIN, GAIN_MAX);
-  m_GainScale.set_value(GAIN_DEFAULT);
-  m_GainLabel.set_label(sTitle);
-  pack_start(m_GainLabel);
-  pack_start(m_GainScale);
-  set_spacing(2);
-  set_homogeneous(false);
-  m_GainScale.set_size_request(40,100); 
-  m_GainLabel.show();
-  m_GainScale.show();
-  show();
-  
-  m_GainScale.signal_value_changed().connect(sigc::mem_fun(*this, &GainCtl::onGainChanged));
-}
+  public:
+    FaderWidget(double dMax, double dMin);
+    virtual ~FaderWidget();
+    
+    //Data accessors
+    void set_value(double value);
+    double get_value();
+    
+    void set_range(double max, double min);
+    double get_max();
+    double get_min();
+    
+  protected:
+      //Override default signal handler:
+      virtual bool on_expose_event(GdkEventExpose* event);
+      void redraw();
+      
+  private:
+      double m_value, m_max, m_min;
+      Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
 
-void GainCtl::setGain(float fValue){
-  m_GainScale.set_value((double) fValue);
-}
-
-float GainCtl::getGain(){
-  return (float)m_GainScale.get_value();
-}
-
-GainCtl::signal_GainChanged GainCtl::signal_changed()
-{
-  return m_GainChangedSignal;
-}
-
-void GainCtl::onGainChanged()
-{
-  m_GainChangedSignal.emit(m_bTrueIfIn, getGain());
-}
-
-
-GainCtl::~GainCtl()
-{
-
-}
+};
+#endif

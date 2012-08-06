@@ -26,7 +26,7 @@
 #define BAR_SEPARATION 0.004
 #define TEXT_OFFSET 17
 #define MARGIN 0.02
-#define CHANNEL_WIDTH 4
+#define CHANNEL_WIDTH 8
 #define GREEN_BARS 20
 #define YELLOW_BARS 5
 #define RED_BARS 4
@@ -112,8 +112,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Translate input to dBu
     for(int i = 0; i<m_iChannels; i++)
     {
-      fdBValue[i] = 10*log10(m_fValues[i]);
-      fdBPeak[i] = 10*log10(m_fPeaks[i]);
+      fdBValue[i] = 20*log10(m_fValues[i]);
+      fdBPeak[i] = 20*log10(m_fPeaks[i]);
       fdBPeak[i] = fdBPeak[i] > 4.0 ? 4.0 : fdBPeak[i];
     }
     
@@ -122,7 +122,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Clip inside acording the expose event
     cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
     cr->clip();
-    cr->paint(); //Fill all with dark color
+    cr->set_source_rgb(0.07, 0.08, 0.15);
+    cr->paint(); //Fill all with background color
     
     //Draw text with pango
     cr->save();
@@ -135,12 +136,12 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->set_source_rgba(0.9, 0.9, 1.0, 1.0);
 
     pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
-    std::string sConcatena = "";
+    //std::string sConcatena = "";
     for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
     {
       std::stringstream ss;
-      ss<<(i-24);
-      cr->move_to(1, height - (i+1)*height*m_fBarStep);
+      ss<<abs(i-24);
+      cr->move_to(3, height - (i+1)*height*m_fBarStep - height*0.045);
       pangoLayout->set_text(ss.str());
       pangoLayout->show_in_cairo_context(cr);
       cr->stroke();  
@@ -264,8 +265,35 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->line_to(MARGIN + fTextOffset, -MARGIN);
     cr->stroke();
     
-    //cr->rectangle(MARGIN + fTextOffset, -MARGIN, fChannelWidth*m_iChannels, -1 + 2*MARGIN);
-    //cr->stroke();
+    
+    //draw a rectangle arround the VU Widget
+    cr->set_source_rgb(0.22, 0.30, 0.53);
+
+     //top horitzontal line
+    cr->set_line_width(0.008);
+    cr->move_to(0, 0); 
+    cr->line_to(1, 0);
+    cr->stroke();
+    
+    //right vertical line
+    cr->set_line_width(0.04);
+    cr->move_to(1, 0);
+    cr->line_to(1, -1);
+    cr->stroke();
+    
+    //bottom Horitzontal line
+    cr->set_line_width(0.008);
+    cr->move_to(1, -1);
+    cr->line_to(0, -1);
+    cr->stroke();
+    
+    //left Vertical line_to
+    cr->set_line_width(0.04);
+    cr->move_to(0, -1);
+    cr->line_to(0, 0);
+    cr->stroke();
+
+    
   }
   return true;  
 }
