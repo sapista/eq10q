@@ -5,94 +5,73 @@
 #include <cmath>
 
 //Build
-//g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp vuwidget.cpp ../eqwindow.cpp ../dsp/filter.c -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`
-
+//g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp faderwidget.cpp vuwidget.cpp ../eqwindow.cpp ../dsp/filter.c -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`
 
 
 HelloWorld::HelloWorld()
 {
-    //Test Band CtlWidget
-    m_BandCtl = Gtk::manage(new BandCtl(0, &m_bMutex));
-    m_BandCtl->setEnabled(true);
-    m_BandCtl->setGain(5.0);
-    m_BandCtl->setFreq(500);
-    m_BandCtl->setQ(2.5);
-    m_BandCtl->setFilterType(PEAK);
-    m_BandCtl->signal_changed().connect( sigc::mem_fun(*this, &HelloWorld::onBandChange));
 
-    m_GainCtl = Gtk::manage(new GainCtl("In gain test", 1, true));
-    m_GainCtl->signal_changed().connect( sigc::mem_fun(*this, &HelloWorld::onGainChange));
-
-//   m_EqWin = Gtk::manage(new EqMainWindow(1, 10,"http://eq10q.sourceforge.net/eq/eq10qm"));
-//   add(*m_EqWin);
-//   m_EqWin->show();
-
-    m_ScaleL.set_digits(1);
-    m_ScaleL.set_draw_value(true);
-    m_ScaleL.set_value_pos(Gtk::POS_TOP);
-    m_ScaleL.set_inverted(true);
-    m_ScaleL.set_range(-50.0, 10.0);
-    m_ScaleL.set_value(0.0);
-    m_ScaleL.signal_value_changed().connect(sigc::mem_fun(*this, &HelloWorld::onGainLChanged));
-    
-    m_ScaleR.set_digits(1);
-    m_ScaleR.set_draw_value(true);
-    m_ScaleR.set_value_pos(Gtk::POS_TOP);
-    m_ScaleR.set_inverted(true);
-    m_ScaleR.set_range(-50.0, 10.0);
-    m_ScaleR.set_value(0.0);
-    m_ScaleR.signal_value_changed().connect(sigc::mem_fun(*this, &HelloWorld::onGainRChanged));
-    
-    m_Vu = Gtk::manage(new VUWidget(2));
-    
-    m_FaderTest = Gtk::manage(new FaderWidget(15,-15));
-    
-    m_Box.pack_start(*m_FaderTest);
-    m_Box.pack_start(*m_GainCtl);
-    m_Box.pack_start(*m_BandCtl);
-    m_Box.pack_start(m_ScaleL);
-    m_Box.pack_start(m_ScaleR);
-    m_Box.pack_start(*m_Vu);
-    add(m_Box);
-    m_ScaleL.show();
-    m_ScaleR.show();
-    m_Vu->show();
-    m_GainCtl->show();
-    m_Box.show();
-    m_FaderTest->show();
-    //show_all_children();
-}
-
-void HelloWorld::onGainLChanged()
-{
-  m_Vu->setValue(0, pow(10.0,(float)m_ScaleL.get_value()/20.0));
-}
-
-void HelloWorld::onGainRChanged()
-{
-  m_Vu->setValue(1, pow(10.0,(float)m_ScaleR.get_value()/20.0));
+  m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs"));
+  add(*m_EqWin);
+  m_EqWin->show();
+  
+  //Signals connections
+  m_EqWin->signal_Bypass_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BypassChanged));
+  m_EqWin->signal_InputGain_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_InputGainChanged));
+  m_EqWin->signal_OutputGain_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_OutputGainChanged));
+  
+  m_EqWin->signal_BandGain_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandGainChanged));
+  m_EqWin->signal_BandFreq_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandFreqChanged));
+  m_EqWin->signal_BandQ_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandQChanged));
+  m_EqWin->signal_BandType_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandTypeChanged));
+  m_EqWin->signal_BandEnabled_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandEnabledChanged));
 }
 
 HelloWorld::~HelloWorld()
 {
-  delete m_BandCtl;
-  delete m_GainCtl;
-  delete m_Vu;
+ delete m_EqWin;
 }
 
-void HelloWorld::onBandChange(int iBand, int iField, float fValue)
+//Slots signal handlers
+void HelloWorld::on_BypassChanged(bool bypass)
 {
-  std::cout<<"Band number: "<<iBand<<" Changed: Field = "<<iField<<"\tValue = "<<fValue<<std::endl;
+  std::cout<<"Bypass = "<<bypass<<std::endl;
 }
 
-void HelloWorld::onGainChange(bool bIn, float fGain)
+void HelloWorld::on_InputGainChanged(float gain)
 {
-   std::cout<<"Gain bIN ="<<bIn<<"\tChanged Value = "<<fGain<<std::endl;
-   
-   //TESTING  THE FADER WIDGET
-   m_FaderTest->set_value(fGain);
+  std::cout<<"In Gain = "<<gain<<std::endl;
 }
 
+void HelloWorld::on_OutputGainChanged(float gain)
+{
+  std::cout<<"Out Gain = "<<gain<<std::endl;
+}
+
+void HelloWorld::on_BandGainChanged(int band, float gain)
+{
+  std::cout<<"Band "<<band<<" Gain = "<<gain<<std::endl;
+}
+
+void HelloWorld::on_BandFreqChanged(int band, float freq)
+{
+  std::cout<<"Band "<<band<<" Freq = "<<freq<<std::endl;
+}
+
+void HelloWorld::on_BandQChanged(int band, float q)
+{
+  std::cout<<"Band "<<band<<" Q = "<<q<<std::endl; 
+}
+
+void HelloWorld::on_BandTypeChanged(int band, int type)
+{
+  std::cout<<"Band "<<band<<" Type = "<<type<<std::endl;  
+}
+
+void HelloWorld::on_BandEnabledChanged(int band, bool enabled)
+{
+  std::cout<<"Band "<<band<<" Enabled = "<<enabled<<std::endl;  
+}
 
 int main (int argc, char *argv[])
 {

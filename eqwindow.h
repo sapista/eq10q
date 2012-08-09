@@ -46,13 +46,41 @@ class EqMainWindow : public Gtk::Box {
   public:
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri);
     virtual ~EqMainWindow();
+    
+    //Input control ports handlers
+    void setBypass(bool bBypass);
+    void setInputGain(float Gain);
+    void setOutputGain(float Gain);
+    void setInputVuLevel(int Channel, float Level);
+    void setOutputVuLevel(int Channel, float Level);
+    void setBandGain(int Band, float Gain);
+    void setBandFreq(int Band, float Freq);
+    void setBandQ(int Band, float Q);
+    void setBandType(int Band, float Type);
+    void setBandEnabled(int Band, bool Enabled);
+    
+    //Output control ports handlers (signals eimted by this widget)
+    typedef sigc::signal<void, bool> signal_BypassChanged;
+    typedef sigc::signal<void, float> signal_ControlGainChanged;
+    typedef sigc::signal<void, int, float> signal_BandParamChanged;
+    typedef sigc::signal<void, int, int> signal_BandTypeChanged;
+    typedef sigc::signal<void, int, bool> signal_BandEnabledChanged;
+    
+    signal_BypassChanged signal_Bypass_Changed();
+    signal_ControlGainChanged signal_InputGain_Changed();
+    signal_ControlGainChanged signal_OutputGain_Changed();
+    signal_BandParamChanged signal_BandGain_Changed();
+    signal_BandParamChanged signal_BandFreq_Changed();
+    signal_BandParamChanged signal_BandQ_Changed();
+    signal_BandTypeChanged signal_BandType_Changed();
+    signal_BandEnabledChanged signal_BandEnabled_Changed();
 
   protected:
     EqParams *m_AParams, *m_BParams, *m_CurParams;
     BandCtl **m_BandCtlArray; 
     GainCtl *m_InGain, *m_OutGain;
-    Gtk::HBox m_BandBox, m_GainBox, m_ABFlatBox;
-    Gtk::VBox m_GainBypassBox, m_MainBox;
+    Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox;
+    Gtk::VBox m_CurveBypassBandsBox, m_MainBox;
     Gtk::ToggleButton m_BypassButton, m_AButton, m_BButton;
     Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign;
     Gtk::Button m_FlatButton;
@@ -70,7 +98,8 @@ class EqMainWindow : public Gtk::Box {
     void onButtonFlat();
     void onButtonBypass();
     void onBandChange(int iBand, int iField, float fValue);
-    void onGainChange(bool bIn, float fGain);
+    void onInputGainChange();
+    void onOutputGainChange();
     //void onCurveChange(); //TODO: no se com ha de ser en handle de la curve
     
   private:
@@ -78,6 +107,16 @@ class EqMainWindow : public Gtk::Box {
     const int m_iNumOfBands;
     bool m_bMutex;
     std::string m_pluginUri;
+    
+    //LV2 Ports Signals
+    signal_BypassChanged m_BypassChangedSignal;
+    signal_ControlGainChanged m_InputGainChangedSignal;
+    signal_ControlGainChanged m_OutputGainChangedSignal;
+    signal_BandParamChanged m_BandGainChangedSignal;
+    signal_BandParamChanged m_BandFreqChangedSignal;
+    signal_BandParamChanged m_BandQChangedSignal;
+    signal_BandTypeChanged m_BandTypeChangedSignal;
+    signal_BandEnabledChanged m_BandEnabledChangedSignal;
 };
 
 #endif

@@ -52,16 +52,16 @@ m_FilterType(int2FilterType(iType))
   
   if(m_FilterType == FREQ_TYPE)
   {
-    set_size_request(60,20);
-    m_ptr_CtlButton->set_size_request(60,20);
-    m_TextEntry.set_size_request(60,20);
+    set_size_request(55,20);
+    m_ptr_CtlButton->set_size_request(55,20);
+    m_TextEntry.set_size_request(55,20);
   }
 
   else 
   {
     set_size_request(45,20);
-    m_ptr_CtlButton->set_size_request(50,20);
-    m_TextEntry.set_size_request(50,20);
+    m_ptr_CtlButton->set_size_request(45,20);
+    m_TextEntry.set_size_request(45,20);
   }
   
   m_ButtonAlign.add(*m_ptr_CtlButton);

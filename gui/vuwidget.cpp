@@ -19,17 +19,20 @@
  ***************************************************************************/
 
 #include <iostream>
-#include "vuwidget.h"
 #include <cmath>
 #include <cstdio>
+
+#include "colors.h"
+#include "vuwidget.h"
 
 #define BAR_SEPARATION 0.004
 #define TEXT_OFFSET 17
 #define MARGIN 0.02
+#define SPACE_BETWEEN_CHANNELS 0.03
 #define CHANNEL_WIDTH 8
-#define GREEN_BARS 20
-#define YELLOW_BARS 5
-#define RED_BARS 4
+#define GREEN_BARS 40
+#define YELLOW_BARS 10
+#define RED_BARS 8
 
 VUWidget::VUWidget(int iChannels, float fMin) 
   :m_iChannels(iChannels),
@@ -112,8 +115,22 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Translate input to dBu
     for(int i = 0; i<m_iChannels; i++)
     {
-      fdBValue[i] = 20*log10(m_fValues[i]);
-      fdBPeak[i] = 20*log10(m_fPeaks[i]);
+      if (m_fValues[i] > 0)
+      {
+	fdBValue[i] = 20*log10(m_fValues[i]);
+      }
+      else
+      {
+	fdBValue[i] = -60;
+      }
+      if (m_fPeaks[i] > 0)
+      {
+	fdBPeak[i] = 20*log10(m_fPeaks[i]);
+      }
+      else
+      {
+	fdBPeak[i] = -60;
+      }
       fdBPeak[i] = fdBPeak[i] > 4.0 ? 4.0 : fdBPeak[i];
     }
     
@@ -122,7 +139,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Clip inside acording the expose event
     cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
     cr->clip();
-    cr->set_source_rgb(0.07, 0.08, 0.15);
+    cr->set_source_rgb(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B);
     cr->paint(); //Fill all with background color
     
     //Draw text with pango
@@ -137,10 +154,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
 
     pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
     //std::string sConcatena = "";
-    for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+4)
+    for(int i = 0; i < GREEN_BARS + YELLOW_BARS + RED_BARS; i=i+RED_BARS)
     {
       std::stringstream ss;
-      ss<<abs(i-24);
+      ss<<abs((i/2)-24);
       cr->move_to(3, height - (i+1)*height*m_fBarStep - height*0.045);
       pangoLayout->set_text(ss.str());
       pangoLayout->show_in_cairo_context(cr);
@@ -152,6 +169,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->scale(width, height);
     cr->translate(0, 1);
     cr->set_line_width(m_fBarWidth);
+    cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+
     
  
     for(int c; c < m_iChannels; c++)
@@ -160,10 +179,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
       for(int i = 0; i< GREEN_BARS; i++)
       {
-	if(fdBValue[c] >= (float)i - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -172,10 +191,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.0, 0.9, 0.3, 0.4);
       for(int i = 0; i< GREEN_BARS; i++)
       {
-	if(fdBValue[c] < (float)i - 24)
+	if(fdBValue[c] < (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -184,10 +203,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
       for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
       { 
-	if(fdBValue[c] >= (float)i - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -196,10 +215,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.9, 0.0, 0.4);
       for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
       { 
-	if(fdBValue[c] < (float)i - 24)
+	if(fdBValue[c] < (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -208,10 +227,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
       for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
       {
-	if(fdBValue[c] >= (float)i - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
@@ -220,25 +239,26 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.1, 0.0, 0.4);
       for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
       {
-	if(fdBValue[c] < (float)i - 24)
+	if(fdBValue[c] < (float)i/2.0 - 24)
 	{
-	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
+	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	}
       }
       cr->stroke();
       
       //draw peak VU
-      if (fdBPeak[c] + 24 < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
-      else if(fdBPeak[c] + 24 < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
+      if (2*(fdBPeak[c] + 24) < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
+      else if(2*(fdBPeak[c] + 24) < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
       else  cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-      cr->move_to(MARGIN + fTextOffset + c*fChannelWidth, -MARGIN -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
-      cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth, -MARGIN -((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
       cr->stroke();
     }
     
+    /*
     //draw a rectangle arrounf the VU
-    //cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+    cr->set_line_cap(Cairo::LINE_CAP_SQUARE);
     //light horitzontal line
     cr->set_source_rgb(0.9, 0.9, 0.9);
     cr->set_line_width(0.008);
@@ -264,8 +284,9 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->move_to(MARGIN + fTextOffset, -1 + MARGIN);
     cr->line_to(MARGIN + fTextOffset, -MARGIN);
     cr->stroke();
+    */
     
-    
+    /*
     //draw a rectangle arround the VU Widget
     cr->set_source_rgb(0.22, 0.30, 0.53);
 
@@ -292,7 +313,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->move_to(0, -1);
     cr->line_to(0, 0);
     cr->stroke();
-
+    */
     
   }
   return true;  

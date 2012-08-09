@@ -132,13 +132,16 @@ void CtlButton::setButtonNumber(float fNum)
   switch(m_iFilterType)
   {
     case GAIN_TYPE:
+      button_text = Glib::ustring::format(std::fixed, std::setprecision(1), m_fValue);
+      break;
+
     case FREQ_TYPE:
-    button_text = Glib::ustring::format(std::fixed, std::setprecision(1), m_fValue);
-    break;
+      button_text = Glib::ustring::format(std::fixed, std::setprecision(0), m_fValue);
+      break;
 
     case Q_TYPE:
-    button_text = Glib::ustring::format(std::fixed, std::setprecision(2), m_fValue);
-    break;
+      button_text = Glib::ustring::format(std::fixed, std::setprecision(2), m_fValue);
+      break;
   }
   set_label(button_text);
 }

@@ -21,6 +21,9 @@
 #include "guiconstants.h"
 #include "bandctl.h"
 
+///TODO: Band colors acording colors.h
+///TODO: Freq, Gain, Q labels... on els poso???
+
 BandCtl::BandCtl( const int iBandNum, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_ComboAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),

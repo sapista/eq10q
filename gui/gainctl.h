@@ -22,28 +22,31 @@
   #define GAIN_CTL_H
 
 #include <gtkmm/box.h>
-#include <gtkmm/scale.h>
-#include <gtkmm/label.h>
+#include <gtkmm/frame.h>
 
-class  GainCtl : public Gtk::VBox{
+#include "vuwidget.h"
+#include "faderwidget.h"
+
+class  GainCtl : public Gtk::Frame{
   public:
-    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, bool bTrueIfIn);
+    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, double Fader_dBMax, double Fader_dBMin);
     virtual ~GainCtl();
     void setGain(float fValue);
+    void setVu(int channel, float fValue);
     float getGain();
      
     //signal accessor:
       //Parameters:
       //bool: true if is the Input Gain control, false if Out
       //flot: the value of gain
-    typedef sigc::signal<void, bool, float> signal_GainChanged;
+    typedef sigc::signal<void> signal_GainChanged;
     signal_GainChanged signal_changed();
     
   protected:
-    Gtk::VScale m_GainScale;
-    Gtk::Label m_GainLabel;
+    FaderWidget *m_GainFader;
+    VUWidget *m_VuMeter;
+    Gtk::HBox m_HBox;
     const int m_iNumOfChannels;
-    const bool m_bTrueIfIn;
     
     //Signal Handler
     void onGainChanged();

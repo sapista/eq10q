@@ -18,54 +18,12 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "gainctl.h"
-#include "guiconstants.h"
-
-GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, double Fader_dBMax, double Fader_dBMin):
-m_iNumOfChannels(iNumOfChannel)
-{
-
-  set_label(sTitle);
-  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin));
-  m_VuMeter = Gtk::manage(new VUWidget(iNumOfChannel));
-  m_HBox.pack_start(*m_GainFader);
-  m_HBox.pack_start(*m_VuMeter);
-  m_HBox.set_spacing(0);
-  m_HBox.set_homogeneous(false);
-  m_HBox.show();
-  m_GainFader->show();
-  m_VuMeter->show();
-  add(m_HBox);
-  show();
+#ifndef EQ10Q_COLORS_H
+  #define EQ10Q_COLORS_H
   
-  m_GainFader->signal_changed().connect(sigc::mem_fun(*this, &GainCtl::onGainChanged));
-}
+//Wdiget background colors 
+#define BACKGROUND_R 0.07
+#define BACKGROUND_G 0.08
+#define BACKGROUND_B 0.15
 
-void GainCtl::setGain(float fValue){
-  m_GainFader->set_value((double) fValue);
-}
-
-void GainCtl::setVu(int channel, float fValue)
-{
-  m_VuMeter->setValue(channel, fValue);
-}
-
-float GainCtl::getGain(){
-  return (float)m_GainFader->get_value();
-}
-
-GainCtl::signal_GainChanged GainCtl::signal_changed()
-{
-  return m_GainChangedSignal;
-}
-
-void GainCtl::onGainChanged()
-{
-  m_GainChangedSignal.emit();
-}
-
-GainCtl::~GainCtl()
-{
-  delete m_GainFader;
-  delete m_VuMeter;
-}
+#endif
