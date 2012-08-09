@@ -1,0 +1,4 @@
+[Project]
+Name=gui
+Manager=KDevCMakeManager
+VersionControl=
