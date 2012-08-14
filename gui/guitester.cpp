@@ -12,7 +12,9 @@ HelloWorld::HelloWorld()
 {
   m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs"));
   add(*m_EqWin);
-  m_EqWin->show();
+
+  
+  show_all_children();
   
   //Signals connections
   m_EqWin->signal_Bypass_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BypassChanged));
@@ -24,6 +26,7 @@ HelloWorld::HelloWorld()
   m_EqWin->signal_BandQ_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandQChanged));
   m_EqWin->signal_BandType_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandTypeChanged));
   m_EqWin->signal_BandEnabled_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandEnabledChanged));
+
 }
 
 HelloWorld::~HelloWorld()

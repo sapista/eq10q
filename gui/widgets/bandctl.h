@@ -25,11 +25,11 @@
 #include "filter.h"
 
 #include <gtkmm/box.h>
-#include <gtkmm/label.h>
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/alignment.h>
+#include <gtkmm/frame.h>
 
-class BandCtl : public Gtk::VBox
+class BandCtl : public Gtk::Frame
 {
   public:
     BandCtl(const int iBandNum,bool *bSemafor);
@@ -56,13 +56,14 @@ class BandCtl : public Gtk::VBox
     signal_ctlBandChanged signal_changed();
         
   protected:
-    Gtk::Label m_BandLabel;
+    Gtk::VBox m_VBox;
     Gtk::ToggleButton m_OnButton;
     PixMapCombo m_FilterSel;
     Gtk::Alignment m_ButtonAlign, m_ComboAlign;
     EQButton *m_Gain, *m_Freq, *m_Q;
     
     //Signal Handlers
+    void onThisWidgetRealize();
     void onButtonClicked();
     void onComboChanged();
     void onGainChanged();
@@ -70,7 +71,7 @@ class BandCtl : public Gtk::VBox
     void onQChanged();
     
   private:
-    //int m_iFilterType; //TODO: check this can be remove
+    Gtk::Label m_FrameLabel;
     FilterType m_FilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;

@@ -20,14 +20,16 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 #include "colors.h"
 #include "faderwidget.h"
+#include "PathConfig.h"
 
 FaderWidget::FaderWidget(double dMax, double dMin)
   :m_max(dMax), m_min(dMin), m_value(0), bMotionIsConnected(false)
 {
-  m_image_surface_ptr = Cairo::ImageSurface::create_from_png (FADER_ICON_FILE);
+  m_image_surface_ptr = Cairo::ImageSurface::create_from_png (std::string(EQ10Q_GUI_PATH) + std::string(FADER_ICON_FILE));
   set_size_request(2*m_image_surface_ptr->get_width()+4*FADER_MARGIN, FADER_INITAL_HIGHT);
   
   //Connect mouse signals
@@ -105,9 +107,11 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
 
     //Draw fader backgroud rectangle and paint it
-    cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
+    cr->save();
     cr->set_source_rgb(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B);
     cr->paint(); //Fill all with background color
+    cr->restore();
+    
     
     //Draw fader backgroud line
     cr->save();

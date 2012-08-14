@@ -17,50 +17,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include <glibmm/ustring.h>
 
-#ifndef EQ10Q_COLORS_H
-  #define EQ10Q_COLORS_H
-  
-//Wdiget background colors 
-#define BACKGROUND_R 0.07
-#define BACKGROUND_G 0.08
-#define BACKGROUND_B 0.15
+#ifndef SET_WIDGET_COLORS_H
+  #define SET_WIDGET_COLORS_H
 
-//Wdiget foreground colors 
-#define FOREGROUND_R 0.0
-#define FOREGROUND_G 0.9
-#define FOREGROUND_B 0.0
+#include <gtkmm/button.h>
+#include <gtkmm/frame.h>
+#include <gtkmm/widget.h>
 
-//Text Label Color
-#define TEXT_R 0.9
-#define TEXT_G 0.9
-#define TEXT_B 0.9
-
-//Buttons background colors 
-#define BUTTON_BACKGROUND_R 0.22
-#define BUTTON_BACKGROUND_G 0.62
-#define BUTTON_BACKGROUND_B 0.75
-
-//Buttons Active background colors 
-#define BUTTON_ACTIVE_BG_R 0.31
-#define BUTTON_ACTIVE_BG_G 0.76
-#define BUTTON_ACTIVE_BG_B 0.39
-
-//Buttons inactive background colors 
-#define BUTTON_INACTIVE_BG_R 0.15
-#define BUTTON_INACTIVE_BG_G 0.35
-#define BUTTON_INACTIVE_BG_B 0.45
-
-//Buttons Mouse Over background colors 
-#define BUTTON_OVER_BG_R 0.31
-#define BUTTON_OVER_BG_G 0.76
-#define BUTTON_OVER_BG_B 0.39
-
-//Bands colors LUT
-const  Glib::ustring bandColorLUT[] = {"#A52A2A","#FFFF00","#FFA500","#CD6E53","#FF01FF","#FF0000","#902CEE","#0000FB","#B2DFEE","#00FF00" };
-
-//Convert to Gdk::Color macro
-#define GDK_COLOR_MACRO(_color) ((gushort)floor(_color * (double)G_MAXUSHORT))
-
+class SetWidgetColors
+{
+  public:
+    SetWidgetColors();
+    void setButtonColors(Gtk::Button* widget);
+    void setGenericWidgetColors(Gtk::Widget* widget);
+    void setBandFrameColor(Gtk::Frame* widget, int band);
+    
+  private:
+    Gdk::Color m_Button_BgColorActive, m_Button_BgColorInactive, m_Button_BgColorNormal, m_Button_BgColorOver, m_Button_FgColor, m_Button_TextColor;
+    Gdk::Color m_BandsColors[10];
+};
 #endif

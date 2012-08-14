@@ -22,6 +22,7 @@
   #define CTL_BUTTON_H
 
 #include <gtkmm/button.h>
+#include "setwidgetcolors.h"
 #define ACCELERATION 15
 
 class CtlButton : public Gtk::Button{
@@ -40,6 +41,8 @@ class CtlButton : public Gtk::Button{
     ctlButton_changed signal_changed();
     
   protected:
+    virtual void onButtonRealize();
+    virtual void onButtonStateChanged(Gtk::StateType previous_state);
     virtual void onButtonPressed();
     virtual void onButtonDepressed();
     virtual bool onMouseMove(GdkEventMotion* event);
@@ -50,6 +53,7 @@ class CtlButton : public Gtk::Button{
     bool m_bIsXDirection;
     int  m_iActValue, m_iAntValue, m_iFilterType;
     float  m_fValue;
+    SetWidgetColors m_WidgetColors;
     sigc::connection m_MouseSignal;
     
     //Double click signal

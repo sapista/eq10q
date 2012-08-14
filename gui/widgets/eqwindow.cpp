@@ -19,8 +19,12 @@
  ***************************************************************************/
 
 #include <stdlib.h>
+
+#include <gtkmm/rc.h>
 #include "eqwindow.h"
-#include "guiconstants.h"
+#include "guiconstants.h" ///TODO: I don't remember what is this include
+#include "colors.h"
+#include "setwidgetcolors.h"
 
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
@@ -39,7 +43,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
 //   image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
 //   image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
 //   image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
-{
+{ 
+  
  //Buttons A,B i Flat
   m_AButton.set_size_request(25,23);
   m_BButton.set_size_request(25,23);
@@ -104,22 +109,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
 //   image_logo_bottom.show();
 //   image_logo_top.show();
 //   image_logo_center.show();
-  m_ABFlatBox.show();
-  m_FlatButton.show();
-  m_FlatAlign.show();
-  m_ABAlign.show();
-  m_BypassAlign.show();
-  m_AButton.show();
-  m_BButton.show();
-  m_CurveBypassBandsBox.show();
-  m_InGain->show();
-  m_OutGain->show();
-  m_GainEqBox.show();
-  m_BypassButton.show();
-  m_BandBox.show();
-  m_ButtonAAlign.show();
-  m_ButtonBAlign.show();
-  m_MainBox.show();
+ 
   add(m_MainBox);
   
   //Add some tooltips
@@ -130,7 +120,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   m_InGain->set_tooltip_text("Adjust the input gain");
   m_OutGain->set_tooltip_text("Adjust the output gain");
 
-   //connect signals
+  //connect signals
   m_BypassButton.signal_toggled().connect(mem_fun(*this, &EqMainWindow::onButtonBypass));
   m_AButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonA));
   m_BButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonB));
@@ -141,8 +131,31 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
   m_BParams = new EqParams(m_iNumOfBands);
+  m_AParams->loadFromTtlFile(m_pluginUri.c_str());
   m_BParams->loadFromTtlFile(m_pluginUri.c_str());
+  changeAB(m_AParams);
   m_CurParams = m_AParams;
+  
+
+  //Set cutom theme color:
+  Gdk::Color m_WinBgColor;
+  SetWidgetColors m_WidgetColors;
+
+  //Set Main widget Background
+  m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
+  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
+  
+  m_WidgetColors.setGenericWidgetColors(m_InGain);
+  m_WidgetColors.setGenericWidgetColors(m_InGain->get_label_widget());
+  m_WidgetColors.setGenericWidgetColors(m_OutGain);
+  m_WidgetColors.setGenericWidgetColors(m_OutGain->get_label_widget());
+  m_WidgetColors.setButtonColors(&m_AButton);
+  m_WidgetColors.setButtonColors(&m_BButton);
+  m_WidgetColors.setButtonColors(&m_FlatButton);
+  m_WidgetColors.setButtonColors(&m_BypassButton);
+
+  //Set pixmap objects TODO:
+  //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
 }
 
 EqMainWindow::~EqMainWindow()

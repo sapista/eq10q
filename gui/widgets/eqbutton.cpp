@@ -20,6 +20,7 @@
 
 #include "guiconstants.h"
 #include "eqbutton.h"
+#include "setwidgetcolors.h"
 
 EQButton::EQButton(int iType, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
@@ -52,36 +53,42 @@ m_FilterType(int2FilterType(iType))
   
   if(m_FilterType == FREQ_TYPE)
   {
-    set_size_request(55,20);
+    set_size_request(55,25);
     m_ptr_CtlButton->set_size_request(55,20);
-    m_TextEntry.set_size_request(55,20);
+    m_TextEntry.set_size_request(55,25);
   }
 
   else 
   {
-    set_size_request(45,20);
+    set_size_request(45,25);
     m_ptr_CtlButton->set_size_request(45,20);
-    m_TextEntry.set_size_request(45,20);
+    m_TextEntry.set_size_request(45,25);
   }
   
   m_ButtonAlign.add(*m_ptr_CtlButton);
   pack_start(m_TextEntry,Gtk::PACK_EXPAND_PADDING);
   pack_start(m_ButtonAlign,Gtk::PACK_EXPAND_PADDING);
   
-  m_TextEntry.hide();
-  m_ptr_CtlButton->show();
-  m_ButtonAlign.show();
-  
   m_ptr_CtlButton->signal_double_clicked().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked));
   m_ptr_CtlButton->signal_changed().connect(sigc::mem_fun(*this, &EQButton::onCtlButtonChanged));
   m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));
   m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
+ 
+  //Set property to start with textEntry hide
+  m_TextEntry.set_no_show_all();
+  
+  //Set Colors
+  SetWidgetColors m_WidgetColors;
+  m_WidgetColors.setGenericWidgetColors(&m_TextEntry); 
+  
+
 }
 
 EQButton::~EQButton()
 {
   delete m_ptr_CtlButton;
 }
+
 
 void EQButton::setValue(float fVal)
 {

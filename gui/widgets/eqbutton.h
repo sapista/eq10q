@@ -37,7 +37,7 @@ class EQButton : public Gtk::VBox{
     virtual ~EQButton();
     virtual void setValue(float fVal);
     virtual float getValue();
-    
+       
     //signal accessor: 
     typedef sigc::signal<void> signal_EqButtonChanged;
     signal_EqButtonChanged signal_changed();

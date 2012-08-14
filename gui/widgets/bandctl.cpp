@@ -18,11 +18,10 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include  <gtkmm/label.h>
 #include "guiconstants.h"
 #include "bandctl.h"
-
-///TODO: Band colors acording colors.h
-///TODO: Freq, Gain, Q labels... on els poso???
+#include "setwidgetcolors.h"
 
 BandCtl::BandCtl( const int iBandNum, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
@@ -34,27 +33,29 @@ m_iBandNum(iBandNum)
   m_Q = Gtk::manage(new EQButton(Q_TYPE, bSemafor));
 
   Glib::ustring sText = Glib::ustring::compose("Band %1", m_iBandNum + 1);
-  m_BandLabel.set_label(sText);
+  m_FrameLabel.set_use_markup(true);
+  m_FrameLabel.set_markup( "<span font_weight=\"bold\">" + sText + "</span>");
+  set_label_widget(m_FrameLabel);
 
-  pack_start(m_BandLabel, Gtk::PACK_SHRINK );
-  pack_start(m_ComboAlign, Gtk::PACK_EXPAND_PADDING );
-  pack_start(*m_Gain, Gtk::PACK_EXPAND_PADDING );
-  pack_start(*m_Freq, Gtk::PACK_EXPAND_PADDING );
-  pack_start(*m_Q, Gtk::PACK_EXPAND_PADDING );
-  pack_start(m_ButtonAlign, Gtk::PACK_EXPAND_PADDING );
+  m_VBox.pack_start(m_ComboAlign, Gtk::PACK_EXPAND_PADDING );
+  m_VBox.pack_start(*m_Gain, Gtk::PACK_EXPAND_PADDING );
+  m_VBox.pack_start(*m_Freq, Gtk::PACK_EXPAND_PADDING );
+  m_VBox.pack_start(*m_Q, Gtk::PACK_EXPAND_PADDING );
+  m_VBox.pack_start(m_ButtonAlign, Gtk::PACK_EXPAND_PADDING );
 
   m_OnButton.set_size_request(35,20);
   m_ButtonAlign.add(m_OnButton);
   
-  set_spacing(0);
-  set_homogeneous(false);
-  //set_size_request(80,-1);
+  m_VBox.set_spacing(0);
+  m_VBox.set_homogeneous(false);
+  m_VBox.set_size_request(-1,120);
 
   m_FilterSel.set_size_request(55,25);
   m_ComboAlign.add(m_FilterSel);
+  add(m_VBox);
+  set_shadow_type(Gtk::SHADOW_IN);
   
   m_ComboAlign.show();
-  m_BandLabel.show();
   m_OnButton.show();
   m_FilterSel.show();
   m_Gain->show();
@@ -76,13 +77,28 @@ m_iBandNum(iBandNum)
   m_Gain->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
   m_Freq->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
   m_Q->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
+  signal_realize().connect(sigc::mem_fun(*this, &BandCtl::onThisWidgetRealize));
+  
+  //Set Colors
+  SetWidgetColors m_WidgetColors;
+  m_WidgetColors.setButtonColors(&m_OnButton);
+  m_WidgetColors.setGenericWidgetColors(&m_FilterSel); ///TODO: axio no funciona, els colors del combo no canvien
 }
+
 
 BandCtl::~BandCtl(){
   delete m_Gain;
   delete m_Freq;
   delete m_Q;
 }
+
+void BandCtl::onThisWidgetRealize()
+{
+  //Set Colors
+  SetWidgetColors m_WidgetColors;
+  m_WidgetColors.setBandFrameColor(this, m_iBandNum);
+}
+
 
 //Data accesors
 float BandCtl::getGain(){

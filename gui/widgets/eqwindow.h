@@ -21,9 +21,15 @@
 #ifndef EQ_MAIN_WIN_H
   #define EQ_MAIN_WIN_H
 
+
+///TODO: I'm trying overriding theme
+#define RC_THEME_STRING "/home/sapista/build/LV2/trunk/gui/eq10q_gtkrc"
+#define GTKRC_THEME "/usr/share/themes/Industrial/gtk-2.0/gtkrc"
+
 #include <iostream>
 #include <string>
 
+#include <gtkmm/eventbox.h>
 #include <gtkmm/box.h>
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/alignment.h>
@@ -45,7 +51,7 @@
 
 using namespace sigc;
 
-class EqMainWindow : public Gtk::Box {
+class EqMainWindow : public Gtk::EventBox {
   public:
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri);
     virtual ~EqMainWindow();

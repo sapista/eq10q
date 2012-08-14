@@ -33,13 +33,28 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   
   signal_button_press_event().connect(sigc::mem_fun(*this, &CtlButton::onButtonDoubleClicked),false);
   signal_released().connect( sigc::mem_fun(*this,&CtlButton::onButtonDepressed));
+  signal_show().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
+  signal_realize().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
+  signal_state_changed().connect(sigc::mem_fun(*this,&CtlButton::onButtonStateChanged));
    
   add_events(Gdk::POINTER_MOTION_MASK); 
+
 }
 
 CtlButton::~CtlButton()
 {
 
+}
+
+void CtlButton::onButtonRealize()
+{
+  //Set Start Colors
+  m_WidgetColors.setButtonColors(this);
+}
+
+void CtlButton::onButtonStateChanged(Gtk::StateType previous_state)
+{
+  onButtonRealize();
 }
 
 bool CtlButton::onButtonDoubleClicked(GdkEventButton* event)
@@ -61,10 +76,12 @@ bool CtlButton::onButtonDoubleClicked(GdkEventButton* event)
 }
 
 void CtlButton::onButtonPressed()
-{
+{ 
   m_iAntValue = 0;
   m_iActValue = 0;
   m_MouseSignal = signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
+  m_WidgetColors.setButtonColors(this);
+  set_state(Gtk::STATE_ACTIVE);
 }
 
 void CtlButton::onButtonDepressed()
@@ -72,6 +89,8 @@ void CtlButton::onButtonDepressed()
   m_MouseSignal.disconnect();
   m_iAntValue = 0;
   m_iActValue = 0;
+  m_WidgetColors.setButtonColors(this);
+  set_state(Gtk::STATE_NORMAL);
 }
 
 bool CtlButton::onMouseMove(GdkEventMotion* event)
@@ -79,6 +98,12 @@ bool CtlButton::onMouseMove(GdkEventMotion* event)
   int x,y;
   get_pointer(x, y);
   setButtonNumber(computeValue(x,y));
+  
+  ///TODO: Els colors no treballen be en moure el mouse amb aixo comenetat
+  ///pero si ho comento.. llavors el buto te una resposta poc fluida...
+  //m_WidgetColors.setButtonColors(this);
+  //set_state(Gtk::STATE_ACTIVE);
+  
   m_ctlButtonChangedSignal.emit();
   return true;
 }
