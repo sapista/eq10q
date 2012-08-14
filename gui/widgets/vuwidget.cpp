@@ -34,6 +34,9 @@
 #define YELLOW_BARS 10
 #define RED_BARS 8
 
+//Constant to dBu conversion is sqrt(2)
+#define CONSTANT_VU 1.4142136
+
 VUWidget::VUWidget(int iChannels, float fMin) 
   :m_iChannels(iChannels),
   m_fMin(fMin),
@@ -117,7 +120,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     {
       if (m_fValues[i] > 0)
       {
-	fdBValue[i] = 20*log10(m_fValues[i]);
+	fdBValue[i] = 20*log10(m_fValues[i]/CONSTANT_VU);
       }
       else
       {
@@ -125,7 +128,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       }
       if (m_fPeaks[i] > 0)
       {
-	fdBPeak[i] = 20*log10(m_fPeaks[i]);
+	fdBPeak[i] = 20*log10(m_fPeaks[i]/CONSTANT_VU);
       }
       else
       {

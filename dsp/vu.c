@@ -72,5 +72,7 @@ inline float ComputeVu(Vu *vu, uint32_t nframes)
       else
 	vu->vu_max = 0.0;
 
-  return 20*log10(fVuOut/CONSTANT_VU);
+  //TESTING liner output
+  //return 20*log10(fVuOut/CONSTANT_VU);
+  return fVuOut;
 }

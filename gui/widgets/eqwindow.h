@@ -21,11 +21,6 @@
 #ifndef EQ_MAIN_WIN_H
   #define EQ_MAIN_WIN_H
 
-
-///TODO: I'm trying overriding theme
-#define RC_THEME_STRING "/home/sapista/build/LV2/trunk/gui/eq10q_gtkrc"
-#define GTKRC_THEME "/usr/share/themes/Industrial/gtk-2.0/gtkrc"
-
 #include <iostream>
 #include <string>
 
@@ -46,8 +41,12 @@
 #include "bandctl.h"
 #include "gainctl.h"
 #include "eqparams.h"
-//#include "eq_type.h"  ///TODO: Estudiar aixo no cal, crec.
 
+//Include eq definition
+#include "../eq_defines.h"
+
+///TODO: Test print information, comment out for the final release
+//#define PRINT_DEBUG_INFO
 
 using namespace sigc;
 
@@ -56,8 +55,7 @@ class EqMainWindow : public Gtk::EventBox {
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri);
     virtual ~EqMainWindow();
     
-    
-    ///TODO: comprobar si tot aixo es necessari en realitat--------------------------------------------
+    ///TODO: comprobar si tot aixo es necessari en realitat----------- En teoria he de invocar la LV2 WriteFunction directament
     //Input control ports handlers
     void setBypass(bool bBypass);
     void setInputGain(float Gain);
@@ -89,27 +87,134 @@ class EqMainWindow : public Gtk::EventBox {
     
     
     // Informing GUI about changes in the control ports
-    void gui_port_event(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void * buffer)
+    void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
     {
-        float val;
-        val = * static_cast<const float*>(buffer);
-
+      float data = * static_cast<const float*>(buffer);
+      
+      #ifdef PRINT_DEBUG_INFO
+	std::cout<<"gui_port_event Entring....... "<<std::endl;
+      #endif
+      
         // Checking if params are the same as specified in the LV2 documentation
         if (format != 0) {
+	    #ifdef PRINT_DEBUG_INFO
+	      std::cout<<"\t-- Return Format != 0"<<std::endl;
+	    #endif
             return;
         }
         if (buffer_size != 4) {
+	    #ifdef PRINT_DEBUG_INFO
+	      std::cout<<"\t-- Return buffer_size != 4"<<std::endl;
+	    #endif  
             return;
         }
 
-        // Updating values for GUI changes
-        switch (port_index) {
-	  case 1:
-		///TODO: completar aqui amb escriptura a tots els ports
-            break;
+        // Updating values in GUI ========================================================
+	switch (port)
+	{
+	  case EQ_BYPASS:
+	    m_bypassValue = data > 0.5 ? 1 : 0;
+	    m_BypassButton.set_active(data > 0.5);
+	    #ifdef PRINT_DEBUG_INFO
+	      std::cout<<"\t-- BYPASS"<<std::endl;
+	    #endif  
+	  break;
+
+	  case EQ_INGAIN:
+	    m_InGainValue = data;
+	    m_InGain->setGain(data);
+	    #ifdef PRINT_DEBUG_INFO
+	      std::cout<<"\t-- Input Gain"<<std::endl;
+	    #endif  
+	  break;
+
+	  case EQ_OUTGAIN:
+	    m_OutGainValue = data;
+	    m_OutGain->setGain(data);
+	    #ifdef PRINT_DEBUG_INFO
+	      std::cout<<"\t-- Out Gain"<<std::endl;
+	    #endif  
+	  break;
+
 	  default:
-            return;
-        }
+	    //Connect BandGain ports
+	    if(port >= (PORT_OFFSET + 2*m_iNumOfChannels) && port < (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands))
+	    {
+	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels]->setGain(data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Band Gain"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect BandFreq ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands))
+	    {
+	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands]->setFreq(data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Band Freq"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect BandParam ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands))
+	    {
+	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands]->setQ(data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Band Q"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect BandType ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands))
+	    {
+	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands]->setFilterType(data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Band Type"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect BandEnabled ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands))
+	    {
+	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands]->setEnabled(data > 0.5);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Band Enabled"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect VuInput ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels))
+	    {
+	      m_InGain->setVu(port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands,data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Vu input"<<std::endl;
+	      #endif  
+	    }
+
+	    //Connect VuOutput ports
+	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
+	    {
+	      m_OutGain->setVu(port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands - m_iNumOfChannels, data);
+	      #ifdef PRINT_DEBUG_INFO
+		std::cout<<"\t-- Vu output"<<std::endl;
+	      #endif  
+	    }
+	    
+	    //
+	    else
+	    {
+	      #ifdef PRINT_DEBUG_INFO	    
+		std::cout<<"\t--  Return port index is out of range"<<std::endl;
+	      #endif
+	      return;
+	    }
+	  break;
+	}       
+        //================================================================================
+        
+	#ifdef PRINT_DEBUG_INFO	    
+	  std::cout<<"\t--  Return OK"<<std::endl;
+	#endif
     }
 
     LV2UI_Controller controller;
@@ -140,9 +245,12 @@ class EqMainWindow : public Gtk::EventBox {
     void onBandChange(int iBand, int iField, float fValue);
     void onInputGainChange();
     void onOutputGainChange();
+    void onRealize();
     //void onCurveChange(); //TODO: no se com ha de ser en handle de la curve
     
   private:
+    float m_bypassValue;
+    float m_InGainValue, m_OutGainValue;
     const int m_iNumOfChannels;
     const int m_iNumOfBands;
     bool m_bMutex;

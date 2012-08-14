@@ -20,11 +20,16 @@
 #include "eqparams.h"
 #include <stdlib.h>
 #include <string>
+
+//#define USE_SLV2 ///TODO: check this-> esta donant problemes amb algunes versions de ardour, ull slv2 esta anticuat!!!
+#ifdef USE_SLV2 
 #include <slv2/world.h>
 #include <slv2/plugin.h>
 #include <slv2/collections.h>
 #include <slv2/value.h>
 #include <slv2/types.h>
+#endif
+
 
 EqParams::EqParams(int iNumBands):
 m_iNumberOfBands(iNumBands)
@@ -109,80 +114,94 @@ void EqParams::setOutputGain(float fOutGain)
 
 void EqParams::loadFromTtlFile(const char *uri)
 {
-  //Load from ttl
-  SLV2World lv2World = slv2_world_new();
-  slv2_world_load_all(lv2World);
-  SLV2Plugins lv2Plugins = slv2_world_get_all_plugins(lv2World);
-  SLV2Plugin lv2ThisPlugin = slv2_plugins_get_by_uri(lv2Plugins, slv2_value_new_uri(lv2World, uri));
-  
-  //Load Data from plugin
-  SLV2Value lv2Symbol;
-  SLV2Value min, max, def;
-  SLV2Port port;
+  #ifdef USE_SLV2
+    //Load from ttl
+    SLV2World lv2World = slv2_world_new();
+    slv2_world_load_all(lv2World);
+    SLV2Plugins lv2Plugins = slv2_world_get_all_plugins(lv2World);
+    SLV2Plugin lv2ThisPlugin = slv2_plugins_get_by_uri(lv2Plugins, slv2_value_new_uri(lv2World, uri));
+    
+    //Load Data from plugin
+    SLV2Value lv2Symbol;
+    SLV2Value min, max, def;
+    SLV2Port port;
 
-  //Get InputGain
-  lv2Symbol = slv2_value_new_string(lv2World, "input_gain");
-  port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-  slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-  m_fInGain = slv2_value_as_float(def);
+    //Get InputGain
+    lv2Symbol = slv2_value_new_string(lv2World, "input_gain");
+    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+    m_fInGain = slv2_value_as_float(def);
 
-  //Get OutputGain
-  lv2Symbol = slv2_value_new_string(lv2World, "output_gain");
-  port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-  slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-  m_fOutGain = slv2_value_as_float(def);
+    //Get OutputGain
+    lv2Symbol = slv2_value_new_string(lv2World, "output_gain");
+    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+    m_fOutGain = slv2_value_as_float(def);
 
-  std::string sSymbol; 
-  char buffer[50];
-  for(int i = 0; i < m_iNumberOfBands; i ++)
-  {
-    //Get Band Gain
-    sprintf (buffer, "filter%d_gain", i+1);
-    sSymbol = buffer;
-    lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
-    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-    m_ptr_BandArray[i].fGain = slv2_value_as_float(def);
-    
-    //Get Band Freq
-    sprintf (buffer, "filter%d_freq", i+1);
-    sSymbol = buffer;
-    lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
-    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-    m_ptr_BandArray[i].fFreq = slv2_value_as_float(def);
-    
-    //Get Band Q
-    sprintf (buffer, "filter%d_q", i+1);
-    sSymbol = buffer;
-    lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
-    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-    m_ptr_BandArray[i].fQ = slv2_value_as_float(def);
-    
-    //Get Band Type
-    sprintf (buffer, "filter%d_type", i+1);
-    sSymbol = buffer;
-    lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
-    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-    m_ptr_BandArray[i].iType = (int) slv2_value_as_float(def);
-    
-    //Get Band Enabled
-    sprintf (buffer, "filter%d_enable", i+1);
-    sSymbol = buffer;
-    lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
-    port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
-    slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
-    m_ptr_BandArray[i].bIsEnabled = slv2_value_as_float(def) > 0.5;
-  }
-    
-  //Free all
-  slv2_value_free(lv2Symbol);
-  slv2_value_free(min);
-  slv2_value_free(max);
-  slv2_value_free(def);
-  slv2_plugins_free(lv2World, lv2Plugins);
-  slv2_world_free(lv2World);
+    std::string sSymbol; 
+    char buffer[50];
+    for(int i = 0; i < m_iNumberOfBands; i ++)
+    {
+      //Get Band Gain
+      sprintf (buffer, "filter%d_gain", i+1);
+      sSymbol = buffer;
+      lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
+      port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+      slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+      m_ptr_BandArray[i].fGain = slv2_value_as_float(def);
+      
+      //Get Band Freq
+      sprintf (buffer, "filter%d_freq", i+1);
+      sSymbol = buffer;
+      lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
+      port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+      slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+      m_ptr_BandArray[i].fFreq = slv2_value_as_float(def);
+      
+      //Get Band Q
+      sprintf (buffer, "filter%d_q", i+1);
+      sSymbol = buffer;
+      lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
+      port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+      slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+      m_ptr_BandArray[i].fQ = slv2_value_as_float(def);
+      
+      //Get Band Type
+      sprintf (buffer, "filter%d_type", i+1);
+      sSymbol = buffer;
+      lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
+      port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+      slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+      m_ptr_BandArray[i].iType = (int) slv2_value_as_float(def);
+      
+      //Get Band Enabled
+      sprintf (buffer, "filter%d_enable", i+1);
+      sSymbol = buffer;
+      lv2Symbol = slv2_value_new_string(lv2World, sSymbol.c_str());
+      port = slv2_plugin_get_port_by_symbol(lv2ThisPlugin, lv2Symbol);
+      slv2_port_get_range(lv2ThisPlugin, port, &def, &min, &max);
+      m_ptr_BandArray[i].bIsEnabled = slv2_value_as_float(def) > 0.5;
+    }
+      
+    //Free all
+    slv2_value_free(lv2Symbol);
+    slv2_value_free(min);
+    slv2_value_free(max);
+    slv2_value_free(def);
+    slv2_plugins_free(lv2World, lv2Plugins);
+    slv2_world_free(lv2World);
+ 
+  #else
+    m_fInGain = 0;
+    m_fOutGain = 0;
+    for(int i = 0; i < m_iNumberOfBands; i ++)
+    {
+      m_ptr_BandArray[i].fGain = 0;
+      m_ptr_BandArray[i].fFreq = 1000;
+      m_ptr_BandArray[i].fQ = 2;
+      m_ptr_BandArray[i].iType = 11;
+      m_ptr_BandArray[i].bIsEnabled = 0;
+    }
+  #endif
 }
 

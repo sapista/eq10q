@@ -3,10 +3,16 @@
 
 #include <iostream>
 #include <cmath>
+#include "lv2_ui.h"
 
 //Build
 //g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp faderwidget.cpp vuwidget.cpp ../eqwindow.cpp ../dsp/filter.c -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`
 
+void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
+{  
+  std::cout<<"--------------------------------------------------------------"<<std::endl;
+  std::cout<<"LV2 Write function test: Port = "<<port_index<<" Data = "<<std::endl;
+}
 
 HelloWorld::HelloWorld()
 {
@@ -26,6 +32,10 @@ HelloWorld::HelloWorld()
   m_EqWin->signal_BandQ_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandQChanged));
   m_EqWin->signal_BandType_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandTypeChanged));
   m_EqWin->signal_BandEnabled_Changed().connect(sigc::mem_fun(*this, &HelloWorld::on_BandEnabledChanged));
+  
+  //Prepare writefunction
+  m_EqWin->write_function = writeTestFunction;
+  
 
 }
 

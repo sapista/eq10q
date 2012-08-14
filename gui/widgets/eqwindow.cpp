@@ -127,13 +127,13 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   m_FlatButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFlat));
   m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
   m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
+  signal_realize().connect( sigc::mem_fun(*this, &EqMainWindow::onRealize));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
   m_BParams = new EqParams(m_iNumOfBands);
   m_AParams->loadFromTtlFile(m_pluginUri.c_str());
-  m_BParams->loadFromTtlFile(m_pluginUri.c_str());
-  changeAB(m_AParams);
+  m_BParams->loadFromTtlFile(m_pluginUri.c_str());  
   m_CurParams = m_AParams;
   
 
@@ -153,6 +153,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   m_WidgetColors.setButtonColors(&m_BButton);
   m_WidgetColors.setButtonColors(&m_FlatButton);
   m_WidgetColors.setButtonColors(&m_BypassButton);
+   
 
   //Set pixmap objects TODO:
   //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
@@ -170,6 +171,16 @@ EqMainWindow::~EqMainWindow()
   }
   free(m_BandCtlArray);
 }
+
+void EqMainWindow::onRealize()
+{
+  Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
+  toplevel->set_resizable(false);
+  
+  //Initialize params
+  changeAB(m_AParams);
+}
+
 
 void EqMainWindow::changeAB(EqParams *toBeCurrent)
 {
@@ -220,60 +231,113 @@ void EqMainWindow::onButtonFlat()
 
 void EqMainWindow::onButtonBypass()
 {
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"onButtonBypass... ";
+  #endif
+  if (m_BypassButton.get_active())
+  {
+    m_bypassValue = 1;
+  }
+  else
+  {
+    m_bypassValue = 0;
+  }
+  write_function(controller, EQ_BYPASS, sizeof(float), 0, &m_bypassValue);
   m_BypassChangedSignal.emit(m_BypassButton.get_active());
+
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"Return"<<std::cout;
+  #endif
 }
 
 void EqMainWindow::onBandChange(int iBand, int iField, float fValue)
 {
 
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"onBandChange...  Band = "<<iBand<<" Field = "<<iField;
+  #endif
+  
   //TODO: Refresh the curve plot widget
   //Save data change and emit signal
   switch(iField)
   {
     case GAIN_TYPE: 
+      write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels, sizeof(float), 0, &fValue);
       m_CurParams->setBandGain(iBand, fValue);
       m_BandGainChangedSignal.emit(iBand, fValue);
       break;
       
     case FREQ_TYPE:
+      write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandFreq(iBand, fValue);
       m_BandFreqChangedSignal.emit(iBand, fValue);
       break;
       
     case Q_TYPE:
+      write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandQ(iBand, fValue);
       m_BandQChangedSignal.emit(iBand, fValue);
       break;
       
-    case FILTER_TYPE: 
+    case FILTER_TYPE:
+      write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandType(iBand, (int) fValue);
       m_BandTypeChangedSignal.emit(iBand, (int)fValue);
       break;
       
     case ONOFF_TYPE:
+      write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandEnabled(iBand, (fValue > 0.5)); 
       m_BandEnabledChangedSignal.emit(iBand, (fValue > 0.5));
       break;  
   }
+  
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"Return"<<std::cout;
+  #endif
 }
 
 void EqMainWindow::onInputGainChange()
 {
+
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"onInputGainChange... ";
+  #endif
+  
   //Save data Change
-  m_CurParams->setInputGain(m_InGain->getGain());
+  m_InGainValue = m_InGain->getGain();
+  m_CurParams->setInputGain(m_InGainValue);
+  
+  //Write to LV2 port
+   write_function(controller, EQ_INGAIN, sizeof(float), 0, &m_InGainValue);
   
   //Emit signal
   m_InputGainChangedSignal.emit(m_InGain->getGain());
-
+  
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"Return"<<std::cout;
+  #endif
 }
 
 void EqMainWindow::onOutputGainChange()
 {
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"onOutputGainChange... ";
+  #endif
+  
   //Save data Change
-  m_CurParams->setOutputGain(m_OutGain->getGain());
+  m_OutGainValue = m_OutGain->getGain();
+  m_CurParams->setOutputGain(m_OutGainValue);
+  
+  //Write to LV2 port
+  write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &m_OutGainValue);
   
   //Emit signal
   m_OutputGainChangedSignal.emit(m_OutGain->getGain());
+  
+  #ifdef PRINT_DEBUG_INFO
+    std::cout<<"Return"<<std::cout;
+  #endif
 }
 
 void EqMainWindow::loadEqParams()

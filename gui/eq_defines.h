@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2009 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,11 +18,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef EQ_CONFIG_H
-  #define EQ_CONFIG_H
+//EQ10Q definitions
+//TODO: Aquestes seran les definicions definitives del EQ tan de GUI com del audio dsp.
+//La idea es fer desapareixer el header EQ_TYPES.H quan s'implementi la compilació amb CMake a tot el projecte (DSP inclos)
+//TODO: aquest fitxer es un copy paste de eq.h elimnnant la inclusio del eq_types
+#ifndef EQ_GUI_DEFINES_H
+  #define EQ_GUI_DEFINES_H
+#define EQ_BYPASS    0
+#define EQ_INGAIN    1
+#define EQ_OUTGAIN   2
 
-#define EQ_BANDS_COUNT @Eq_Bands_Count@
-#define EQ_CHANNELS_COUNT @Eq_Channels_Count@
-#define EQ_URI @Eq_Uri@
+#define PORT_OFFSET  3
 
 #endif
