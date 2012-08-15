@@ -6,7 +6,7 @@ ADD_DEFINITIONS(-Wall -fPIC -DPIC -g)
 
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-2.4)
-pkg_check_modules(SLV2 slv2)
+#pkg_check_modules(SLV2 slv2)
 
 #Set Install prefix TODO CAUTION!!! This have to be moved to the top Cmak directory this is just a test
 set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix

@@ -24,7 +24,7 @@ This plugin is inside the Sapista Plugins Bundle
 This file tryies to implement functionalities for a large numbers of equalizers
 ****************************************************************************/
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -163,7 +163,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   int i, j;
   for(i=0; i<NUM_BANDS; i++)
   {
-    plugin_data->filter[i] = FilterInit(s_rate);
+    plugin_data->filter[i] = FilterInit(s_rate, NUM_CHANNELS);
     for(j=0;j<3;j++) plugin_data->smooth[i][j] = SmoothInit(s_rate);
   }
 
@@ -172,6 +172,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
     plugin_data->InputVu[i] = VuInit(s_rate);
     plugin_data->OutputVu[i] = VuInit(s_rate);
   }
+
   return (LV2_Handle)plugin_data;
 }
 
@@ -244,7 +245,7 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
         
         for(j = 0; j< NUM_BANDS; j++)
         {	
-          sample = computeFilter(plugin_data->filter[j], sample);
+          sample = computeFilter(plugin_data->filter[j], sample, i);
         }
         
         //The output amplifier

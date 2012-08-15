@@ -54,18 +54,19 @@ typedef struct
 {
   float b0, b1, b2, a1, a2; //Second Order coeficients
   float b1_0, b1_1, a1_1; //First order coeficients
-  float buffer[3];  //second order buffers
-  float buffer1[2]; //First order buffers
-  float buffer_extra[3]; //4st order buffers
+  float **buffer;  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  float **buffer1; //First order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  float **buffer_extra; //4st order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
   FilterType filter_type; //filter type
   int iFilterEnabled; //1 if filter is enabled
   int filter_order;  //filter order
   float gain, freq, Q; //analog filter parameters
   float fs; //sample rate
+  int channels; //Number of audio channels
 }Filter;
 
 //Initialize filter instance
-Filter *FilterInit(double rate);
+Filter *FilterInit(double rate, int channels_count);
 
 //Destroy a filter instance
 void FilterClean(Filter *f);
@@ -77,7 +78,7 @@ inline void calcCoefs(Filter *f);
 void flushBuffers(Filter *f);
 
 //The DSP processor
-inline float computeFilter(Filter *filter, float inputSample);
+inline float computeFilter(Filter *filter, float inputSample, int ch);
 
 //Check a Change on a band and return 1 if change exisit, otherwise return 0
 int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);

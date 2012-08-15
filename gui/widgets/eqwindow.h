@@ -36,7 +36,7 @@
 #include <cmath>
 
 //LV2 UI header
-#include <slv2/lv2_ui.h>
+#include "../lv2_ui.h"
 
 #include "bandctl.h"
 #include "gainctl.h"

@@ -23,10 +23,28 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define BUFFER_SIZE 3
+#define BUFFER_1_SIZE 2
+#define BUFFER_EXTRA_SIZE 3
+// BUFFERS format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+
+
 //Initialize filter
-Filter *FilterInit(double rate)
+Filter *FilterInit(double rate, int channels_count)
 {
   Filter *filter = (Filter *)malloc(sizeof(Filter));
+  
+  //Prepare buffers
+  int i;
+  filter->buffer = (float **)malloc(channels_count*sizeof(float *));
+  filter->buffer1 = (float **)malloc(channels_count*sizeof(float *));
+  filter->buffer_extra = (float **)malloc(channels_count*sizeof(float *));
+  for(i = 0; i < channels_count; i++)
+  {
+    filter->buffer[i] = (float *)malloc(BUFFER_SIZE*sizeof(float));
+    filter->buffer1[i] = (float *)malloc(BUFFER_1_SIZE*sizeof(float));
+    filter->buffer_extra[i] = (float *)malloc(BUFFER_EXTRA_SIZE*sizeof(float));
+  }
 
   filter->gain = 0.0;
   filter->freq = 20.0;
@@ -35,6 +53,7 @@ Filter *FilterInit(double rate)
   filter->iFilterEnabled = 0;
   flushBuffers(filter);
   filter->fs=(float)rate;
+  filter->channels = channels_count;
 
   return filter;
 }
@@ -42,10 +61,20 @@ Filter *FilterInit(double rate)
 //Destroy a filter instance
 void FilterClean(Filter *filter)
 {
+  int i;
+  for(i = 0; i < filter->channels; i++)
+  {
+    free(filter->buffer[i]);
+    free(filter->buffer1[i]);
+    free(filter->buffer_extra[i]);
+  }
+  free(filter->buffer);
+  free(filter->buffer1);
+  free(filter->buffer_extra);
   free(filter);
 }
 //Compute filter
-inline float computeFilter(Filter *filter, float inputSample)
+inline float computeFilter(Filter *filter, float inputSample, int ch)
 {
   float w = inputSample;
 
@@ -56,59 +85,59 @@ inline float computeFilter(Filter *filter, float inputSample)
       //Process first order
       case 1:
         //w(n)=x(n)-a1*w(n-1)
-        filter->buffer1[0] = w-filter->a1_1*filter->buffer1[1];
+        filter->buffer1[ch][0] = w-filter->a1_1*filter->buffer1[ch][1];
         //y(n)=bo*w(n)+b1*w(n-1)
-        w = filter->b1_0*filter->buffer1[0] + filter->b1_1*filter->buffer1[1];
+        w = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
   
-        filter->buffer1[1] = filter->buffer1[0];
+        filter->buffer1[ch][1] = filter->buffer1[ch][0];
       break;
   
       //Process second order
       case 2:
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[0] = w-filter->a1*filter->buffer[1]-filter->a2*filter->buffer[2];
+        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[0] + filter->b1*filter->buffer[1]+ filter->b2*filter->buffer[2];
+        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
-        filter->buffer[2] = filter->buffer[1];
-        filter->buffer[1] = filter->buffer[0];
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
       break;
     
       //Processat 3r ordre
       case 3:
         //w(n)=x(n)-a1*w(n-1)
-        filter->buffer1[0] = w-filter->a1_1*filter->buffer1[1];
+        filter->buffer1[ch][0] = w-filter->a1_1*filter->buffer1[ch][1];
         //y(n)=bo*w(n)+b1*w(n-1)
-        w = filter->b1_0*filter->buffer1[0] + filter->b1_1*filter->buffer1[1];
+        w = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
   
-        filter->buffer1[1] = filter->buffer1[0];
+        filter->buffer1[ch][1] = filter->buffer1[ch][0];
   
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[0] = w-filter->a1*filter->buffer[1]-filter->a2*filter->buffer[2];
+        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[0] + filter->b1*filter->buffer[1]+ filter->b2*filter->buffer[2];
+        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
-        filter->buffer[2] = filter->buffer[1];
-        filter->buffer[1] = filter->buffer[0];
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
       break;
     
       //Processat 4t ordre
       case 4:
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[0] = w-filter->a1*filter->buffer[1]-filter->a2*filter->buffer[2];
+        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[0] + filter->b1*filter->buffer[1]+ filter->b2*filter->buffer[2];
+        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
-        filter->buffer[2] = filter->buffer[1];
-        filter->buffer[1] = filter->buffer[0];
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
   
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer_extra[0] = w-filter->a1*filter->buffer_extra[1]-filter->a2*filter->buffer_extra[2];
+        filter->buffer_extra[ch][0] = w-filter->a1*filter->buffer_extra[ch][1]-filter->a2*filter->buffer_extra[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer_extra[0] + filter->b1*filter->buffer_extra[1]+ filter->b2*filter->buffer_extra[2];
+        w = filter->b0*filter->buffer_extra[ch][0] + filter->b1*filter->buffer_extra[ch][1]+ filter->b2*filter->buffer_extra[ch][2];
   
-        filter->buffer_extra[2] = filter->buffer_extra[1];
-        filter->buffer_extra[1] = filter->buffer_extra[0];
+        filter->buffer_extra[ch][2] = filter->buffer_extra[ch][1];
+        filter->buffer_extra[ch][1] = filter->buffer_extra[ch][0];
       break;
     }//END SWITCH ORDER
   }//END of if filter activated
@@ -264,12 +293,15 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
 //Clean buffers
 void flushBuffers(Filter *filter)
 {
-  int j;
-    for(j=0; j<3; j++)
+  int i,j;
+    for(i=0; i<filter->channels; i++)
     {
-      filter->buffer_extra[j]=0;
-      filter->buffer[j]=0;
-      if(j<2)filter->buffer1[j]=0;
+      for(j=0; j<3; j++)
+      {
+	filter->buffer_extra[i][j]=0;
+	filter->buffer[i][j]=0;
+	if(j<2)filter->buffer1[i][j]=0;
+      }
     }
 }
 
