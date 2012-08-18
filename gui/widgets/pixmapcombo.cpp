@@ -19,11 +19,12 @@
  ***************************************************************************/
 
 #include "pixmapcombo.h"
-#include "PathConfig.h"
 #include <cstring>
 
 
-PixMapCombo::PixMapCombo(){
+PixMapCombo::PixMapCombo(const char *bundlePath)
+:m_bundlePath(bundlePath)
+{
   //Create the tree model
   m_refTreeModel = Gtk::ListStore::create(m_Columns);
   set_model(m_refTreeModel);
@@ -32,84 +33,84 @@ PixMapCombo::PixMapCombo(){
   Gtk::TreeModel::Row row;
   
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_LPF1));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_LPF1));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
   
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_LPF2));
-  
-  //Fill the ComboBox Tree Model
-  row = *(m_refTreeModel->append());
-  row[m_Columns.m_col_pix] = m_refTopixbuf;
-
-  //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_LPF3));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_LPF2));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
 
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_LPF4));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_LPF3));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
 
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_HPF1));
-  
-  //Fill the ComboBox Tree Model
-  row = *(m_refTreeModel->append());
-  row[m_Columns.m_col_pix] = m_refTopixbuf;
-  
-  //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_HPF2));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_LPF4));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
 
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_HPF3));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_HPF1));
+  
+  //Fill the ComboBox Tree Model
+  row = *(m_refTreeModel->append());
+  row[m_Columns.m_col_pix] = m_refTopixbuf;
+  
+  //Enganxar una imatge al pixbuf
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_HPF2));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
 
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_HPF4));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_HPF3));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
 
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_LOSHELF));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_HPF4));
+  
+  //Fill the ComboBox Tree Model
+  row = *(m_refTreeModel->append());
+  row[m_Columns.m_col_pix] = m_refTopixbuf;
+
+  //Enganxar una imatge al pixbuf
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_LOSHELF));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
   
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_HISHELF));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_HISHELF));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
   
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_PEAK));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_PEAK));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());
   row[m_Columns.m_col_pix] = m_refTopixbuf;
   
   //Enganxar una imatge al pixbuf
-  m_refTopixbuf= Gdk::Pixbuf::create_from_file(std::string(EQ10Q_GUI_PATH) + std::string(RUTA_NOTCH));
+  m_refTopixbuf= Gdk::Pixbuf::create_from_file(m_bundlePath +"/" + std::string(RUTA_NOTCH));
   
   //Fill the ComboBox Tree Model
   row = *(m_refTreeModel->append());

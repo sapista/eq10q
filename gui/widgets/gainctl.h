@@ -29,7 +29,7 @@
 
 class  GainCtl : public Gtk::Frame{
   public:
-    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, double Fader_dBMax, double Fader_dBMin);
+    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, double Fader_dBMax, double Fader_dBMin, const char* bundlePath);
     virtual ~GainCtl();
     void setGain(float fValue);
     void setVu(int channel, float fValue);
@@ -53,6 +53,5 @@ class  GainCtl : public Gtk::Frame{
     
     //Gain change signal
     signal_GainChanged m_GainChangedSignal;
-
 };
 #endif

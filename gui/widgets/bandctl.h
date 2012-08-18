@@ -32,7 +32,7 @@
 class BandCtl : public Gtk::Frame
 {
   public:
-    BandCtl(const int iBandNum,bool *bSemafor);
+    BandCtl(const int iBandNum,bool *bSemafor, const char* bundlepath);
     
     virtual ~BandCtl();
     float getGain();
@@ -58,7 +58,7 @@ class BandCtl : public Gtk::Frame
   protected:
     Gtk::VBox m_VBox;
     Gtk::ToggleButton m_OnButton;
-    PixMapCombo m_FilterSel;
+    PixMapCombo *m_FilterSel;
     Gtk::Alignment m_ButtonAlign, m_ComboAlign;
     EQButton *m_Gain, *m_Freq, *m_Q;
     
@@ -75,12 +75,12 @@ class BandCtl : public Gtk::Frame
     FilterType m_FilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
+    std::string m_budlepath;
     
     void configSensitive();
-      
-    //Band change signal
+    
+     //Band change signal
     signal_ctlBandChanged m_bandChangedSignal;
-
 };
 #endif
 

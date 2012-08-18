@@ -45,7 +45,7 @@
 class PixMapCombo : public Gtk::ComboBox
 {
   public:
-    PixMapCombo();
+    PixMapCombo(const char *bundlePath);
     virtual ~PixMapCombo();
     
   protected:
@@ -62,5 +62,8 @@ class PixMapCombo : public Gtk::ComboBox
     
     ModelColumns m_Columns;
     Glib::RefPtr<Gtk::ListStore> m_refTreeModel; 
+    
+  private:
+    std::string m_bundlePath;
 };
 #endif

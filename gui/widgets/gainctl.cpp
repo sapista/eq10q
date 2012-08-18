@@ -21,12 +21,12 @@
 #include "gainctl.h"
 #include "guiconstants.h"
 
-GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, double Fader_dBMax, double Fader_dBMin):
+GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, double Fader_dBMax, double Fader_dBMin, const char* bundlePath):
 m_iNumOfChannels(iNumOfChannel)
 {
 
   set_label(sTitle);
-  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin));
+  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin, bundlePath));
   m_VuMeter = Gtk::manage(new VUWidget(iNumOfChannel));
   m_HBox.pack_start(*m_GainFader);
   m_HBox.pack_start(*m_VuMeter);

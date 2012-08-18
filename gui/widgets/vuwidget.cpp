@@ -34,9 +34,6 @@
 #define YELLOW_BARS 10
 #define RED_BARS 8
 
-//Constant to dBu conversion is sqrt(2)
-#define CONSTANT_VU 1.4142136
-
 VUWidget::VUWidget(int iChannels, float fMin) 
   :m_iChannels(iChannels),
   m_fMin(fMin),
@@ -120,7 +117,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     {
       if (m_fValues[i] > 0)
       {
-	fdBValue[i] = 20*log10(m_fValues[i]/CONSTANT_VU);
+	fdBValue[i] = 20*log10(m_fValues[i]);
       }
       else
       {
@@ -128,7 +125,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       }
       if (m_fPeaks[i] > 0)
       {
-	fdBPeak[i] = 20*log10(m_fPeaks[i]/CONSTANT_VU);
+	fdBPeak[i] = 20*log10(m_fPeaks[i]);
       }
       else
       {
@@ -182,7 +179,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
       for(int i = 0; i< GREEN_BARS; i++)
       {
-	if(fdBValue[c] >= (float)i/2.0 - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -194,7 +191,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.0, 0.9, 0.3, 0.4);
       for(int i = 0; i< GREEN_BARS; i++)
       {
-	if(fdBValue[c] < (float)i/2.0 - 24)
+	if(fdBValue[c] < (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -206,7 +203,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
       for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
       { 
-	if(fdBValue[c] >= (float)i/2.0 - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -218,7 +215,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.9, 0.0, 0.4);
       for(int i = GREEN_BARS; i<GREEN_BARS + YELLOW_BARS; i++)
       { 
-	if(fdBValue[c] < (float)i/2.0 - 24)
+	if(fdBValue[c] < (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -230,7 +227,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
       for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
       {
-	if(fdBValue[c] >= (float)i/2.0 - 24)
+	if(fdBValue[c] >= (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -242,7 +239,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.9, 0.1, 0.0, 0.4);
       for(int i = GREEN_BARS + YELLOW_BARS; i<GREEN_BARS + YELLOW_BARS + RED_BARS; i++)
       {
-	if(fdBValue[c] < (float)i/2.0 - 24)
+	if(fdBValue[c] < (float)i/2.0 - 25)
 	{
 	  cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
 	  cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -i*m_fBarStep - m_fBarWidth/2);
@@ -251,11 +248,11 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->stroke();
       
       //draw peak VU
-      if (2*(fdBPeak[c] + 24) < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
-      else if(2*(fdBPeak[c] + 24) < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
+      if (2*(fdBPeak[c] + 25) < GREEN_BARS) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
+      else if(2*(fdBPeak[c] + 25) < GREEN_BARS + YELLOW_BARS) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
       else  cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-      cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
-      cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+24)*m_fBarStep - m_fBarWidth/2);
+      cr->move_to(MARGIN + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+25)*m_fBarStep - m_fBarWidth/2);
+      cr->line_to(MARGIN + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -MARGIN -2*((int)fdBPeak[c]+25)*m_fBarStep - m_fBarWidth/2);
       cr->stroke();
     }
     

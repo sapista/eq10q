@@ -27,7 +27,7 @@
 #include "setwidgetcolors.h"
 
 //Constructor
-EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
+EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath)
   :m_FlatButton("Flat"),
   m_AButton("A"),
   m_BButton("B"),
@@ -35,15 +35,15 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
   m_bMutex(false),
-  m_pluginUri(uri)
-
+  m_pluginUri(uri),
+  m_bundlePath(bundlePath)
+{
 ///TODO: Molt xapusero!
 //   image_logo_top_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top_top.png"),
 //   image_logo_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top.png"),
 //   image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
 //   image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
 //   image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
-{ 
   
  //Buttons A,B i Flat
   m_AButton.set_size_request(25,23);
@@ -64,15 +64,15 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri)
 
 
   
-  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20)); ///TODO: Get gain min max from ttl file
-  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20)); ///TODO: Get gain min max from ttl file
+  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
+  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
 
   m_BandBox.set_spacing(4);
   m_BandBox.set_homogeneous(true);
   m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
   for (int i = 0; i< m_iNumOfBands; i++)
   {
-    m_BandCtlArray[i] = Gtk::manage(new BandCtl(i, &m_bMutex));
+    m_BandCtlArray[i] = Gtk::manage(new BandCtl(i, &m_bMutex, m_bundlePath.c_str()));
     m_BandBox.pack_start(*m_BandCtlArray[i], Gtk::PACK_SHRINK);
     m_BandCtlArray[i] -> signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onBandChange));
   }
@@ -188,7 +188,14 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
   
   //Reload All data
   m_InGain->setGain(m_CurParams->getInputGain());
+  m_InGainValue = m_InGain->getGain();
   m_OutGain->setGain(m_CurParams->getOutputGain());
+  m_OutGainValue = m_OutGain->getGain();
+  
+   //Write to LV2 port
+   write_function(controller, EQ_INGAIN, sizeof(float), 0, &m_InGainValue);
+   write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &m_OutGainValue);
+   
   for(int i = 0; i < m_iNumOfBands; i++)
   {
     //TODO: crec  el setEnabled no esta funcionant be, es pot veure en fer canvi de A/B -> bug real vist el 09/08/2012 P.Rafols

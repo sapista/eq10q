@@ -64,6 +64,7 @@ void FilterClean(Filter *filter)
   int i;
   for(i = 0; i < filter->channels; i++)
   {
+   
     free(filter->buffer[i]);
     free(filter->buffer1[i]);
     free(filter->buffer_extra[i]);
@@ -71,6 +72,7 @@ void FilterClean(Filter *filter)
   free(filter->buffer);
   free(filter->buffer1);
   free(filter->buffer_extra);
+  
   free(filter);
 }
 //Compute filter

@@ -30,12 +30,17 @@ This file tryies to implement functionalities for a large numbers of equalizers
 
 #include <math.h>
 
-#include <lv2.h>
+#include "lv2.h"
 
-#include "eq.h"
+#include "gui/eq_defines.h"
 #include "dsp/filter.h"
 #include "dsp/smooth.h"
 #include "dsp/vu.h"
+
+//Data from CMake
+#define NUM_BANDS @Eq_Bands_Count@
+#define NUM_CHANNELS @Eq_Channels_Count@
+#define EQ_URI @Eq_Uri@
 
 static LV2_Descriptor *eqDescriptor = NULL;
 
@@ -185,6 +190,7 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
 
   //Get values of control ports
   const int iBypass = *(plugin_data->fBypass) > 0.0f ? 1 : 0;
+  
   const float fInGain = DB_CO(*(plugin_data->fInGain));
   const float fOutGain = DB_CO(*(plugin_data->fOutGain));
 

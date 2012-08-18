@@ -24,12 +24,11 @@
 
 #include "colors.h"
 #include "faderwidget.h"
-#include "PathConfig.h"
 
-FaderWidget::FaderWidget(double dMax, double dMin)
-  :m_max(dMax), m_min(dMin), m_value(0), bMotionIsConnected(false)
+FaderWidget::FaderWidget(double dMax, double dMin, const char *bundlePath)
+  :m_max(dMax), m_min(dMin), m_value(0), bMotionIsConnected(false), m_bundlePath(bundlePath)
 {
-  m_image_surface_ptr = Cairo::ImageSurface::create_from_png (std::string(EQ10Q_GUI_PATH) + std::string(FADER_ICON_FILE));
+  m_image_surface_ptr = Cairo::ImageSurface::create_from_png (m_bundlePath + "/" + std::string(FADER_ICON_FILE));
   set_size_request(2*m_image_surface_ptr->get_width()+4*FADER_MARGIN, FADER_INITAL_HIGHT);
   
   //Connect mouse signals

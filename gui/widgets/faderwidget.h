@@ -31,7 +31,7 @@
 class  FaderWidget : public Gtk::DrawingArea
 {
   public:
-    FaderWidget(double dMax, double dMin);
+    FaderWidget(double dMax, double dMin, const char *bundlePath);
     virtual ~FaderWidget();
     
     //Data accessors
@@ -64,6 +64,7 @@ class  FaderWidget : public Gtk::DrawingArea
       double m_value, m_max, m_min;
       sigc::connection m_motion_connection;
       Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
+      std::string m_bundlePath;
       
       //Fader change signal
       signal_FaderChanged m_FaderChangedSignal;

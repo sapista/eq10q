@@ -1,3 +1,5 @@
+##Widgets CMake
+
 link_directories(${GTKMM_LIBRARY_DIRS}) # ${SLV2_LIBRARY_DIRS} ) Removed SLV2 dependency
 
 include_directories(${GTKMM_INCLUDE_DIRS}) # ${SLV2_INCLUDE_DIRS}) Removed SLV2 dependency

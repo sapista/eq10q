@@ -52,7 +52,7 @@ using namespace sigc;
 
 class EqMainWindow : public Gtk::EventBox {
   public:
-    EqMainWindow(int iAudioChannels, int iNumBands, const char *uri);
+    EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath);
     virtual ~EqMainWindow();
     
     ///TODO: comprobar si tot aixo es necessari en realitat----------- En teoria he de invocar la LV2 WriteFunction directament
@@ -255,6 +255,7 @@ class EqMainWindow : public Gtk::EventBox {
     const int m_iNumOfBands;
     bool m_bMutex;
     std::string m_pluginUri;
+    std::string m_bundlePath;
     
     ///TODO: comprobar si tot aixo es necessari en realitat--------------------------------------------
     //LV2 Ports Signals

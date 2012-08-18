@@ -22,6 +22,6 @@
 #ifndef EQ10Q_PATH_CONFIG_H
 #define EQ10Q_PATH_CONFIG_H
   
-#define EQ10Q_GUI_PATH "/usr/local/lib/lv2/sapistaEQ.lv2/gui/"
+#define EQ10Q_GUI_PATH "/home/sapista/.lv2/sapistaEQ.lv2/gui/"
  
 #endif

@@ -23,11 +23,12 @@
 #include "bandctl.h"
 #include "setwidgetcolors.h"
 
-BandCtl::BandCtl( const int iBandNum, bool *bSemafor):
+BandCtl::BandCtl( const int iBandNum, bool *bSemafor, const char* bundlepath):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_ComboAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_iBandNum(iBandNum)
 {
+  m_FilterSel = Gtk::manage(new PixMapCombo(bundlepath));
   m_Gain = Gtk::manage(new EQButton(GAIN_TYPE, bSemafor));
   m_Freq = Gtk::manage(new EQButton(FREQ_TYPE, bSemafor));
   m_Q = Gtk::manage(new EQButton(Q_TYPE, bSemafor));
@@ -50,14 +51,14 @@ m_iBandNum(iBandNum)
   m_VBox.set_homogeneous(false);
   m_VBox.set_size_request(-1,120);
 
-  m_FilterSel.set_size_request(55,25);
-  m_ComboAlign.add(m_FilterSel);
+  m_FilterSel->set_size_request(55,25);
+  m_ComboAlign.add(*m_FilterSel);
   add(m_VBox);
   set_shadow_type(Gtk::SHADOW_IN);
   
   m_ComboAlign.show();
   m_OnButton.show();
-  m_FilterSel.show();
+  m_FilterSel->show();
   m_Gain->show();
   m_Freq->show();
   m_Q->show();
@@ -73,7 +74,7 @@ m_iBandNum(iBandNum)
 
   m_OnButton.set_label("ON");
   m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
-  m_FilterSel.signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
+  m_FilterSel->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
   m_Gain->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
   m_Freq->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
   m_Q->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
@@ -82,7 +83,7 @@ m_iBandNum(iBandNum)
   //Set Colors
   SetWidgetColors m_WidgetColors;
   m_WidgetColors.setButtonColors(&m_OnButton);
-  m_WidgetColors.setGenericWidgetColors(&m_FilterSel); ///TODO: axio no funciona, els colors del combo no canvien
+  m_WidgetColors.setGenericWidgetColors(m_FilterSel); ///TODO: axio no funciona, els colors del combo no canvien
 }
 
 
@@ -90,6 +91,7 @@ BandCtl::~BandCtl(){
   delete m_Gain;
   delete m_Freq;
   delete m_Q;
+  delete m_FilterSel;
 }
 
 void BandCtl::onThisWidgetRealize()
@@ -135,7 +137,7 @@ void BandCtl::setQ(float fQ){
 }
 
 void BandCtl::setFilterType(float fType){
-  m_FilterSel.set_active((int)fType - 1);
+  m_FilterSel->set_active((int)fType - 1);
 }
 
 void BandCtl::setEnabled(bool bIsEnabled)
@@ -156,8 +158,8 @@ void BandCtl::onButtonClicked()
 
 void BandCtl::onComboChanged()
 {
-  //m_iFilterType = m_FilterSel.get_active_row_number();
-  m_FilterType = int2FilterType(m_FilterSel.get_active_row_number() + 1);
+  //m_iFilterType = m_FilterSel->get_active_row_number();
+  m_FilterType = int2FilterType(m_FilterSel->get_active_row_number() + 1);
   configSensitive();
   m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
 }

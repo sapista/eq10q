@@ -6,7 +6,7 @@
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/eq/eq4qm/gui>
   a guiext:GtkUI;
-  guiext:binary <gui/libeq4qm_gui.so>;
+  guiext:binary <gui/eq4qm_gui.so>;
   guiext:requiredFeature guiext:makeResident;
   guiext:optionalFeature guiext:noUserResize.
 

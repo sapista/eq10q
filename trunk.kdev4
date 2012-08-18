@@ -1,4 +1,4 @@
 [Project]
-Name=gui
+Name=trunk
 Manager=KDevCMakeManager
 VersionControl=
