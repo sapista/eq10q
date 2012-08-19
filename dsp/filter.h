@@ -28,6 +28,10 @@ This file contains the filter definitions
 //Constants definitions
 #define PI 3.1416
 
+#define BUFFER_SIZE 3
+#define BUFFER_1_SIZE 2
+#define BUFFER_EXTRA_SIZE 3
+
 ///TODO: No veig clar que aixo hagi d'existir en aquest context
 // #define GAIN_DEFAULT 0.0
 // #define FREQ_MIN 20.0
@@ -54,9 +58,17 @@ typedef struct
 {
   float b0, b1, b2, a1, a2; //Second Order coeficients
   float b1_0, b1_1, a1_1; //First order coeficients
-  float **buffer;  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
-  float **buffer1; //First order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
-  float **buffer_extra; //4st order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+ 
+  ///TEST->> this way solves the segfault but the memory map is not ok for mono version (double of memory than needed)
+  float buffer[2][BUFFER_SIZE];  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  float buffer1[2][BUFFER_1_SIZE]; //First order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  float buffer_extra[2][BUFFER_EXTRA_SIZE]; //4st order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc      
+ 
+ ///TEST this way produces de segfault!!!!! on eq.c malloc call
+  //float **buffer;  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  //float **buffer1; //First order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  //float **buffer_extra; //4st order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
+  
   FilterType filter_type; //filter type
   int iFilterEnabled; //1 if filter is enabled
   int filter_order;  //filter order

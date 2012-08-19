@@ -23,18 +23,17 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define BUFFER_SIZE 3
-#define BUFFER_1_SIZE 2
-#define BUFFER_EXTRA_SIZE 3
 // BUFFERS format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
 
 
 //Initialize filter
 Filter *FilterInit(double rate, int channels_count)
 {
-  Filter *filter = (Filter *)malloc(sizeof(Filter));
   
-  //Prepare buffers
+  Filter *filter = (Filter *)malloc(sizeof(Filter));
+   
+  //Prepare buffers TEST ->> this is related with the segfault
+  /*
   int i;
   filter->buffer = (float **)malloc(channels_count*sizeof(float *));
   filter->buffer1 = (float **)malloc(channels_count*sizeof(float *));
@@ -45,7 +44,8 @@ Filter *FilterInit(double rate, int channels_count)
     filter->buffer1[i] = (float *)malloc(BUFFER_1_SIZE*sizeof(float));
     filter->buffer_extra[i] = (float *)malloc(BUFFER_EXTRA_SIZE*sizeof(float));
   }
-
+  */
+  
   filter->gain = 0.0;
   filter->freq = 20.0;
   filter->Q = 2.0;
@@ -61,10 +61,10 @@ Filter *FilterInit(double rate, int channels_count)
 //Destroy a filter instance
 void FilterClean(Filter *filter)
 {
-  int i;
+  // TEST ->> this is related with the segfault
+  /*int i;
   for(i = 0; i < filter->channels; i++)
   {
-   
     free(filter->buffer[i]);
     free(filter->buffer1[i]);
     free(filter->buffer_extra[i]);
@@ -72,6 +72,7 @@ void FilterClean(Filter *filter)
   free(filter->buffer);
   free(filter->buffer1);
   free(filter->buffer_extra);
+  */
   
   free(filter);
 }

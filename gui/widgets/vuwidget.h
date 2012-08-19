@@ -18,7 +18,6 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
- ///TODO: Recordar que part del codi es de Lars Lutermans O algu aixi!!!!!!
 #ifndef VU_WIDGET_H
 #define VU_WIDGET_H
 

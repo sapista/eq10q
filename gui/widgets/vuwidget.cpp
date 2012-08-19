@@ -50,6 +50,11 @@ VUWidget::VUWidget(int iChannels, float fMin)
  
   m_fBarWidth = (1.0 - 2*MARGIN)/(float)(GREEN_BARS+YELLOW_BARS+RED_BARS) - BAR_SEPARATION;
   m_fBarStep = BAR_SEPARATION + m_fBarWidth;
+  
+  //TODO: Bug- sometime the VU widget is not drawn !!! only text is drawn no LEDs
+  //this signal connection does not solves the problem, so I coment out it
+  //checj the on_expose_event method, the problem could be related with initialitzation of LEDs
+  //signal_expose_event().connect(sigc::mem_fun(*this, &VUWidget::on_expose_event));
 
 }
 
@@ -76,12 +81,12 @@ void VUWidget::onTimeout()
   {
     clearPeak(i);
   }
+  redraw();
 }
 
 void VUWidget::clearPeak(int iChannel)
 {
   m_fPeaks[iChannel] = 0.0;
-  redraw();
 } 
 
 void VUWidget::redraw()

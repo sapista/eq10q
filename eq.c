@@ -21,17 +21,15 @@
 /***************************************************************************
 This file is the implementation of the EQ plugin
 This plugin is inside the Sapista Plugins Bundle
-This file tryies to implement functionalities for a large numbers of equalizers
+This file implements functionalities for a large numbers of equalizers
 ****************************************************************************/
 
-//#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <math.h>
 
 #include "lv2.h"
-
 #include "gui/eq_defines.h"
 #include "dsp/filter.h"
 #include "dsp/smooth.h"
@@ -68,6 +66,7 @@ typedef struct {
 
 static void cleanupEQ(LV2_Handle instance)
 {
+  ///printf("Entinring cleanupEQ...\n\r");
   EQ *plugin = (EQ *)instance;
   int i,j;
   for(i=0; i<NUM_BANDS; i++)
@@ -82,10 +81,12 @@ static void cleanupEQ(LV2_Handle instance)
     VuClean(plugin->OutputVu[i]);
   }
   free(instance);
+  ///printf("cleanupEQ Return\n\r");
 }
 
 static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
 {
+  ///printf("Entinring connectPortEQ...\n\r");
   EQ *plugin = (EQ *)instance;
 
   //Connect standar ports
@@ -159,12 +160,18 @@ static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
       }
     break;
   }
+  ///printf("connectPortEQ Return\n\r");
 }
 
 static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
 {
+  ///printf("Entinring instantiateEQ...\n\r"); 
+  
+  ///TODO: SEGFAUL defering EQ is here!!! using buffer[NUM_CHANNELS][BUFFER_SIZE] insted of **buffer solves the problem
+  ///TODO: Find a better implementation of Filter buffers avoiding fixed size buffers
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));
-
+  ///printf("Malloc return OK");
+  
   int i, j;
   for(i=0; i<NUM_BANDS; i++)
   {
@@ -178,6 +185,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
     plugin_data->OutputVu[i] = VuInit(s_rate);
   }
 
+  ///printf("intantiateEQ Return\n\r");
   return (LV2_Handle)plugin_data;
 }
 
@@ -186,6 +194,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
 
 static void runEQ(LV2_Handle instance, uint32_t sample_count)
 {
+  ///printf("Entinring runEQ...\n\r");
   EQ *plugin_data = (EQ *)instance;
 
   //Get values of control ports
@@ -276,10 +285,13 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
     *(plugin_data->fVuIn[i]) = ComputeVu(plugin_data->InputVu[i], sample_count);
     *(plugin_data->fVuOut[i]) = ComputeVu(plugin_data->OutputVu[i], sample_count);
   }
+  
+  ///printf("runEQ Return\n\r");
 }
 
 static void init()
 {
+  ///printf("Entinring init...\n\r");
   eqDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
 
   eqDescriptor->URI = EQ_URI;
@@ -290,17 +302,22 @@ static void init()
   eqDescriptor->instantiate = instantiateEQ;
   eqDescriptor->run = runEQ;
   eqDescriptor->extension_data = NULL;
+  
+  ///printf("init Return\n\r");
 }
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *lv2_descriptor(uint32_t index)
 {
+  ///printf("Entinring lv2_descriptor...\n\r");
   if (!eqDescriptor) init();
 
   switch (index) {
   case 0:
+    ///printf("lv2_descriptr Return OK\n\r");
     return eqDescriptor;
   default:
+    ///printf("lv2_descriptr Return NULL\n\r");
     return NULL;
   }
 }
