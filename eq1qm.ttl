@@ -128,8 +128,6 @@ doap:maintainer [
     lv2:index 10;
     lv2:symbol "in_vu_ctl";
     lv2:name "In Vu CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ],
 
   [
@@ -137,6 +135,4 @@ doap:maintainer [
     lv2:index 11;
     lv2:symbol "out_vu_ctl";
     lv2:name "Out VU CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ].

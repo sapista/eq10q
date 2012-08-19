@@ -18,33 +18,22 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "filter.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-// BUFFERS format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
-
+#define CMAKE_FILTER_CHANNEL_COUNT @Num_Of_Channels@
+#if CMAKE_FILTER_CHANNEL_COUNT == 1
+  #include "filter_mono.h"
+#else
+  #include "filter_stereo.h"
+#endif
 
 //Initialize filter
-Filter *FilterInit(double rate, int channels_count)
+Filter *FilterInit(double rate)
 {
   
   Filter *filter = (Filter *)malloc(sizeof(Filter));
-   
-  //Prepare buffers TEST ->> this is related with the segfault
-  /*
-  int i;
-  filter->buffer = (float **)malloc(channels_count*sizeof(float *));
-  filter->buffer1 = (float **)malloc(channels_count*sizeof(float *));
-  filter->buffer_extra = (float **)malloc(channels_count*sizeof(float *));
-  for(i = 0; i < channels_count; i++)
-  {
-    filter->buffer[i] = (float *)malloc(BUFFER_SIZE*sizeof(float));
-    filter->buffer1[i] = (float *)malloc(BUFFER_1_SIZE*sizeof(float));
-    filter->buffer_extra[i] = (float *)malloc(BUFFER_EXTRA_SIZE*sizeof(float));
-  }
-  */
   
   filter->gain = 0.0;
   filter->freq = 20.0;
@@ -53,27 +42,13 @@ Filter *FilterInit(double rate, int channels_count)
   filter->iFilterEnabled = 0;
   flushBuffers(filter);
   filter->fs=(float)rate;
-  filter->channels = channels_count;
 
   return filter;
 }
 
 //Destroy a filter instance
 void FilterClean(Filter *filter)
-{
-  // TEST ->> this is related with the segfault
-  /*int i;
-  for(i = 0; i < filter->channels; i++)
-  {
-    free(filter->buffer[i]);
-    free(filter->buffer1[i]);
-    free(filter->buffer_extra[i]);
-  }
-  free(filter->buffer);
-  free(filter->buffer1);
-  free(filter->buffer_extra);
-  */
-  
+{ 
   free(filter);
 }
 //Compute filter
@@ -297,7 +272,7 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
 void flushBuffers(Filter *filter)
 {
   int i,j;
-    for(i=0; i<filter->channels; i++)
+    for(i=0; i<NUM_OF_CHANNELS; i++)
     {
       for(j=0; j<3; j++)
       {

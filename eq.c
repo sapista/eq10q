@@ -31,7 +31,6 @@ This file implements functionalities for a large numbers of equalizers
 
 #include "lv2.h"
 #include "gui/eq_defines.h"
-#include "dsp/filter.h"
 #include "dsp/smooth.h"
 #include "dsp/vu.h"
 
@@ -39,6 +38,13 @@ This file implements functionalities for a large numbers of equalizers
 #define NUM_BANDS @Eq_Bands_Count@
 #define NUM_CHANNELS @Eq_Channels_Count@
 #define EQ_URI @Eq_Uri@
+
+//Conditional inclusion of filter.h
+#if NUM_CHANNELS == 1
+  #include "dsp/filter_mono.h"
+#else
+  #include "dsp/filter_stereo.h"
+#endif
 
 static LV2_Descriptor *eqDescriptor = NULL;
 
@@ -175,7 +181,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   int i, j;
   for(i=0; i<NUM_BANDS; i++)
   {
-    plugin_data->filter[i] = FilterInit(s_rate, NUM_CHANNELS);
+    plugin_data->filter[i] = FilterInit(s_rate);
     for(j=0;j<3;j++) plugin_data->smooth[i][j] = SmoothInit(s_rate);
   }
 

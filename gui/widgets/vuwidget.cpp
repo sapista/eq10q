@@ -65,7 +65,7 @@ VUWidget::~VUWidget()
 }
   
 void VUWidget::setValue(int iChannel, float fValue)
-{
+{ 
   m_fValues[iChannel] = fValue;
   if (m_fValues[iChannel] > m_fPeaks[iChannel])
   {

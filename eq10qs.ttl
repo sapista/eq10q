@@ -616,8 +616,6 @@ doap:maintainer [
     lv2:index 57;
     lv2:symbol "in_1_vu_ctl";
     lv2:name "In 1 Vu CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ],
 
   [
@@ -625,8 +623,6 @@ doap:maintainer [
     lv2:index 58;
     lv2:symbol "in_2_vu_ctl";
     lv2:name "In 2 Vu CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ],
 
   [
@@ -634,8 +630,6 @@ doap:maintainer [
     lv2:index 59;
     lv2:symbol "out_2_vu_ctl";
     lv2:name "Out 1 VU CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ],
 
   [
@@ -643,6 +637,4 @@ doap:maintainer [
     lv2:index 60;
     lv2:symbol "out_2_vu_ctl";
     lv2:name "Out 2 VU CTL";
-    lv2:minimum -50;
-    lv2:maximum 12;
   ].
