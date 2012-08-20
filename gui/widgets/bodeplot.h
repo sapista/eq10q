@@ -18,80 +18,95 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#ifndef PLOT_BODE_CURVE_H
+  #define PLOT_BODE_CURVE_H
 
 #include <iostream>
+#include <gtkmm/drawingarea.h>
+#include "filter.h"
 
-#include <plotmm/plot.h>
-#include <plotmm/scalediv.h>
-#include <plotmm/curve.h>
-#include <plotmm/symbol.h>
-#include <plotmm/paint.h>
+#define NUM_POINTS_PER_DECADE 100
+#define MIN_FREQ 20
+#define MAX_FREQ 20000
 
-#include "constants.h"
-
-#define PLOT_WIDTH 960
-#define PLOT_HEIGHT 230
-
-
-#ifndef  MAIN_WINDOW_WIDGET
-  #define MAIN_WINDOW_WIDGET
-  class main_window;
-#endif
-
-/**********************Classe per fer plots*****************************/
-class PlotEQCurve : public PlotMM::Plot
+typedef struct
 {
-public:
-  PlotEQCurve(main_window *m_ptr, void (*f_ptr) (main_window *myptr, int b_ix, float g, float f));
-  virtual ~PlotEQCurve();
-  virtual void DrawPeakCurve(int band, double G, double F, double lQ, int Ftype);
-  virtual void on_button_press(int a, int b, GdkEventButton* event);
-  virtual void on_button_release(int a, int b, GdkEventButton* event);
-  virtual void on_mouse_move(int a, int b, GdkEventMotion* event);
-  virtual int CalcFg(double &f, double &g);
-  virtual void Set_Bypass(bool bypass);
+  float Gain;
+  float Freq;
+  float Q;
+  bool bIsOn;
+  FilterType fType;
+}FilterBandParams;
+
+class PlotEQCurve : public Gtk::DrawingArea
+{
+  public:
+    PlotEQCurve(int iNumOfBands);
+    virtual ~PlotEQCurve();
+    
+    virtual void setBandGain(int bd_ix, float newGain);
+    virtual void setBandFreq(int bd_ix, float newFreq);
+    virtual void setBandQ(int bd_ix, float newQ);
+    virtual void setBandType(int bd_ix, int newType); ///TODO: are you shure that this is an integer type???
+    virtual void setBandEnable(int bd_ix, bool bIsEnabled);
+    virtual void setBypass(bool bypass);
+    
+    //signal accessor:
+    //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
+    typedef sigc::signal<void, int, float, float, float> signal_BandChanged;
+    signal_BandChanged signal_changed();
+    
+  protected:    
+      //Mouse grab signal handlers
+      virtual bool on_button_press_event(GdkEventButton* event);
+      virtual bool on_button_release_event(GdkEventButton* event);
+      virtual bool on_scrollwheel_event(GdkEventScroll* event);
+      virtual bool on_mouse_motion_event(GdkEventMotion* event);
   
-protected:
- bool mouse_press; //flag pel mouse
- double f[NUM_POINTS];
- void canvicoordenades(double &freq, double &gain);
- double y_vs_gain, x_vs_freq; //pendents pel canvi de coordenades
- int BandSet;
- 
- //Vector de corbes
- double main_y[NUM_POINTS], band_y[NUM_OF_FILTERS][NUM_POINTS];
- 
- //Cada Banda del EQ
- //EQBandCtlPack **FrameBand;
-
- //Gdk::Color m_colors;
-
- Glib::RefPtr<PlotMM::Curve> ZeroCurve;
- Glib::RefPtr<PlotMM::Curve> freq_grid[26], gain_grid[6] ;
- //Glib::RefPtr<PlotMM::Curve> peak_Curve;
- Glib::RefPtr<PlotMM::Curve> peak_Point[NUM_OF_FILTERS]; 
- Glib::RefPtr<PlotMM::Curve> Master_Curve; 
- 
- //Funcions de calcul de corves
- void CalcBand_filter_off(int bd_ix);
- void CalcBand_lpf_order1(int bd_ix, double freq);
- void CalcBand_lpf_order2(int bd_ix, double freq, double Q);
- void CalcBand_lpf_order3(int bd_ix, double freq, double Q);
- void CalcBand_lpf_order4(int bd_ix, double freq, double Q);
- void CalcBand_hpf_order1(int bd_ix, double freq);
- void CalcBand_hpf_order2(int bd_ix, double freq, double Q);
- void CalcBand_hpf_order3(int bd_ix, double freq, double Q);
- void CalcBand_hpf_order4(int bd_ix, double freq, double Q);
- void CalcBand_low_shelv(int bd_ix, double gain, double freq, double Q);
- void CalcBand_high_shelv(int bd_ix, double gain, double freq, double Q);
- void CalcBand_peak(int bd_ix, double gain, double freq, double Q);
- void CalcBand_notch(int bd_ix, double freq, double Q);
-
-  //Function ptr to main
- void (*external_ptr) (main_window *ptr, int b_ix, float g, float f);
-
-  //punter a main_window
-  main_window *main_win_ptr;
+      //Override default signal handler:
+      virtual bool on_expose_event(GdkEventExpose* event);
+      void redraw();
+    
+  private:
+    int m_TotalBandsCount;
+    int m_NumOfPoints;
+    
+    //Store filters data
+    FilterBandParams **m_filters;  //This pointer is initialized by construcor to an array of total num of bands
+    
+    //X axes LUT tables
+    double *f; //This pointer is initialized by construcor to an array of total num of points acording min/max freq define
+    int *xPixels; //This pointer is initialized by construcor to an array of total num of points, eacy item is the pixel space transaltion of corresponding freq
+    
+    //Curve vector for Y axes in dB units
+    double *main_y; //This pointer is initialized by construcor to an array of total num of points
+    double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
   
+    //Fader change signal
+    signal_BandChanged m_BandChangedSignal;
+    
+    //Function for dB to pixels convertion
+    int dB2Pixels(double db);
+    
+    //Compute a filter points
+    void ComputeFilter(int bd_ix); //this methos implements a switch to call methods on bodecalc.cpp acording filter type
+  
+    ///TODO: Falta definir els objectes de dibuix, Cairo, Pango...
+    
+    //Curve math functions implemented in bodecalc.cpp
+    void CalcBand_filter_off(int bd_ix);
+    void CalcBand_lpf_order1(int bd_ix);
+    void CalcBand_lpf_order2(int bd_ix);
+    void CalcBand_lpf_order3(int bd_ix);
+    void CalcBand_lpf_order4(int bd_ix);
+    void CalcBand_hpf_order1(int bd_ix);
+    void CalcBand_hpf_order2(int bd_ix);
+    void CalcBand_hpf_order3(int bd_ix);
+    void CalcBand_hpf_order4(int bd_ix);
+    void CalcBand_low_shelv(int bd_ix);
+    void CalcBand_high_shelv(int bd_ix);
+    void CalcBand_peak(int bd_ix);
+    void CalcBand_notch(int bd_ix);
+    
 };
-/*****************************************************************************/
+#endif
