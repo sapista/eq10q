@@ -68,7 +68,7 @@ inline float ComputeVu(Vu *vu, uint32_t nframes)
 {
   const float fVuOut = vu->vu_max > vu->m_min ? vu->vu_max : 0;
       if (vu->vu_max > vu->m_min)
-		vu->vu_max *= pow(vu->m_decay, nframes);
+		vu->vu_max *= pow(vu->m_decay, nframes);  ///TODO: estas perdent rendiment amb akest pow!!!
       else
 	vu->vu_max = 0.0;
 

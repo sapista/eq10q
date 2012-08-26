@@ -21,6 +21,9 @@ add_library( lib_vumeter  STATIC vu.c)
 ##Build the smooth
 add_library( lib_smooth  STATIC smooth.c)
 
+##Build the db converter
+add_library( lib_db  STATIC db.c)
+
 #CLEAN generated .c files on run 'make clean'
 SET(generatedDspConfigFiles 
       "${PROJECT_SOURCE_DIR}/dsp/filter_mono.h"

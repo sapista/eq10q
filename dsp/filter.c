@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "db.h"
 
 #define CMAKE_FILTER_CHANNEL_COUNT @Num_Of_Channels@
 #if CMAKE_FILTER_CHANNEL_COUNT == 1
@@ -198,7 +199,8 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
     break;
 
     case LOW_SHELF:
-      A=pow(10,(filter->gain/40));
+      A = sqrt(dB2Lin(filter->gain));
+      //A=pow(10,(filter->gain/40));
       alpha =sin(w0)/2 * (1/filter->Q);
 
       b0 = A*((A+1)-(A-1)*cos(w0)+2*sqrt(A)*alpha); //b0
@@ -210,7 +212,8 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
     break;
 
     case HIGH_SHELF:
-      A=pow(10,(filter->gain/40));
+      A = sqrt(dB2Lin(filter->gain));
+      //A=pow(10,(filter->gain/40));
       alpha =sin(w0)/2 * (1/filter->Q);
 
       b0 = A*( (A+1) + (A-1)*cos(w0) + 2*sqrt(A)*alpha ); //b0
@@ -222,7 +225,8 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
     break;
 
     case PEAK:
-      A=pow(10,(filter->gain/40));
+      A = sqrt(dB2Lin(filter->gain));
+      //A=pow(10,(filter->gain/40));
       alpha = sin(w0)/(2*filter->Q);
 
       b0 = 1 + alpha*A; //b0

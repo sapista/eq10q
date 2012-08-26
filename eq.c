@@ -27,12 +27,14 @@ This file implements functionalities for a large numbers of equalizers
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+//#include <math.h>
+
 
 #include "lv2.h"
 #include "gui/eq_defines.h"
 #include "dsp/smooth.h"
 #include "dsp/vu.h"
+#include "dsp/db.h"
 
 //Data from CMake
 #define NUM_BANDS @Eq_Bands_Count@
@@ -195,8 +197,9 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   return (LV2_Handle)plugin_data;
 }
 
+///TODO: remove this
 //Amplifier definition
-#define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
+//#define DB_CO(g) ((g) > -90.0f ? powf(10.0f, (g) * 0.05f) : 0.0f)
 
 static void runEQ(LV2_Handle instance, uint32_t sample_count)
 {
@@ -206,8 +209,12 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
   //Get values of control ports
   const int iBypass = *(plugin_data->fBypass) > 0.0f ? 1 : 0;
   
-  const float fInGain = DB_CO(*(plugin_data->fInGain));
-  const float fOutGain = DB_CO(*(plugin_data->fOutGain));
+  //TODO: remove this
+  //const float fInGain = DB_CO(*(plugin_data->fInGain));
+  //const float fOutGain = DB_CO(*(plugin_data->fOutGain));
+  
+  const float fInGain = dB2Lin(*(plugin_data->fInGain));
+  const float fOutGain = dB2Lin(*(plugin_data->fOutGain));
 
   float fBandGain[NUM_BANDS];
   float fBandFreq[NUM_BANDS];
