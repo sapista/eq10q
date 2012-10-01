@@ -17,6 +17,7 @@ protected:
   EqMainWindow *m_EqWin;
   
   //Slots signal handlers
+  void on_realize();
   void on_BypassChanged(bool bypass);
   void on_InputGainChanged(float gain);
   void on_OutputGainChanged(float gain);

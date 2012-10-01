@@ -54,7 +54,7 @@ m_iBandNum(iBandNum)
   m_FilterSel->set_size_request(55,25);
   m_ComboAlign.add(*m_FilterSel);
   add(m_VBox);
-  set_shadow_type(Gtk::SHADOW_IN);
+  set_shadow_type(Gtk::SHADOW_OUT);
   
   m_ComboAlign.show();
   m_OnButton.show();
@@ -186,9 +186,11 @@ void BandCtl::configSensitive()
     m_Q->set_sensitive(false);
     m_Gain->set_sensitive(false);
     m_Freq->set_sensitive(false);
+    m_FilterSel->set_sensitive(false);
   }
   else
   {
+    m_FilterSel->set_sensitive(true);
     switch((int)m_FilterType)
     {
       case LPF_ORDER_1:

@@ -66,8 +66,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   
   m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
+  m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
 
-  m_BandBox.set_spacing(4);
+  m_BandBox.set_spacing(0);
   m_BandBox.set_homogeneous(true);
   m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
   for (int i = 0; i< m_iNumOfBands; i++)
@@ -78,6 +79,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   }
 
 
+  //Bode plot layout
+  m_PlotFrame.add(*m_Bode);
+  m_PlotFrame.set_label("EQ Curve");
 
   //Box layout
   m_ABFlatBox.set_homogeneous(false);
@@ -88,7 +92,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_ABFlatBox.pack_start(m_FlatAlign);
   
   
-  //m_CurveBypassBandsBox.pack_start(CURVE widget,Gtk::PACK_SHRINK); ///TODO: add curve widget
+  m_CurveBypassBandsBox.pack_start(m_PlotFrame ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_BandBox ,Gtk::PACK_SHRINK);
 
@@ -127,6 +131,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_FlatButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFlat));
   m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
   m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
+  m_Bode->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveChange));
   signal_realize().connect( sigc::mem_fun(*this, &EqMainWindow::onRealize));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
@@ -145,6 +150,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
   modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
   
+  m_WidgetColors.setGenericWidgetColors(&m_PlotFrame);
+  m_WidgetColors.setGenericWidgetColors(m_PlotFrame.get_label_widget());
   m_WidgetColors.setGenericWidgetColors(m_InGain);
   m_WidgetColors.setGenericWidgetColors(m_InGain->get_label_widget());
   m_WidgetColors.setGenericWidgetColors(m_OutGain);
@@ -153,7 +160,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setButtonColors(&m_BButton);
   m_WidgetColors.setButtonColors(&m_FlatButton);
   m_WidgetColors.setButtonColors(&m_BypassButton);
-   
 
   //Set pixmap objects TODO:
   //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
@@ -176,14 +182,11 @@ void EqMainWindow::onRealize()
 {
   Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
   toplevel->set_resizable(false);
-  
-  //Initialize params
-  changeAB(m_AParams);
 }
 
 
 void EqMainWindow::changeAB(EqParams *toBeCurrent)
-{
+{ 
   m_CurParams = toBeCurrent;
   
   //Reload All data
@@ -195,6 +198,10 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
    //Write to LV2 port
    write_function(controller, EQ_INGAIN, sizeof(float), 0, &m_InGainValue);
    write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &m_OutGainValue);
+  
+  //Reset the Curve Plot
+  m_Bode->resetCurve();
+  m_Bode->redraw();
    
   for(int i = 0; i < m_iNumOfBands; i++)
   {
@@ -204,6 +211,14 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
     m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
     m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));
     m_BandCtlArray[i]->setQ(m_CurParams->getBandQ(i));
+    
+    /**
+    m_Bode->setBandEnable(i, m_CurParams->getBandEnabled(i));
+    m_Bode->setBandType(i, m_CurParams->getBandType(i));
+    m_Bode->setBandFreq(i, m_CurParams->getBandFreq(i));
+    m_Bode->setBandGain(i, m_CurParams->getBandGain(i));
+    m_Bode->setBandQ(i, m_CurParams->getBandQ(i));
+    **/
   }
 }
 
@@ -241,6 +256,7 @@ void EqMainWindow::onButtonBypass()
   #ifdef PRINT_DEBUG_INFO
     std::cout<<"onButtonBypass... ";
   #endif
+  m_Bode->setBypass(m_BypassButton.get_active());
   if (m_BypassButton.get_active())
   {
     m_bypassValue = 1;
@@ -264,43 +280,46 @@ void EqMainWindow::onBandChange(int iBand, int iField, float fValue)
     std::cout<<"onBandChange...  Band = "<<iBand<<" Field = "<<iField;
   #endif
   
-  //TODO: Refresh the curve plot widget
-  //Save data change and emit signal
   switch(iField)
   {
     case GAIN_TYPE: 
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels, sizeof(float), 0, &fValue);
       m_CurParams->setBandGain(iBand, fValue);
+      m_Bode->setBandGain(iBand, fValue);
       m_BandGainChangedSignal.emit(iBand, fValue);
       break;
       
     case FREQ_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandFreq(iBand, fValue);
+      m_Bode->setBandFreq(iBand, fValue);
       m_BandFreqChangedSignal.emit(iBand, fValue);
       break;
       
     case Q_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandQ(iBand, fValue);
+      m_Bode->setBandQ(iBand, fValue);
       m_BandQChangedSignal.emit(iBand, fValue);
       break;
       
     case FILTER_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandType(iBand, (int) fValue);
+      m_Bode->setBandType(iBand, (int) fValue);
       m_BandTypeChangedSignal.emit(iBand, (int)fValue);
       break;
       
     case ONOFF_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandEnabled(iBand, (fValue > 0.5)); 
+      m_Bode->setBandEnable(iBand, (fValue > 0.5));
       m_BandEnabledChangedSignal.emit(iBand, (fValue > 0.5));
       break;  
   }
   
   #ifdef PRINT_DEBUG_INFO
-    std::cout<<"Return"<<std::cout;
+    std::cout<<"Return"<<std::endl;
   #endif
 }
 
@@ -347,6 +366,14 @@ void EqMainWindow::onOutputGainChange()
   #endif
 }
 
+void EqMainWindow::onCurveChange(int band_ix, float Gain, float Freq, float Q)
+{
+  m_BandCtlArray[band_ix]->setGain(Gain);
+  m_BandCtlArray[band_ix]->setFreq(Freq);
+  m_BandCtlArray[band_ix]->setQ(Q);
+}
+
+
 void EqMainWindow::loadEqParams()
 {
   
@@ -372,6 +399,7 @@ void EqMainWindow::loadEqParams()
 void EqMainWindow::setBypass(bool bBypass)
 {
     m_BypassButton.set_active(bBypass);
+    m_Bode->setBypass(bBypass);
 }
 
 void EqMainWindow::setInputGain(float Gain)
@@ -397,26 +425,31 @@ void EqMainWindow::setOutputVuLevel(int Channel, float Level)
 void EqMainWindow::setBandGain(int Band, float Gain)
 {
   m_BandCtlArray[Band]->setGain(Gain);
+  ///m_Bode->setBandGain(Band, Gain);
 }
 
 void EqMainWindow::setBandFreq(int Band, float Freq)
 {
   m_BandCtlArray[Band]->setFreq(Freq);
+  ///m_Bode->setBandFreq(Band, Freq);
 }
 
 void EqMainWindow::setBandQ(int Band, float Q)
 {
   m_BandCtlArray[Band]->setQ(Q);
+  ///m_Bode->setBandQ(Band, Q);
 }
 
 void EqMainWindow::setBandType(int Band, float Type)
 {
   m_BandCtlArray[Band]->setFilterType(Type);
+  ///m_Bode->setBandType(Band, (int)Type);
 }
 
 void EqMainWindow::setBandEnabled(int Band, bool Enabled)
 {
   m_BandCtlArray[Band]->setEnabled(Enabled);
+  ///m_Bode->setBandEnable(Band, Enabled);
 }
 
 //LV2 Output port signals

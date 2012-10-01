@@ -22,14 +22,6 @@
 #include <cmath>
 #define PI 3.1416
 
-inline void PlotEQCurve::CalcBand_filter_off(int bd_ix)
-{
-  for(int i=0; i<m_NumOfPoints; i++)
-  {
-    band_y[bd_ix][i]=0;
-  }
-}
- 
 inline void PlotEQCurve::CalcBand_lpf_order1(int bd_ix)
 {
   double w, w2, Im, den;
@@ -101,23 +93,6 @@ inline void PlotEQCurve::CalcBand_lpf_order3(int bd_ix)
  
 inline void PlotEQCurve::CalcBand_lpf_order4(int bd_ix)
 {
-  /*
-  double aux_band[m_NumOfPoints];
-  CalcBand_lpf_order2( bd_ix);
-
-  for(int i=0; i<m_NumOfPoints; i++)
-  {
-    aux_band[i]=band_y[bd_ix][i];
-  }
-
-  CalcBand_lpf_order2( bd_ix);
-
-  for(int i=0; i<m_NumOfPoints; i++)
-  {
-    band_y[bd_ix][i]=band_y[bd_ix][i]+aux_band[i];  
-  }*/
-  
-  // TEST Testing faster implementation
   CalcBand_lpf_order2( bd_ix);
   for(int i=0; i<m_NumOfPoints; i++)
   {
@@ -192,26 +167,7 @@ inline void PlotEQCurve::CalcBand_hpf_order3(int bd_ix)
 }
  
 inline void PlotEQCurve::CalcBand_hpf_order4(int bd_ix)
-{
-  /*
-  double aux_band[m_NumOfPoints];
-  CalcBand_hpf_order2( bd_ix, freq, Q);
-
-  for(int i=0; i<m_NumOfPoints; i++)
-  {
-    aux_band[i]=band_y[bd_ix][i];
-  }
-
-  CalcBand_hpf_order2( bd_ix, freq, Q);
-
-  for(int i=0; i<m_NumOfPoints; i++)
-  {
-    band_y[bd_ix][i]=band_y[bd_ix][i]+aux_band[i];
-  }
-  */
-  
-  // TEST Testing a faster implementation
-  
+{ 
   CalcBand_hpf_order2( bd_ix);
 
   for(int i=0; i<m_NumOfPoints; i++)
@@ -250,6 +206,12 @@ inline void PlotEQCurve::CalcBand_low_shelv(int bd_ix)
     den=den+AQ2wo2*w2;
 
     band_y[bd_ix][i]=(double)20*log10(sqrt((Re*Re)+(Im*Im))/den);
+    
+    //Force zero to avoid some drawing noise
+    if(band_y[bd_ix][i] < 0.1 && band_y[bd_ix][i] > -0.1)
+    {
+      band_y[bd_ix][i] = 0.0;
+    }
   }
 }
  
@@ -283,6 +245,12 @@ inline void PlotEQCurve::CalcBand_high_shelv(int bd_ix)
     den=den+AQ2wo2*w2;
 
     band_y[bd_ix][i]=(double)20*log10(sqrt((Re*Re)+(Im*Im))/den);
+    
+    //Force zero to avoid some drawing noise
+    if(band_y[bd_ix][i] < 0.1 && band_y[bd_ix][i] > -0.1)
+    {
+      band_y[bd_ix][i] = 0.0;
+    }
   }
 }
  
@@ -323,6 +291,7 @@ inline void PlotEQCurve::CalcBand_peak(int bd_ix)
  
 inline void PlotEQCurve::CalcBand_notch(int bd_ix)
 {
+  bool bIsCenterFreq = false;
   double w, w2, Re, Im, den;
   double Q = m_filters[bd_ix]->Q;
   
@@ -331,7 +300,6 @@ inline void PlotEQCurve::CalcBand_notch(int bd_ix)
   double wo2=wo*wo;
   double wo4=wo2*wo2;
   double Q2=Q*Q;
-  double wo3=wo2*wo; ///TODO: Variable sense utilitzar!!!!! OJU verifica be el notch! si va be em carrego akesta linea
   double doswo2=2*wo2;
   double woQ=wo/Q;
   double wo2Q2=wo2/Q2;
@@ -346,7 +314,15 @@ inline void PlotEQCurve::CalcBand_notch(int bd_ix)
     den=wo2-w2;
     den=den*den;
     den=den+wo2Q2*w2;
-
-    band_y[bd_ix][i]=(double)20*log10(sqrt((Re*Re)+(Im*Im))/den);
-  }
+    
+    if( w >= wo && !bIsCenterFreq)
+    {
+      band_y[bd_ix][i] = -100.0;
+      bIsCenterFreq = true;
+    }
+    else
+    {	
+      band_y[bd_ix][i]=(double)20*log10(sqrt((Re*Re)+(Im*Im))/den);
+    }
+  }  
 }

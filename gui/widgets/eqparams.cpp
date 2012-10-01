@@ -194,13 +194,34 @@ void EqParams::loadFromTtlFile(const char *uri)
   #else
     m_fInGain = 0;
     m_fOutGain = 0;
+    float cur_freq = 30.0;
     for(int i = 0; i < m_iNumberOfBands; i ++)
     {
       m_ptr_BandArray[i].fGain = 0;
-      m_ptr_BandArray[i].fFreq = 1000;
       m_ptr_BandArray[i].fQ = 2;
       m_ptr_BandArray[i].iType = 11;
       m_ptr_BandArray[i].bIsEnabled = 0;
+      m_ptr_BandArray[i].fFreq = cur_freq;
+      
+      switch(m_iNumberOfBands)
+      {
+	case 4:
+	  cur_freq *=5.0;
+	  break;
+	
+	case 6:
+	  cur_freq *=3.0;
+	  break;
+	  
+	case 10:
+	  cur_freq *=2.0;
+	  break;
+	  
+	default:
+	  m_ptr_BandArray[i].fFreq = 1000;
+	  break;
+      }
+      
     }
   #endif
 }

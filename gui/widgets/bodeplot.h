@@ -25,9 +25,16 @@
 #include <gtkmm/drawingarea.h>
 #include "filter.h"
 
-#define NUM_POINTS_PER_DECADE 100
-#define MIN_FREQ 20
-#define MAX_FREQ 20000
+#define NUM_POINTS_PER_DECADE 150
+#define MIN_FREQ 20.0
+#define MAX_FREQ 20000.0
+#define GRID_VERTICAL_LINES 28
+#define DB_GRID_RANGE 40.0
+#define CURVE_MARGIN 2
+#define CURVE_TEXT_OFFSET 18
+#define PLOT_HIGHT 200
+#define PLOT_WIDTH 300
+#define SCROLL_EVENT_INCREMENT 0.3
 
 typedef struct
 {
@@ -44,10 +51,13 @@ class PlotEQCurve : public Gtk::DrawingArea
     PlotEQCurve(int iNumOfBands);
     virtual ~PlotEQCurve();
     
+    void reComputeRedrawAll();
+    void resetCurve();
+    void redraw();
     virtual void setBandGain(int bd_ix, float newGain);
     virtual void setBandFreq(int bd_ix, float newFreq);
     virtual void setBandQ(int bd_ix, float newQ);
-    virtual void setBandType(int bd_ix, int newType); ///TODO: are you shure that this is an integer type???
+    virtual void setBandType(int bd_ix, int newType);
     virtual void setBandEnable(int bd_ix, bool bIsEnabled);
     virtual void setBypass(bool bypass);
     
@@ -64,19 +74,27 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual bool on_mouse_motion_event(GdkEventMotion* event);
   
       //Override default signal handler:
+      virtual void on_realize();
       virtual bool on_expose_event(GdkEventExpose* event);
-      void redraw();
     
   private:
+    int width, height; 
     int m_TotalBandsCount;
     int m_NumOfPoints;
+    bool m_Bypass;
+    int m_iBandSel;
+    bool bMotionIsConnected;
+    
+    //To hadle mouse mouve events
+    sigc::connection m_motion_connection;
     
     //Store filters data
     FilterBandParams **m_filters;  //This pointer is initialized by construcor to an array of total num of bands
     
     //X axes LUT tables
+    int xPixels_Grid[GRID_VERTICAL_LINES]; //Pixels used to draw the grind in logspace
     double *f; //This pointer is initialized by construcor to an array of total num of points acording min/max freq define
-    int *xPixels; //This pointer is initialized by construcor to an array of total num of points, eacy item is the pixel space transaltion of corresponding freq
+    int *xPixels; //This pointer is initialized by construcor to an array of total num of points, each item is the pixel space transaltion of corresponding freq
     
     //Curve vector for Y axes in dB units
     double *main_y; //This pointer is initialized by construcor to an array of total num of points
@@ -85,16 +103,25 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Fader change signal
     signal_BandChanged m_BandChangedSignal;
     
+    //Method to initialize base vectors xPixels_Grind, f, xPixels
+    void initBaseVectors();
+    
     //Function for dB to pixels convertion
     int dB2Pixels(double db);
     
+    //Function for Hz to pixels convertion
+    int freq2Pixels(double f);
+    
+    //Function for pixels to dB convertion
+    double Pixels2dB(int pixels);
+    
+    //Function for pixels to Hz convertion
+    double Pixels2freq(int pixels);
+    
     //Compute a filter points
     void ComputeFilter(int bd_ix); //this methos implements a switch to call methods on bodecalc.cpp acording filter type
-  
-    ///TODO: Falta definir els objectes de dibuix, Cairo, Pango...
     
     //Curve math functions implemented in bodecalc.cpp
-    void CalcBand_filter_off(int bd_ix);
     void CalcBand_lpf_order1(int bd_ix);
     void CalcBand_lpf_order2(int bd_ix);
     void CalcBand_lpf_order3(int bd_ix);

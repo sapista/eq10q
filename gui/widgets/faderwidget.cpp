@@ -114,7 +114,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     
     //Draw fader backgroud line
     cr->save();
-    cr->set_source_rgb(0.8, 0.8, 0.9);
+    cr->set_source_rgb(0.7, 0.7, 0.8);
     cr->set_line_width(3);
     cr->move_to(width/2, FADER_MARGIN + m_image_surface_ptr->get_height()/2); 
     cr->line_to(width/2, height - FADER_MARGIN - m_image_surface_ptr->get_height()/2);
@@ -122,15 +122,15 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     cr->restore();
     
     //Draw fader dB scale
-    int yBarPosition;
+    double yBarPosition;
     
     //Draw thin lines for each dB
     cr->save();
-    cr->set_source_rgb(1, 1, 1);
-    cr->set_line_width(0.5);
+    cr->set_source_rgb(0.5, 0.5, 0.6);
+    cr->set_line_width(1);
     for (double i = m_max; i >= m_min; i--)  //The var step size is one dBu
     {
-      yBarPosition = (int)(m*i + n) +  m_image_surface_ptr->get_height()/2;
+      yBarPosition = (double)((int)(m*i + n +  (double)(m_image_surface_ptr->get_height()/2))) + 0.5; //Sum 0.5 to center cairo to the pixel
       cr->move_to(width/2 - m_image_surface_ptr->get_width()/3 - FADER_MARGIN, yBarPosition); 
       cr->line_to(width/2 - FADER_MARGIN, yBarPosition);
       cr->move_to(width/2 + FADER_MARGIN, yBarPosition); 
@@ -142,7 +142,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     
     //Draw text with pango
     cr->save();
-    cr->set_source_rgb(1, 1, 1);
+    cr->set_source_rgb(0.8, 0.8, 0.9);
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 7");
     pangoLayout->set_font_description(font_desc);
@@ -152,7 +152,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     {
       std::stringstream ss;
       yBarPosition = (int)(m*i + n) +  m_image_surface_ptr->get_height()/2;
-      ss<< std::setprecision(3) << i;
+      ss<< std::setprecision(3) << abs(i);
       cr->move_to(width/2 - m_image_surface_ptr->get_width()/2 - 3*FADER_MARGIN, yBarPosition - 14);
       pangoLayout->set_text(ss.str());
       pangoLayout->show_in_cairo_context(cr);
@@ -162,11 +162,11 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
    
     //Draw strong lines with labels
     cr->save();
-    cr->set_source_rgb(1, 1, 1);
+    cr->set_source_rgb(0.6, 0.6, 0.7);
     cr->set_line_width(1.5);
     for (double i = m_max; i >= m_min; i -= m_max/2)  //The var step size is the hlaf of max because I like this way
     {
-      yBarPosition = (int)(m*i + n) +  m_image_surface_ptr->get_height()/2;
+      yBarPosition = (double)((int)(m*i + n +  (double)(m_image_surface_ptr->get_height()/2))) + 0.5;  //Sum 0.5 to center cairo to the pixel
       cr->move_to(width/2 - m_image_surface_ptr->get_width() + FADER_MARGIN, yBarPosition); 
       cr->line_to(width/2 - FADER_MARGIN, yBarPosition);
       cr->move_to(width/2 + FADER_MARGIN, yBarPosition); 

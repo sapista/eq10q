@@ -194,7 +194,7 @@ doap:maintainer [
     lv2:name "Filter 1 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 30;
   ],
 
  [
@@ -204,7 +204,7 @@ doap:maintainer [
     lv2:name "Filter 2 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 60;
   ],
 
   [
@@ -214,7 +214,7 @@ doap:maintainer [
     lv2:name "Filter 3 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 120;
   ],
 
  [
@@ -224,7 +224,7 @@ doap:maintainer [
     lv2:name "Filter 4 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 240;
   ],
 
  [
@@ -234,7 +234,7 @@ doap:maintainer [
     lv2:name "Filter 5 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 480;
   ],
 
  [
@@ -244,7 +244,7 @@ doap:maintainer [
     lv2:name "Filter 6 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 960;
   ],
 
  [
@@ -254,7 +254,7 @@ doap:maintainer [
     lv2:name "Filter 7 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 1920;
   ],
 
  [
@@ -264,7 +264,7 @@ doap:maintainer [
     lv2:name "Filter 8 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 3840;
   ],
 
  [
@@ -274,7 +274,7 @@ doap:maintainer [
     lv2:name "Filter 9 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 7680;
   ],
 
  [
@@ -284,7 +284,7 @@ doap:maintainer [
     lv2:name "Filter 10 Freq";
     lv2:minimum 20;
     lv2:maximum 20000;
-    lv2:default 1000;
+    lv2:default 15360;
   ],
 
 ################## Q PORTS #####################

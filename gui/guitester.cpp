@@ -10,8 +10,8 @@
 
 void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
 {  
-  std::cout<<"--------------------------------------------------------------"<<std::endl;
-  std::cout<<"LV2 Write function test: Port = "<<port_index<<" Data = "<<std::endl;
+  //std::cout<<"--------------------------------------------------------------"<<std::endl;
+  //std::cout<<"LV2 Write function test: Port = "<<port_index<<" Data = "<<std::endl;
 }
 
 HelloWorld::HelloWorld()
@@ -36,7 +36,6 @@ HelloWorld::HelloWorld()
   //Prepare writefunction
   m_EqWin->write_function = writeTestFunction;
   
-
 }
 
 HelloWorld::~HelloWorld()
@@ -44,46 +43,62 @@ HelloWorld::~HelloWorld()
  delete m_EqWin;
 }
 
+void HelloWorld::on_realize()
+{
+  Gtk::Widget::on_realize();
+    
+  //Initialize all
+  for( int i = 0; i < 10; i++)
+  {
+    m_EqWin->setBandEnabled(i,false);
+    m_EqWin->setBandFreq(i, 500);
+    m_EqWin->setBandGain(i, 0);
+    m_EqWin->setBandQ(i, 2);
+    m_EqWin->setBandType(i, 11);
+    m_EqWin->setBypass(false);
+  }
+}
+
 
 //Slots signal handlers
 void HelloWorld::on_BypassChanged(bool bypass)
 {
-  std::cout<<"Bypass = "<<bypass<<std::endl;
+  //std::cout<<"Bypass = "<<bypass<<std::endl;
 }
 
 void HelloWorld::on_InputGainChanged(float gain)
 {
-  std::cout<<"In Gain = "<<gain<<std::endl;
+  //std::cout<<"In Gain = "<<gain<<std::endl;
 }
 
 void HelloWorld::on_OutputGainChanged(float gain)
 {
-  std::cout<<"Out Gain = "<<gain<<std::endl;
+  //std::cout<<"Out Gain = "<<gain<<std::endl;
 }
 
 void HelloWorld::on_BandGainChanged(int band, float gain)
 {
-  std::cout<<"Band "<<band<<" Gain = "<<gain<<std::endl;
+  //std::cout<<"Band "<<band<<" Gain = "<<gain<<std::endl;
 }
 
 void HelloWorld::on_BandFreqChanged(int band, float freq)
 {
-  std::cout<<"Band "<<band<<" Freq = "<<freq<<std::endl;
+  //std::cout<<"Band "<<band<<" Freq = "<<freq<<std::endl;
 }
 
 void HelloWorld::on_BandQChanged(int band, float q)
 {
-  std::cout<<"Band "<<band<<" Q = "<<q<<std::endl; 
+  //std::cout<<"Band "<<band<<" Q = "<<q<<std::endl; 
 }
 
 void HelloWorld::on_BandTypeChanged(int band, int type)
 {
-  std::cout<<"Band "<<band<<" Type = "<<type<<std::endl;  
+  //std::cout<<"Band "<<band<<" Type = "<<type<<std::endl;  
 }
 
 void HelloWorld::on_BandEnabledChanged(int band, bool enabled)
 {
-  std::cout<<"Band "<<band<<" Enabled = "<<enabled<<std::endl;  
+  //std::cout<<"Band "<<band<<" Enabled = "<<enabled<<std::endl;  
 }
 
 

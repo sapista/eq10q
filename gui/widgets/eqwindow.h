@@ -30,6 +30,7 @@
 #include <gtkmm/alignment.h>
 #include <gtkmm/button.h>
 #include <gtkmm/messagedialog.h>
+#include <gtkmm/frame.h>
 //#include <gtkmm/fixed.h> //Amb el nou plot potser no caldara
 #include <gtkmm/image.h>
 
@@ -41,6 +42,7 @@
 #include "bandctl.h"
 #include "gainctl.h"
 #include "eqparams.h"
+#include "bodeplot.h"
 
 //Include eq definition
 #include "../eq_defines.h"
@@ -138,63 +140,68 @@ class EqMainWindow : public Gtk::EventBox {
 
 	  default:
 	    //Connect BandGain ports
-	    if(port >= (PORT_OFFSET + 2*m_iNumOfChannels) && port < (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands))
+	    if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands))
 	    {
-	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels]->setGain(data);
+	      m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels]->setGain(data);
+	      ///m_Bode->setBandGain((int)port - PORT_OFFSET - 2*m_iNumOfChannels, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Gain"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect BandFreq ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands))
 	    {
-	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands]->setFreq(data);
+	      m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands]->setFreq(data);
+	      ///m_Bode->setBandFreq((int)port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Freq"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect BandParam ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands))
 	    {
-	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands]->setQ(data);
+	      m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands]->setQ(data);
+	      ///m_Bode->setBandQ((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Q"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect BandType ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands))
 	    {
-	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands]->setFilterType(data);
+	      m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands]->setFilterType(data);
+	      ///m_Bode->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Type"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect BandEnabled ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands))
 	    {
-	      m_BandCtlArray[port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands]->setEnabled(data > 0.5);
+	      m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands]->setEnabled(data > 0.5);
+	      ///m_Bode->setBandEnable((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands, data > 0.5);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Enabled"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect VuInput ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels))
 	    {
-	      m_InGain->setVu(port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands,data);
+	      m_InGain->setVu((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands,data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Vu input"<<std::endl;
 	      #endif  
 	    }
 
 	    //Connect VuOutput ports
-	    else if(port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels) && port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
+	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
 	    {
-	      m_OutGain->setVu(port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands - m_iNumOfChannels, data);
+	      m_OutGain->setVu((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands - m_iNumOfChannels, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Vu output"<<std::endl;
 	      #endif  
@@ -229,6 +236,8 @@ class EqMainWindow : public Gtk::EventBox {
     Gtk::ToggleButton m_BypassButton, m_AButton, m_BButton;
     Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign;
     Gtk::Button m_FlatButton;
+    Gtk::Frame m_PlotFrame;
+    PlotEQCurve *m_Bode;
     ///Gtk::Fixed m_PlotFix; ///TODO: amb el nou sistema de plot potser no caldra
     
     ///TODO: Estudiar la millor forma de carrgar les imatges
@@ -246,7 +255,7 @@ class EqMainWindow : public Gtk::EventBox {
     void onInputGainChange();
     void onOutputGainChange();
     void onRealize();
-    //void onCurveChange(); //TODO: no se com ha de ser en handle de la curve
+    void onCurveChange(int band_ix, float Gain, float Freq, float Q);
     
   private:
     float m_bypassValue;
