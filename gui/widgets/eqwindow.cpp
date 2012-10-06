@@ -22,7 +22,7 @@
 
 #include <gtkmm/rc.h>
 #include "eqwindow.h"
-#include "guiconstants.h" ///TODO: I don't remember what is this include
+#include "guiconstants.h"
 #include "colors.h"
 #include "setwidgetcolors.h"
 
@@ -44,6 +44,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
 //   image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
 //   image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
 //   image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
+
+
+//Set Custom style
+//Glib::RefPtr<Gtk::RCStyle> thisWidgetStyle = get_modifier_style();
+//thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
+
+
+
   
  //Buttons A,B i Flat
   m_AButton.set_size_request(25,23);
@@ -163,6 +171,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
 
   //Set pixmap objects TODO:
   //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
+  
+  
+thisWidgetStyle = Gtk::Style::create();
+thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
+set_style(thisWidgetStyle);
 }
 
 EqMainWindow::~EqMainWindow()
@@ -181,7 +194,7 @@ EqMainWindow::~EqMainWindow()
 void EqMainWindow::onRealize()
 {
   Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
-  toplevel->set_resizable(false);
+  toplevel->set_resizable(false);  
 }
 
 

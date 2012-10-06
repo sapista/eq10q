@@ -21,6 +21,9 @@
 #include "guiconstants.h"
 #include "ctlbutton.h"
 #include <cmath>
+
+
+
 #include <iostream>
 #include <iomanip> 
 
@@ -36,8 +39,11 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   signal_show().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
   signal_realize().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
   signal_state_changed().connect(sigc::mem_fun(*this,&CtlButton::onButtonStateChanged));
-   
-  add_events(Gdk::POINTER_MOTION_MASK); 
+  add_events(Gdk::POINTER_MOTION_MASK);
+  
+  //Set font type
+  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 9"));
+  add(btnLabel);
 
 }
 
@@ -168,7 +174,8 @@ void CtlButton::setButtonNumber(float fNum)
       button_text = Glib::ustring::format(std::fixed, std::setprecision(2), m_fValue);
       break;
   }
-  set_label(button_text);
+ 
+  btnLabel.set_text(button_text);
 }
 
 float CtlButton::getButtonNumber()

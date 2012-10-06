@@ -48,16 +48,16 @@ class EQButton : public Gtk::VBox{
     CtlButton *m_ptr_CtlButton;
 
     //GTK signal handlers
-    virtual void onButtonDoubleClicked();
     virtual void onEnterPressed();
+    virtual void onButtonDoubleClicked();
     virtual void onSpinChange();
-	virtual void onCtlButtonChanged();
+    virtual void onCtlButtonChanged();
     
   private:
-    //int m_iFilterType; //TODO: check this can be remove
-	FilterType m_FilterType;
+    FilterType m_FilterType;
     float m_fValue;
     bool *m_bStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
+    bool m_bTextEntryMode;
 	
     //EQButton change signal
     signal_EqButtonChanged m_EqButtonChangedSignal;

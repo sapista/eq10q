@@ -35,7 +35,7 @@ m_iBandNum(iBandNum)
 
   Glib::ustring sText = Glib::ustring::compose("Band %1", m_iBandNum + 1);
   m_FrameLabel.set_use_markup(true);
-  m_FrameLabel.set_markup( "<span font_weight=\"bold\">" + sText + "</span>");
+  m_FrameLabel.set_markup( "<span font_weight=\"bold\" font_family=\"Monospace\">" + sText + "</span>");
   set_label_widget(m_FrameLabel);
 
   m_VBox.pack_start(m_ComboAlign, Gtk::PACK_EXPAND_PADDING );
@@ -72,13 +72,17 @@ m_iBandNum(iBandNum)
   m_Q->set_tooltip_text("Press and drag to adjust Q.\nAlso you can double click to enter value.");
   m_OnButton.set_tooltip_text("Enable/Disable this band");
 
-  m_OnButton.set_label("ON");
   m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
   m_FilterSel->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
   m_Gain->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
   m_Freq->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onFreqChanged));
   m_Q->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onQChanged));
   signal_realize().connect(sigc::mem_fun(*this, &BandCtl::onThisWidgetRealize));
+  
+  //Set ON Button font type and ON text
+  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 9"));
+  m_OnButton.add(btnLabel);
+  btnLabel.set_text("ON");
   
   //Set Colors
   SetWidgetColors m_WidgetColors;
@@ -161,6 +165,33 @@ void BandCtl::onComboChanged()
   //m_iFilterType = m_FilterSel->get_active_row_number();
   m_FilterType = int2FilterType(m_FilterSel->get_active_row_number() + 1);
   configSensitive();
+  
+  //Config default Q for each kind of filter
+  switch((int)m_FilterType)
+  {
+    case LPF_ORDER_2:
+    case LPF_ORDER_3:
+    case LPF_ORDER_4:
+    case HPF_ORDER_2:
+    case HPF_ORDER_3:
+    case HPF_ORDER_4:
+      setQ(HPF_LPF_Q_DEFAULT); 
+    break;
+    
+    case NOTCH:
+      setQ(NOTCH_Q_DEFAULT);
+    break;
+
+    case LOW_SHELF:
+    case HIGH_SHELF:
+      setQ(HIGH_LOW_SHELF_Q_DEFAULT);
+    break;
+    
+    case PEAK:
+      setQ(PEAK_Q_DEFAULT);
+    break;
+  }
+  
   m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
 }
 
@@ -206,12 +237,7 @@ void BandCtl::configSensitive()
       case HPF_ORDER_2:
       case HPF_ORDER_3:
       case HPF_ORDER_4:
-	setQ(HPF_LPF_Q_DEFAULT);
-	goto hpf_lpf;
       case NOTCH:
-	setQ(NOTCH_Q_DEFAULT);
-
-  hpf_lpf:
 	m_Gain->set_sensitive(false);
 	m_Q->set_sensitive(true);
 	m_Freq->set_sensitive(true);
@@ -219,11 +245,7 @@ void BandCtl::configSensitive()
 
       case LOW_SHELF:
       case HIGH_SHELF:
-	setQ(HIGH_LOW_SHELF_Q_DEFAULT);
-	goto shelvings;
       case PEAK:
-	setQ(PEAK_Q_DEFAULT);
-  shelvings:
 	m_Gain->set_sensitive(true);
 	m_Q->set_sensitive(true);
 	m_Freq->set_sensitive(true);

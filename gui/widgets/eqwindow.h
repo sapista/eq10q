@@ -277,6 +277,9 @@ class EqMainWindow : public Gtk::EventBox {
     signal_BandTypeChanged m_BandTypeChangedSignal;
     signal_BandEnabledChanged m_BandEnabledChangedSignal;
     ///TODO: Fins aki----------------------------------------------------------------------------------------
+    
+    
+      Glib::RefPtr< Gtk::Style> thisWidgetStyle;
 };
 
 #endif

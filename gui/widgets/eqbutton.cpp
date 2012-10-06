@@ -25,13 +25,14 @@
 EQButton::EQButton(int iType, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_bStop(bSemafor),
-m_FilterType(int2FilterType(iType))
+m_FilterType(int2FilterType(iType)),
+m_bTextEntryMode(false)
 {
   *m_bStop = false;
   m_ptr_CtlButton = Gtk::manage(new CtlButton(iType));
   m_ptr_CtlButton->setButtonNumber(m_fValue);
   
-  m_TextEntry.set_numeric(true);
+  m_TextEntry.set_update_policy(Gtk::UPDATE_ALWAYS);
   
   switch ((int)m_FilterType)
   {
@@ -126,11 +127,14 @@ void EQButton::onButtonDoubleClicked()
 {
   if(!*m_bStop)
   {
-      *m_bStop = true;
-      m_ptr_CtlButton->hide();
-      setValue(m_ptr_CtlButton->getButtonNumber());
-      m_TextEntry.show();
-      m_TextEntry.grab_focus();
+    add_modal_grab();
+    //Button change
+    m_bTextEntryMode = true;
+    *m_bStop = true;
+    m_ptr_CtlButton->hide();
+    setValue(m_ptr_CtlButton->getButtonNumber());
+    m_TextEntry.show();
+    m_TextEntry.grab_focus();
   }
 }
 
@@ -140,6 +144,7 @@ void EQButton::onEnterPressed()
   m_ptr_CtlButton->show();
   m_TextEntry.hide();
   *m_bStop = false;
+  remove_modal_grab();
   m_EqButtonChangedSignal.emit();
 }
 

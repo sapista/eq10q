@@ -28,6 +28,7 @@
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/alignment.h>
 #include <gtkmm/frame.h>
+#include <gtkmm/label.h>
 
 class BandCtl : public Gtk::Frame
 {
@@ -72,6 +73,7 @@ class BandCtl : public Gtk::Frame
     
   private:
     Gtk::Label m_FrameLabel;
+    Gtk::Label btnLabel;
     FilterType m_FilterType;
     int m_iBandNum;
     bool m_bBandIsEnabled;
