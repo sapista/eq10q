@@ -19,7 +19,6 @@ HelloWorld::HelloWorld()
   m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs","/home/sapista/build/LV2/trunk/gui"));
   add(*m_EqWin);
 
-  
   show_all_children();
   
   //Signals connections

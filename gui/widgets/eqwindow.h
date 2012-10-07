@@ -279,7 +279,7 @@ class EqMainWindow : public Gtk::EventBox {
     ///TODO: Fins aki----------------------------------------------------------------------------------------
     
     
-      Glib::RefPtr< Gtk::Style> thisWidgetStyle;
+      Glib::RefPtr< Gtk::RcStyle> thisWidgetStyle;
 };
 
 #endif

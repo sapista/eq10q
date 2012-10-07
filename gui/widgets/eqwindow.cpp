@@ -173,9 +173,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
   
   
-thisWidgetStyle = Gtk::Style::create();
-thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
-set_style(thisWidgetStyle);
+//thisWidgetStyle = Gtk::Style::create();
+//thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
+//set_style(thisWidgetStyle);
+
+
 }
 
 EqMainWindow::~EqMainWindow()
