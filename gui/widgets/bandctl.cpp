@@ -44,7 +44,7 @@ m_iBandNum(iBandNum)
   m_VBox.pack_start(*m_Q, Gtk::PACK_EXPAND_PADDING );
   m_VBox.pack_start(m_ButtonAlign, Gtk::PACK_EXPAND_PADDING );
 
-  m_OnButton.set_size_request(35,20);
+  m_OnButton.set_size_request(30,20);
   m_ButtonAlign.add(m_OnButton);
   
   m_VBox.set_spacing(0);

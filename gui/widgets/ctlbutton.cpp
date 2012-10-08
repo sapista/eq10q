@@ -42,9 +42,16 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   add_events(Gdk::POINTER_MOTION_MASK);
   
   //Set font type
-  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 9"));
+  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 15"));
+  btnLabel.modify_fg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_PRELIGHT, Gdk::Color::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_SELECTED, Gdk::Color::Color("#FFFFFF")); 
   add(btnLabel);
 
+  //Set custom theme style    
+  set_style(m_WidgetColors.getPlainButtonStyle());
 }
 
 CtlButton::~CtlButton()
@@ -54,8 +61,9 @@ CtlButton::~CtlButton()
 
 void CtlButton::onButtonRealize()
 {
+  ///TODO: remove this method and his connection to on_realize, now is don with Gtk::Style Object
   //Set Start Colors
-  m_WidgetColors.setButtonColors(this);
+  //m_WidgetColors.setButtonColors(this);
 }
 
 void CtlButton::onButtonStateChanged(Gtk::StateType previous_state)
@@ -86,7 +94,6 @@ void CtlButton::onButtonPressed()
   m_iAntValue = 0;
   m_iActValue = 0;
   m_MouseSignal = signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
-  m_WidgetColors.setButtonColors(this);
   set_state(Gtk::STATE_ACTIVE);
 }
 
@@ -95,7 +102,6 @@ void CtlButton::onButtonDepressed()
   m_MouseSignal.disconnect();
   m_iAntValue = 0;
   m_iActValue = 0;
-  m_WidgetColors.setButtonColors(this);
   set_state(Gtk::STATE_NORMAL);
 }
 
@@ -104,13 +110,8 @@ bool CtlButton::onMouseMove(GdkEventMotion* event)
   int x,y;
   get_pointer(x, y);
   setButtonNumber(computeValue(x,y));
-  
-  ///TODO: Els colors no treballen be en moure el mouse amb aixo comenetat
-  ///pero si ho comento.. llavors el buto te una resposta poc fluida...
-  //m_WidgetColors.setButtonColors(this);
-  //set_state(Gtk::STATE_ACTIVE);
-  
   m_ctlButtonChangedSignal.emit();
+  set_state(Gtk::STATE_ACTIVE);
   return true;
 }
 

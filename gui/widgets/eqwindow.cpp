@@ -170,12 +170,18 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setButtonColors(&m_BypassButton);
 
   //Set pixmap objects TODO:
-  //void 	modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
+  //void modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
   
+
+/*
+    unsetenv ("GTK_RC_FILES");
+  Gtk::RC rc ("/home/sapista/build/LV2/GtkRCTest/gtkrc");
+  //RC::reset_styles (Gtk::Settings::get_default());
+  //rc.reset_styles(Gtk::Settings::get_default());
+  gtk_rc_reset_styles (gtk_settings_get_default());
+  */
   
-//thisWidgetStyle = Gtk::Style::create();
-//thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
-//set_style(thisWidgetStyle);
+
 
 
 }

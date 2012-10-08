@@ -21,6 +21,8 @@
 #include "pixmapcombo.h"
 #include <cstring>
 
+#include "setwidgetcolors.h"
+
 
 PixMapCombo::PixMapCombo(const char *bundlePath)
 :m_bundlePath(bundlePath)
@@ -119,6 +121,32 @@ PixMapCombo::PixMapCombo(const char *bundlePath)
    //add to combo
    pack_start(m_Columns.m_col_pix);
    
+   //Setup style
+   ///TODO SetWidgetColors myColors; Remve this and also the include
+   /*
+   get_toplevel()->set_style(myColors.getPlainButtonStyle());
+   get_toplevel()->modify_bg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FF00F7"));
+   get_toplevel()->modify_bg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FF00F7"));
+   get_toplevel()->modify_bg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FF00F7"));
+   get_toplevel()->modify_bg(Gtk::STATE_PRELIGHT, Gdk::Color::Color("#FF00F7"));
+   get_toplevel()->modify_bg(Gtk::STATE_SELECTED, Gdk::Color::Color("#FF00F7"));*/
+   
+   
+   Glib::RefPtr<Gtk::Style> comboStyle = get_style();
+   comboStyle->set_bg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FF00F7"));
+   comboStyle->set_bg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FF00F7"));
+   comboStyle->set_bg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FF00F7"));
+   comboStyle->set_bg(Gtk::STATE_PRELIGHT, Gdk::Color::Color("#FF00F7"));
+   comboStyle->set_bg(Gtk::STATE_SELECTED, Gdk::Color::Color("#FF00F7"));
+   set_style(comboStyle);
+   
+   /*
+   modify_fg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FF00F7"));
+   modify_fg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FF00F7"));
+   modify_fg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FF00F7"));
+   modify_fg(Gtk::STATE_PRELIGHT, Gdk::Color::Color("#FF00F7"));
+   modify_fg(Gtk::STATE_SELECTED, Gdk::Color::Color("#FF00F7"));
+   */
       
    show_all_children();
 }

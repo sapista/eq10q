@@ -32,9 +32,11 @@ class SetWidgetColors
     void setButtonColors(Gtk::Button* widget);
     void setGenericWidgetColors(Gtk::Widget* widget);
     void setBandFrameColor(Gtk::Frame* widget, int band);
+    Glib::RefPtr<Gtk::Style> getPlainButtonStyle();
     
   private:
     Gdk::Color m_Button_BgColorActive, m_Button_BgColorInactive, m_Button_BgColorNormal, m_Button_BgColorOver, m_Button_FgColor, m_Button_TextColor;
     Gdk::Color m_BandsColors[10];
+    Glib::RefPtr<Gtk::Style> PlainButtonStyle;
 };
 #endif

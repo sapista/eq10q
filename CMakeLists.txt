@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(eq10q)
 
 #denormals are handled using -ffast-math
-ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -ffast-math)
-###ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC -ffast-math) ###USED FOR DEBUG
+###ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -ffast-math)
+ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC -ffast-math) ###USED FOR DEBUG
 
 #Set Install prefix
 #set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix

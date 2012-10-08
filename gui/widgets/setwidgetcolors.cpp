@@ -34,7 +34,44 @@ SetWidgetColors::SetWidgetColors()
   {
     m_BandsColors[i].set(bandColorLUT[i]);
   }
+  
+  //Initialize the ButtonStyle Object
+  PlainButtonStyle = Gtk::Style::create(); 
+  
+  //Backround colors
+  PlainButtonStyle->set_bg(Gtk::STATE_NORMAL, m_Button_BgColorNormal);
+  PlainButtonStyle->set_bg(Gtk::STATE_ACTIVE, m_Button_BgColorActive);
+  PlainButtonStyle->set_bg(Gtk::STATE_INSENSITIVE, m_Button_BgColorInactive);
+  PlainButtonStyle->set_bg(Gtk::STATE_PRELIGHT, m_Button_BgColorOver);
+  PlainButtonStyle->set_bg(Gtk::STATE_SELECTED, m_Button_BgColorNormal);
+  
+  //Base colors
+  PlainButtonStyle->set_base(Gtk::STATE_NORMAL, m_Button_BgColorNormal);
+  PlainButtonStyle->set_base(Gtk::STATE_ACTIVE, m_Button_BgColorActive);
+  PlainButtonStyle->set_base(Gtk::STATE_INSENSITIVE, m_Button_BgColorInactive);
+  PlainButtonStyle->set_base(Gtk::STATE_PRELIGHT, m_Button_BgColorOver);
+  PlainButtonStyle->set_base(Gtk::STATE_SELECTED, m_Button_BgColorNormal);
+  
+  //Foreground
+  PlainButtonStyle->set_fg(Gtk::STATE_NORMAL, m_Button_FgColor);
+  PlainButtonStyle->set_fg(Gtk::STATE_ACTIVE, m_Button_FgColor);
+  PlainButtonStyle->set_fg(Gtk::STATE_INSENSITIVE, m_Button_FgColor);
+  PlainButtonStyle->set_fg(Gtk::STATE_PRELIGHT, m_Button_FgColor);
+  PlainButtonStyle->set_fg(Gtk::STATE_SELECTED, m_Button_FgColor);
+  
+  //Text colors
+  PlainButtonStyle->set_text(Gtk::STATE_NORMAL, Gdk::Color::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_ACTIVE,  Gdk::Color::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_INSENSITIVE,  Gdk::Color::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_PRELIGHT,  Gdk::Color::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_SELECTED,  Gdk::Color::Color("#FFFFFF"));  
 }
+
+Glib::RefPtr< Gtk::Style > SetWidgetColors::getPlainButtonStyle()
+{
+  return PlainButtonStyle;
+}
+
 
 void SetWidgetColors::setButtonColors(Gtk::Button* widget)
 {

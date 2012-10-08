@@ -278,8 +278,6 @@ class EqMainWindow : public Gtk::EventBox {
     signal_BandEnabledChanged m_BandEnabledChangedSignal;
     ///TODO: Fins aki----------------------------------------------------------------------------------------
     
-    
-      Glib::RefPtr< Gtk::RcStyle> thisWidgetStyle;
 };
 
 #endif
