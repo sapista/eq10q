@@ -28,10 +28,10 @@
 
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath)
-  :m_FlatButton("Flat"),
-  m_AButton("A"),
-  m_BButton("B"),
-  m_BypassButton("Bypass"),
+  :m_FlatButton(" Flat "),
+  m_AButton(" A "),
+  m_BButton(" B "),
+  m_BypassButton(" Bypass "),
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
   m_bMutex(false),
@@ -54,12 +54,12 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
 
   
  //Buttons A,B i Flat
-  m_AButton.set_size_request(25,23);
-  m_BButton.set_size_request(25,23);
+  //m_AButton.set_size_request(25,23);
+  //m_BButton.set_size_request(25,23);
   m_AButton.set_active(true);
   m_BButton.set_active(false);
-  m_FlatButton.set_size_request(40,23); 
-  m_BypassButton.set_size_request(55,23); 
+  //m_FlatButton.set_size_request(40,23); 
+  //m_BypassButton.set_size_request(55,23); 
   
   m_ButtonAAlign.add(m_AButton);
   m_ButtonBAlign.add(m_BButton);
@@ -79,13 +79,13 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_BandBox.set_spacing(0);
   m_BandBox.set_homogeneous(true);
   m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
+  
   for (int i = 0; i< m_iNumOfBands; i++)
   {
     m_BandCtlArray[i] = Gtk::manage(new BandCtl(i, &m_bMutex, m_bundlePath.c_str()));
     m_BandBox.pack_start(*m_BandCtlArray[i], Gtk::PACK_SHRINK);
     m_BandCtlArray[i] -> signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onBandChange));
   }
-
 
   //Bode plot layout
   m_PlotFrame.add(*m_Bode);
@@ -168,6 +168,12 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setButtonColors(&m_BButton);
   m_WidgetColors.setButtonColors(&m_FlatButton);
   m_WidgetColors.setButtonColors(&m_BypassButton);
+  
+  //Set buttons font type
+  m_BypassButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
+  m_AButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
+  m_BButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
+  m_FlatButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
 
   //Set pixmap objects TODO:
   //void modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)

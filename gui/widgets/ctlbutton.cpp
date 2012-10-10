@@ -42,7 +42,7 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   add_events(Gdk::POINTER_MOTION_MASK);
   
   //Set font type
-  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 15"));
+  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
   btnLabel.modify_fg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FFFFFF"));
   btnLabel.modify_fg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FFFFFF"));
   btnLabel.modify_fg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FFFFFF"));

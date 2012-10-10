@@ -318,10 +318,10 @@ bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
   for(int i = 0; i < m_TotalBandsCount; i++)
   {
     if( m_filters[i]->bIsOn &&
-	event->x > freq2Pixels(m_filters[i]->Freq) - 5 &&
-	event->x < freq2Pixels(m_filters[i]->Freq) + 5 &&
-	event->y > dB2Pixels(m_filters[i]->Gain) - 5 &&
-	event->y < dB2Pixels(m_filters[i]->Gain) + 5 )
+	event->x > freq2Pixels(m_filters[i]->Freq) - 8 &&
+	event->x < freq2Pixels(m_filters[i]->Freq) + 8 &&
+	event->y > dB2Pixels(m_filters[i]->Gain) - 8 &&
+	event->y < dB2Pixels(m_filters[i]->Gain) + 8 )
     {
       m_iBandSel = i;
       if (!bMotionIsConnected)
@@ -613,13 +613,13 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
 	  cr->save();
 	  Gdk::Color color(bandColorLUT[i]);
 	  cr->set_source_rgb(color.get_red_p(), color.get_green_p(), color.get_blue_p());
-	  cr->arc(ball_x, ball_y, 4.0, 0.0, 6.28318530717958647693);
+	  cr->arc(ball_x, ball_y, 5.0, 0.0, 6.28318530717958647693);
 	  cr->fill();
 	  cr->restore();
 	  
 	  cr->save();
 	  cr->set_line_width(1);
-	  cr->set_source_rgb(1,1,1);
+	  cr->set_source_rgb(0.1,0.1,0.1);
 	  cr->arc(ball_x, ball_y, 4.0, 0.0, 6.28318530717958647693);
 	  cr->stroke();
 	  cr->restore();

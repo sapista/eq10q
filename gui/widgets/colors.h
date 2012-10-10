@@ -33,32 +33,32 @@
 #define FOREGROUND_B 0.0
 
 //Text Label Color
-#define TEXT_R 0.9
-#define TEXT_G 0.9
-#define TEXT_B 0.9
+#define TEXT_R 1.0
+#define TEXT_G 1.0
+#define TEXT_B 1.0
 
 //Buttons background colors 
-#define BUTTON_BACKGROUND_R 0.22
-#define BUTTON_BACKGROUND_G 0.62
-#define BUTTON_BACKGROUND_B 0.75
+#define BUTTON_BACKGROUND_R 0.02
+#define BUTTON_BACKGROUND_G 0.32
+#define BUTTON_BACKGROUND_B 0.45
 
 //Buttons Active background colors 
-#define BUTTON_ACTIVE_BG_R 0.31
-#define BUTTON_ACTIVE_BG_G 0.76
-#define BUTTON_ACTIVE_BG_B 0.39
+#define BUTTON_ACTIVE_BG_R 0.11
+#define BUTTON_ACTIVE_BG_G 0.56
+#define BUTTON_ACTIVE_BG_B 0.19
 
 //Buttons inactive background colors 
-#define BUTTON_INACTIVE_BG_R 0.15
-#define BUTTON_INACTIVE_BG_G 0.35
-#define BUTTON_INACTIVE_BG_B 0.45
+#define BUTTON_INACTIVE_BG_R 0.00
+#define BUTTON_INACTIVE_BG_G 0.15
+#define BUTTON_INACTIVE_BG_B 0.25
 
 //Buttons Mouse Over background colors 
-#define BUTTON_OVER_BG_R 0.31
-#define BUTTON_OVER_BG_G 0.76
-#define BUTTON_OVER_BG_B 0.39
+#define BUTTON_OVER_BG_R 0.01
+#define BUTTON_OVER_BG_G 0.46
+#define BUTTON_OVER_BG_B 0.09
 
 //Bands colors LUT
-const  Glib::ustring bandColorLUT[] = {"#A52A2A","#FFFF00","#FFA500","#CD6E53","#FF01FF","#FF0000","#902CEE","#0000FB","#B2DFEE","#00FF00" };
+const  Glib::ustring bandColorLUT[] = {"#FF0000","#FFFF00","#535EFB","#19FFAF","#FF01FF","#00FF00","#A52A2A","#FF8C2E","#B2DFEE","#7129EE" };
 
 //Convert to Gdk::Color macro
 #define GDK_COLOR_MACRO(_color) ((gushort)floor(_color * (double)G_MAXUSHORT))
