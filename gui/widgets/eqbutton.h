@@ -41,7 +41,10 @@ class EQButton : public Gtk::VBox{
     //signal accessor: 
     typedef sigc::signal<void> signal_EqButtonChanged;
     signal_EqButtonChanged signal_changed();
-	
+
+    typedef sigc::signal<void, bool> signal_EqButtonSpinState;
+    signal_EqButtonSpinState spinState_changed();
+    
   protected:
     Gtk::Alignment m_ButtonAlign;
     Gtk::SpinButton m_TextEntry;
@@ -58,8 +61,9 @@ class EQButton : public Gtk::VBox{
     float m_fValue;
     bool *m_bStop; //This is muttual exclusion pointer. This pointer have to be common to all syncronitzated buttons in order to avoid multiple textEntry at the same time.
     bool m_bTextEntryMode;
-	
+    
     //EQButton change signal
     signal_EqButtonChanged m_EqButtonChangedSignal;
+    signal_EqButtonSpinState m_EqButtonSpinState;
 };
 #endif

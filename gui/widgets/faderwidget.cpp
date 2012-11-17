@@ -114,7 +114,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     
     //Draw fader backgroud line
     cr->save();
-    cr->set_source_rgb(0.7, 0.7, 0.8);
+    cr->set_source_rgb(0.27, 0.28, 0.35);
     cr->set_line_width(3);
     cr->move_to(width/2, FADER_MARGIN + m_image_surface_ptr->get_height()/2); 
     cr->line_to(width/2, height - FADER_MARGIN - m_image_surface_ptr->get_height()/2);
@@ -126,7 +126,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     
     //Draw thin lines for each dB
     cr->save();
-    cr->set_source_rgb(0.5, 0.5, 0.6);
+    cr->set_source_rgb(0.4, 0.4, 0.5);
     cr->set_line_width(1);
     for (double i = m_max; i >= m_min; i--)  //The var step size is one dBu
     {
@@ -142,7 +142,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
     
     //Draw text with pango
     cr->save();
-    cr->set_source_rgb(0.8, 0.8, 0.9);
+    cr->set_source_rgb(0.75, 0.75, 0.85);
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 7");
     pangoLayout->set_font_description(font_desc);
@@ -162,7 +162,7 @@ bool FaderWidget::on_expose_event(GdkEventExpose* event)
    
     //Draw strong lines with labels
     cr->save();
-    cr->set_source_rgb(0.6, 0.6, 0.7);
+    cr->set_source_rgb(0.55, 0.55, 0.65);
     cr->set_line_width(1.5);
     for (double i = m_max; i >= m_min; i -= m_max/2)  //The var step size is the hlaf of max because I like this way
     {

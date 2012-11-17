@@ -45,8 +45,8 @@ class BandCtl : public Gtk::Frame
     void setGain(float fGain);
     void setFreq(float fFreq);
     void setQ(float fQ);
-    void setFilterType(float fType);
-    void setEnabled(bool bIsEnabled);
+    void setFilterType(float fType, bool DisableEvent = false);
+    void setEnabled(bool bIsEnabled, bool DisableEvent = false);
     
     //signal accessor: 
 	//Parameters:
@@ -70,13 +70,14 @@ class BandCtl : public Gtk::Frame
     void onGainChanged();
     void onFreqChanged();
     void onQChanged();
+    void onSpinStateChanged(bool SpinState);
     
   private:
     Gtk::Label m_FrameLabel;
     Gtk::Label btnLabel;
     FilterType m_FilterType;
     int m_iBandNum;
-    bool m_bBandIsEnabled;
+    bool m_bBandIsEnabled, m_DisableComboEvent, m_DisableButtonEvent;
     std::string m_budlepath;
     
     void configSensitive();

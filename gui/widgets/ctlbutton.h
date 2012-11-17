@@ -37,13 +37,11 @@ class CtlButton : public Gtk::Button{
     //signal accessor:
     typedef sigc::signal<void> ctlButton_double_clicked;
     ctlButton_double_clicked signal_double_clicked();
-	
-	typedef sigc::signal<void> ctlButton_changed;
+
+    typedef sigc::signal<void> ctlButton_changed;
     ctlButton_changed signal_changed();
     
   protected:
-    virtual void onButtonRealize();
-    virtual void onButtonStateChanged(Gtk::StateType previous_state);
     virtual void onButtonPressed();
     virtual void onButtonDepressed();
     virtual bool onMouseMove(GdkEventMotion* event);

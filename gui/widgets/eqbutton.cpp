@@ -39,6 +39,7 @@ m_bTextEntryMode(false)
     case GAIN_TYPE:
       m_TextEntry.set_range(GAIN_MIN, GAIN_MAX);
       m_TextEntry.set_digits(1);
+      m_TextEntry.set_increments(0.2, 0.5);
     break;
     
     case FREQ_TYPE:
@@ -48,31 +49,24 @@ m_bTextEntryMode(false)
     case Q_TYPE:
       m_TextEntry.set_range(PEAK_Q_MIN, PEAK_Q_MAX);
       m_TextEntry.set_digits(2);
+      m_TextEntry.set_increments(0.1, 1.0);
     break;
   }
-  m_TextEntry.set_increments(0.1, 1.0);
   
-  if(m_FilterType == FREQ_TYPE)
-  {
-    //set_size_request(55,25);
-    //m_ptr_CtlButton->set_size_request(55,20);
-    //m_TextEntry.set_size_request(55,25);
-    
+  //if(m_FilterType == FREQ_TYPE)
+  //{   
     set_size_request(45,20);
     m_ptr_CtlButton->set_size_request(45,20);
-    m_TextEntry.set_size_request(45,20);
-  }
+    //m_TextEntry.set_size_request(45,20);
+  /*}
 
   else 
-  {
-    //set_size_request(45,25);
-    //m_ptr_CtlButton->set_size_request(45,20);
-    //m_TextEntry.set_size_request(45,25);
-    
+  {   
     set_size_request(40, 20);
     m_ptr_CtlButton->set_size_request(40, 20);
-    m_TextEntry.set_size_request(40, 20);
+    //m_TextEntry.set_size_request(40, 20);
   }
+  */
   
   m_ButtonAlign.add(*m_ptr_CtlButton);
   pack_start(m_TextEntry,Gtk::PACK_EXPAND_PADDING);
@@ -81,12 +75,15 @@ m_bTextEntryMode(false)
   m_ptr_CtlButton->signal_double_clicked().connect(sigc::mem_fun(*this, &EQButton::onButtonDoubleClicked));
   m_ptr_CtlButton->signal_changed().connect(sigc::mem_fun(*this, &EQButton::onCtlButtonChanged));
   m_TextEntry.signal_activate().connect(sigc::mem_fun(*this, &EQButton::onEnterPressed));
-  m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
+  
+  //This signal is not connected because is not much usefull and enabling it introduces a bug thet crashed the plugin on automation!
+  //m_TextEntry.signal_value_changed().connect(sigc::mem_fun(*this, &EQButton::onSpinChange));
  
   //Set property to start with textEntry hide
   m_TextEntry.set_no_show_all();
   
-  //Set Colors
+  //Set Colors and fonts
+  m_TextEntry.modify_font(Pango::FontDescription::FontDescription("Monospace 7"));
   SetWidgetColors m_WidgetColors;
   m_WidgetColors.setGenericWidgetColors(&m_TextEntry); 
   
@@ -122,7 +119,9 @@ void EQButton::setValue(float fVal)
     break;
   }
   
-  m_TextEntry.set_value((double)m_fValue);
+///TODO Automation bug could be there!!!!
+/// m_TextEntry.set_value((double)m_fValue);
+
   m_ptr_CtlButton->setButtonNumber(m_fValue);
 }
 
@@ -135,12 +134,16 @@ void EQButton::onButtonDoubleClicked()
 {
   if(!*m_bStop)
   {
-    add_modal_grab();
+    m_EqButtonSpinState.emit(true);
     //Button change
     m_bTextEntryMode = true;
     *m_bStop = true;
     m_ptr_CtlButton->hide();
-    setValue(m_ptr_CtlButton->getButtonNumber());
+    
+    ///TODO: this is old!!!!
+    //setValue(m_ptr_CtlButton->getButtonNumber());
+    m_TextEntry.set_value((double)m_fValue);
+    
     m_TextEntry.show();
     m_TextEntry.grab_focus();
   }
@@ -148,11 +151,12 @@ void EQButton::onButtonDoubleClicked()
 
 void EQButton::onEnterPressed()
 {
+  m_fValue = (float)m_TextEntry.get_value();
   m_ptr_CtlButton->setButtonNumber(m_fValue);
   m_ptr_CtlButton->show();
   m_TextEntry.hide();
   *m_bStop = false;
-  remove_modal_grab();
+  m_EqButtonSpinState.emit(false);
   m_EqButtonChangedSignal.emit();
 }
 
@@ -160,6 +164,11 @@ void EQButton::onSpinChange()
 {
   m_fValue = (float)m_TextEntry.get_value();
   m_EqButtonChangedSignal.emit();
+  
+  if((int)m_FilterType == FREQ_TYPE)
+  {
+    m_TextEntry.set_increments(m_fValue/10.0, m_fValue/5.0);
+  }
 }
 
 void EQButton::onCtlButtonChanged()
@@ -171,4 +180,9 @@ void EQButton::onCtlButtonChanged()
 EQButton::signal_EqButtonChanged EQButton::signal_changed()
 {
   return m_EqButtonChangedSignal;
+}
+
+EQButton::signal_EqButtonSpinState EQButton::spinState_changed()
+{
+  return m_EqButtonSpinState;
 }

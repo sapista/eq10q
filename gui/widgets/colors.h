@@ -29,8 +29,8 @@
 
 //Wdiget foreground colors 
 #define FOREGROUND_R 0.0
-#define FOREGROUND_G 0.9
-#define FOREGROUND_B 0.0
+#define FOREGROUND_G 0.65
+#define FOREGROUND_B 0.65
 
 //Text Label Color
 #define TEXT_R 1.0

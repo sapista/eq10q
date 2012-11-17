@@ -4,7 +4,7 @@
 
 #GCC options example TODO remove -g option in release version
 # TODO  segur k no e de fer un remove_definitions()???
-ADD_DEFINITIONS(-Wall -fPIC -DPIC -g)
+##ADD_DEFINITIONS(-Wall -fPIC -DPIC -g)
 
 find_package(PkgConfig)
 pkg_check_modules(GTKMM gtkmm-2.4)
@@ -105,4 +105,5 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedGui
 INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/knobs" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/combopix" DESTINATION "${LV2_BUNDLE}/gui")
+INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/icons" DESTINATION "${LV2_BUNDLE}/gui")
 

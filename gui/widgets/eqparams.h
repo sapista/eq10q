@@ -52,6 +52,8 @@ class EqParams
     bool getBandEnabled(int iBand);
     
     void loadFromTtlFile(const char *uri);
+    bool loadFromFile(const char *path);
+    void saveToFile(const char *path);
   
   private:
     int m_iNumberOfBands;

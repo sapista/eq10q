@@ -60,11 +60,11 @@ SetWidgetColors::SetWidgetColors()
   PlainButtonStyle->set_fg(Gtk::STATE_SELECTED, m_Button_FgColor);
   
   //Text colors
-  PlainButtonStyle->set_text(Gtk::STATE_NORMAL, Gdk::Color::Color("#FFFFFF"));
-  PlainButtonStyle->set_text(Gtk::STATE_ACTIVE,  Gdk::Color::Color("#FFFFFF"));
-  PlainButtonStyle->set_text(Gtk::STATE_INSENSITIVE,  Gdk::Color::Color("#FFFFFF"));
-  PlainButtonStyle->set_text(Gtk::STATE_PRELIGHT,  Gdk::Color::Color("#FFFFFF"));
-  PlainButtonStyle->set_text(Gtk::STATE_SELECTED,  Gdk::Color::Color("#FFFFFF"));  
+  PlainButtonStyle->set_text(Gtk::STATE_NORMAL, Gdk::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_ACTIVE,  Gdk::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_INSENSITIVE,  Gdk::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_PRELIGHT,  Gdk::Color("#FFFFFF"));
+  PlainButtonStyle->set_text(Gtk::STATE_SELECTED,  Gdk::Color("#FFFFFF"));  
 }
 
 Glib::RefPtr< Gtk::Style > SetWidgetColors::getPlainButtonStyle()

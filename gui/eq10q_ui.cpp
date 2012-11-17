@@ -38,7 +38,6 @@ using namespace std;
 static LV2UI_Descriptor *eq10q_guiDescriptor = NULL;
 
 
-///TODO: utilitzar el parametre bundel path com a metode millorat per carregar les imatges en el combo i el fader, aixi sera independent a la instalació!
 static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
   #ifdef TESTING_EQ10Q

@@ -1,16 +1,15 @@
 ##EQ10Q TopLevel CMake
-
 cmake_minimum_required(VERSION 2.8)
 PROJECT(eq10q)
 
 #denormals are handled using -ffast-math
 ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -ffast-math)
-###ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC -ffast-math) ###USED FOR DEBUG
+##ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC -ffast-math) ###USED FOR DEBUG
 
 #Set Install prefix
-#set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix
-set (CMAKE_INSTALL_PREFIX  "$ENV{HOME}/.lv2") #Install prefix
-set (LV2_BUNDLE "sapistaEQ.lv2") #LV2 Bundel dir
+set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix
+#set (CMAKE_INSTALL_PREFIX  "$ENV{HOME}/.lv2") #Install prefix
+set (LV2_BUNDLE "sapistaEQv2.lv2") #LV2 Bundel dir
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
 
@@ -103,3 +102,4 @@ INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs DESTINATION "
 
 INCLUDE(CPack)
 # cpack -G TGZ
+ 

@@ -26,6 +26,9 @@
 #include <vector>
 #include <gtkmm/drawingarea.h>
 
+#include <sys/time.h>
+#define PEAK_CLEAR_TIMEOUT 2000
+
 class VUWidget : public Gtk::DrawingArea
 {
   public:
@@ -36,7 +39,6 @@ class VUWidget : public Gtk::DrawingArea
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
-  void onTimeout();
   void clearPeak(int uChannel);
   void redraw();
   
@@ -49,5 +51,9 @@ protected:
   //sigc::connection* m_peak_connections;
 private:
     void pangoLayout();
+   
+    struct timeval *m_start; //Array of timeval start, on for each channel
+    struct timeval *m_end; //Array of timeval end, on for each channel
+
 };
 #endif

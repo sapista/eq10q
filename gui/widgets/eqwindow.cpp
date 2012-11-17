@@ -19,8 +19,11 @@
  ***************************************************************************/
 
 #include <stdlib.h>
+#include <iostream>
 
+#include <cstring>
 #include <gtkmm/rc.h>
+#include <gtkmm/filechooserdialog.h>
 #include "eqwindow.h"
 #include "guiconstants.h"
 #include "colors.h"
@@ -32,34 +35,29 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_AButton(" A "),
   m_BButton(" B "),
   m_BypassButton(" Bypass "),
+  m_LoadButton("Load"),
+  m_SaveButton("Save"),
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
   m_bMutex(false),
+  m_port_event_InGain(false),
+  m_port_event_OutGain(false),
+  m_port_event_Bypass(false),
+  m_port_event_Curve(false),
   m_pluginUri(uri),
-  m_bundlePath(bundlePath)
+  m_bundlePath(bundlePath),
+  m_DisableBypassEvent(false)
 {
-///TODO: Molt xapusero!
-//   image_logo_top_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top_top.png"),
-//   image_logo_top("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_top.png"),
-//   image_logo_center("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_center.png"),
-//   image_logo_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom.png"),
-//   image_logo_bottom_bottom("/usr/local/lib/lv2/paramEQ-Rafols.lv2/logo_bottom_bottom.png")
+ 
+  //load image logo
+  image_logo_center = new Gtk::Image(m_bundlePath + "/" + std::string(IMAGE_LOGO_PATH));
+  //image_logo_center( m_bundlePath + "/" + std::string(IMAGE_LOGO_PATH))
+  //image_logo_center("/home/sapista/build/LV2/trunk/gui/icons/logoeq10q.png")
 
-
-//Set Custom style
-//Glib::RefPtr<Gtk::RCStyle> thisWidgetStyle = get_modifier_style();
-//thisWidgetStyle->set_font(Pango::FontDescription::FontDescription("Monospace 15"));
-
-
-
+  m_MainWidgetAlign.set_padding(3,3,3,3);
   
- //Buttons A,B i Flat
-  //m_AButton.set_size_request(25,23);
-  //m_BButton.set_size_request(25,23);
   m_AButton.set_active(true);
   m_BButton.set_active(false);
-  //m_FlatButton.set_size_request(40,23); 
-  //m_BypassButton.set_size_request(55,23); 
   
   m_ButtonAAlign.add(m_AButton);
   m_ButtonBAlign.add(m_BButton);
@@ -69,8 +67,10 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_BypassAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
   m_FlatAlign.add(m_FlatButton);
   m_FlatAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
-
-
+  m_LoadAlign.add(m_LoadButton);
+  m_SaveAlign.add(m_SaveButton);
+  m_LoadAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
+  m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   
   m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
@@ -96,9 +96,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_ABFlatBox.pack_start(m_BypassAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_ButtonAAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_ButtonBAlign,Gtk::PACK_SHRINK);
-  //m_ABFlatBox.pack_start(image_logo_center); //TODO: the center image
-  m_ABFlatBox.pack_start(m_FlatAlign);
-  
+  m_ABFlatBox.pack_start(*image_logo_center);
+  m_ABFlatBox.pack_start(m_FlatAlign,Gtk::PACK_SHRINK);
+  m_ABFlatBox.pack_start(m_LoadAlign,Gtk::PACK_SHRINK);
+  m_ABFlatBox.pack_start(m_SaveAlign,Gtk::PACK_SHRINK);
+  m_LoadButton.show();
+  m_SaveButton.show();
+  m_LoadAlign.show();
+  m_SaveAlign.show();
   
   m_CurveBypassBandsBox.pack_start(m_PlotFrame ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
@@ -108,21 +113,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_GainEqBox.pack_start(m_CurveBypassBandsBox, Gtk::PACK_SHRINK);
   m_GainEqBox.pack_start(*m_OutGain, Gtk::PACK_SHRINK);
   m_GainEqBox.set_spacing(2);
-   
-  //m_MainBox.pack_start(image_logo_top); ///TODO: les imatges....
-  //m_MainBox.pack_start(PRESETS Widget,Gtk::PACK_EXPAND_PADDING); ///TODO: add presets widget
-  //m_MainBox.pack_start(image_logo_bottom); //TODO: imatges
   m_MainBox.pack_start(m_GainEqBox);
-  //m_MainBox.pack_start(image_logo_bottom_bottom); //TODO: imatges
   m_MainBox.set_spacing(0);
 
-
-//TODO: imatges
-//   image_logo_bottom.show();
-//   image_logo_top.show();
-//   image_logo_center.show();
+  image_logo_center->show();
  
-  add(m_MainBox);
+  m_MainWidgetAlign.add(m_MainBox);
+  add(m_MainWidgetAlign);
+  m_MainWidgetAlign.show();
   
   //Add some tooltips
   m_AButton.set_tooltip_text("Switch to curve A");
@@ -131,6 +129,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_FlatButton.set_tooltip_text("Reset all values to default");
   m_InGain->set_tooltip_text("Adjust the input gain");
   m_OutGain->set_tooltip_text("Adjust the output gain");
+  m_LoadButton.set_tooltip_text("Load curve from file");
+  m_SaveButton.set_tooltip_text("Save curve to file");
 
   //connect signals
   m_BypassButton.signal_toggled().connect(mem_fun(*this, &EqMainWindow::onButtonBypass));
@@ -140,7 +140,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
   m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
   m_Bode->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveChange));
+  m_Bode->signal_enabled().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveBandEnable));
   signal_realize().connect( sigc::mem_fun(*this, &EqMainWindow::onRealize));
+  Glib::signal_timeout().connect( sigc::mem_fun(*this, &EqMainWindow::on_timeout), TIMER_VALUE_MS);
+  m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
+  m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -168,32 +172,21 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setButtonColors(&m_BButton);
   m_WidgetColors.setButtonColors(&m_FlatButton);
   m_WidgetColors.setButtonColors(&m_BypassButton);
+  m_WidgetColors.setButtonColors(&m_LoadButton);
+  m_WidgetColors.setButtonColors(&m_SaveButton);
   
   //Set buttons font type
-  m_BypassButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
-  m_AButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
-  m_BButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
-  m_FlatButton.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
-
-  //Set pixmap objects TODO:
-  //void modify_bg_pixmap (StateType state, const Glib::ustring& pixmap_name)
-  
-
-/*
-    unsetenv ("GTK_RC_FILES");
-  Gtk::RC rc ("/home/sapista/build/LV2/GtkRCTest/gtkrc");
-  //RC::reset_styles (Gtk::Settings::get_default());
-  //rc.reset_styles(Gtk::Settings::get_default());
-  gtk_rc_reset_styles (gtk_settings_get_default());
-  */
-  
-
-
-
+  m_BypassButton.modify_font(Pango::FontDescription("Monospace 8"));
+  m_AButton.modify_font(Pango::FontDescription("Monospace 8"));
+  m_BButton.modify_font(Pango::FontDescription("Monospace 8"));
+  m_FlatButton.modify_font(Pango::FontDescription("Monospace 8"));
+  m_LoadButton.modify_font(Pango::FontDescription("Monospace 8"));
+  m_SaveButton.modify_font(Pango::FontDescription("Monospace 8"));
 }
 
 EqMainWindow::~EqMainWindow()
 {
+  delete image_logo_center;
   delete m_AParams;
   delete m_BParams;
   delete m_InGain;
@@ -211,6 +204,43 @@ void EqMainWindow::onRealize()
   toplevel->set_resizable(false);  
 }
 
+//Timer to redraw all widgets in case of host port events
+bool EqMainWindow::on_timeout()
+{
+  if(m_port_event_Bypass)
+  {
+    m_port_event_Bypass = false;
+    m_DisableBypassEvent = true;
+    m_BypassButton.set_active(m_bypassValue);
+  }
+
+  if(m_port_event_InGain)
+  {
+    m_port_event_InGain = false;
+    m_InGain->setGain(m_CurParams->getInputGain());
+  }
+  
+  if(m_port_event_OutGain)
+  {
+    m_port_event_OutGain = false;
+    m_OutGain->setGain(m_CurParams->getOutputGain());
+  }
+  
+  if(m_port_event_Curve)
+  {
+    m_port_event_Curve = false;
+    for(int i = 0; i < m_iNumOfBands; i++)
+    {
+      m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));
+      m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
+      m_BandCtlArray[i]->setQ(m_CurParams->getBandQ(i));
+      m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i), true);
+      m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i), true);
+      m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
+    }
+    m_Bode->reComputeRedrawAll();
+  }  
+}
 
 void EqMainWindow::changeAB(EqParams *toBeCurrent)
 { 
@@ -218,35 +248,51 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
   
   //Reload All data
   m_InGain->setGain(m_CurParams->getInputGain());
-  m_InGainValue = m_InGain->getGain();
+  
+  ///TODO REMOVE THIS comented line
+  ///m_InGainValue = m_InGain->getGain();
+
   m_OutGain->setGain(m_CurParams->getOutputGain());
-  m_OutGainValue = m_OutGain->getGain();
+  
+    ///TODO REMOVE THIS comented line
+  ///m_OutGainValue = m_OutGain->getGain();
   
    //Write to LV2 port
-   write_function(controller, EQ_INGAIN, sizeof(float), 0, &m_InGainValue);
-   write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &m_OutGainValue);
+   float aux;
+   aux = m_InGain->getGain();
+   write_function(controller, EQ_INGAIN, sizeof(float), 0, &aux);
+   aux = m_OutGain->getGain();
+   write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &aux);
   
   //Reset the Curve Plot
   m_Bode->resetCurve();
-  m_Bode->redraw();
-   
+  
+  //changeAB action will overwrite Q values by defaults to keep the values we use this var
+  float usedQ;
+  
   for(int i = 0; i < m_iNumOfBands; i++)
   {
-    //TODO: crec  el setEnabled no esta funcionant be, es pot veure en fer canvi de A/B -> bug real vist el 09/08/2012 P.Rafols
-    m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));
-    m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i));
-    m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
-    m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));
-    m_BandCtlArray[i]->setQ(m_CurParams->getBandQ(i));
+    usedQ = m_CurParams->getBandQ(i);
+    //It's very important to set de values for bandCtl and bode object.
+    //Because if there are some value that does not change between A/B curves this could be not correctly updated
+    m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));    
+    m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));   
+    m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));    
+    m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i)); 
+    m_BandCtlArray[i]->setQ(usedQ);
+    m_CurParams->setBandQ(i, usedQ);
+    m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
     
-    /**
-    m_Bode->setBandEnable(i, m_CurParams->getBandEnabled(i));
-    m_Bode->setBandType(i, m_CurParams->getBandType(i));
-    m_Bode->setBandFreq(i, m_CurParams->getBandFreq(i));
-    m_Bode->setBandGain(i, m_CurParams->getBandGain(i));
-    m_Bode->setBandQ(i, m_CurParams->getBandQ(i));
-    **/
+    //Write to LV2 ports
+    aux = m_CurParams->getBandGain(i);
+    write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels, sizeof(float), 0, &aux); //Gain
+    aux = m_CurParams->getBandFreq(i);
+    write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &aux); //Freq
+    aux = m_CurParams->getBandQ(i);
+    write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &aux); //Q
   }
+  
+  m_Bode->reComputeRedrawAll();
 }
 
 void EqMainWindow::onButtonA()
@@ -283,6 +329,7 @@ void EqMainWindow::onButtonBypass()
   #ifdef PRINT_DEBUG_INFO
     std::cout<<"onButtonBypass... ";
   #endif
+ 
   m_Bode->setBypass(m_BypassButton.get_active());
   if (m_BypassButton.get_active())
   {
@@ -292,8 +339,18 @@ void EqMainWindow::onButtonBypass()
   {
     m_bypassValue = 0;
   }
-  write_function(controller, EQ_BYPASS, sizeof(float), 0, &m_bypassValue);
-  m_BypassChangedSignal.emit(m_BypassButton.get_active());
+  
+  if(m_DisableBypassEvent)
+  {
+    m_DisableBypassEvent = false;
+  }
+  else
+  {
+    write_function(controller, EQ_BYPASS, sizeof(float), 0, &m_bypassValue);
+  }
+  
+  ///TODO REMOVE THIS EMIT()
+  ///m_BypassChangedSignal.emit(m_BypassButton.get_active());
 
   #ifdef PRINT_DEBUG_INFO
     std::cout<<"Return"<<std::cout;
@@ -313,35 +370,45 @@ void EqMainWindow::onBandChange(int iBand, int iField, float fValue)
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels, sizeof(float), 0, &fValue);
       m_CurParams->setBandGain(iBand, fValue);
       m_Bode->setBandGain(iBand, fValue);
-      m_BandGainChangedSignal.emit(iBand, fValue);
+      
+      ///TODO REMOVE THIS EMIT()
+      //m_BandGainChangedSignal.emit(iBand, fValue);
       break;
       
     case FREQ_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandFreq(iBand, fValue);
       m_Bode->setBandFreq(iBand, fValue);
-      m_BandFreqChangedSignal.emit(iBand, fValue);
+      
+      ///TODO REMOVE THIS EMIT()
+      //m_BandFreqChangedSignal.emit(iBand, fValue);
       break;
       
     case Q_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandQ(iBand, fValue);
       m_Bode->setBandQ(iBand, fValue);
-      m_BandQChangedSignal.emit(iBand, fValue);
+      
+      ///TODO REMOVE THIS EMIT()
+      //m_BandQChangedSignal.emit(iBand, fValue);
       break;
       
     case FILTER_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandType(iBand, (int) fValue);
       m_Bode->setBandType(iBand, (int) fValue);
-      m_BandTypeChangedSignal.emit(iBand, (int)fValue);
+      
+      ///TODO REMOVE THIS EMIT()
+      //m_BandTypeChangedSignal.emit(iBand, (int)fValue);
       break;
       
     case ONOFF_TYPE:
       write_function(controller, iBand + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &fValue);
       m_CurParams->setBandEnabled(iBand, (fValue > 0.5)); 
       m_Bode->setBandEnable(iBand, (fValue > 0.5));
-      m_BandEnabledChangedSignal.emit(iBand, (fValue > 0.5));
+      
+      ///TODO REMOVE THIS EMIT()
+      //m_BandEnabledChangedSignal.emit(iBand, (fValue > 0.5));
       break;  
   }
   
@@ -358,14 +425,20 @@ void EqMainWindow::onInputGainChange()
   #endif
   
   //Save data Change
-  m_InGainValue = m_InGain->getGain();
-  m_CurParams->setInputGain(m_InGainValue);
+  m_CurParams->setInputGain(m_InGain->getGain());
+  
+  //TODO REmove this comented lines
+  //m_InGainValue = m_InGain->getGain();
+  //m_CurParams->setInputGain(m_InGainValue);
   
   //Write to LV2 port
-   write_function(controller, EQ_INGAIN, sizeof(float), 0, &m_InGainValue);
+  float aux;
+  aux = m_InGain->getGain();
+  write_function(controller, EQ_INGAIN, sizeof(float), 0, &aux);
   
   //Emit signal
-  m_InputGainChangedSignal.emit(m_InGain->getGain());
+  ///TODO REMOVE THIS EMIT()
+  //m_InputGainChangedSignal.emit(m_InGain->getGain());
   
   #ifdef PRINT_DEBUG_INFO
     std::cout<<"Return"<<std::cout;
@@ -379,14 +452,20 @@ void EqMainWindow::onOutputGainChange()
   #endif
   
   //Save data Change
-  m_OutGainValue = m_OutGain->getGain();
-  m_CurParams->setOutputGain(m_OutGainValue);
+  m_CurParams->setOutputGain( m_OutGain->getGain());
+  
+  //TODO REmove this comented lines
+  //m_OutGainValue = m_OutGain->getGain();
+  //m_CurParams->setOutputGain(m_OutGainValue);
   
   //Write to LV2 port
-  write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &m_OutGainValue);
+  float aux;
+  aux = m_OutGain->getGain();
+  write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &aux);
   
   //Emit signal
-  m_OutputGainChangedSignal.emit(m_OutGain->getGain());
+  ///TODO REMOVE THIS EMIT()
+  //m_OutputGainChangedSignal.emit(m_OutGain->getGain());
   
   #ifdef PRINT_DEBUG_INFO
     std::cout<<"Return"<<std::cout;
@@ -398,8 +477,38 @@ void EqMainWindow::onCurveChange(int band_ix, float Gain, float Freq, float Q)
   m_BandCtlArray[band_ix]->setGain(Gain);
   m_BandCtlArray[band_ix]->setFreq(Freq);
   m_BandCtlArray[band_ix]->setQ(Q);
+  
+  //Write to LV2 plugin ports
+  //Gain
+  write_function(controller, band_ix + PORT_OFFSET + 2*m_iNumOfChannels, sizeof(float), 0, &Gain);
+  m_CurParams->setBandGain(band_ix, Gain);
+
+  //Freq
+  write_function(controller, band_ix + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &Freq);
+  m_CurParams->setBandFreq(band_ix, Freq);
+
+  //Q
+  write_function(controller, band_ix + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &Q);
+  m_CurParams->setBandQ(band_ix, Q);
+
 }
 
+void EqMainWindow::onCurveBandEnable(int band_ix, bool IsEnabled)
+{
+  float fEnable;
+  if(IsEnabled)
+  {
+    fEnable = 1.0;
+  }
+  else
+  {
+    fEnable = 0.0;
+  }
+  
+  m_BandCtlArray[band_ix]->setEnabled(IsEnabled, true);
+  write_function(controller, band_ix + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &fEnable);
+  m_CurParams->setBandEnabled(band_ix, IsEnabled); 
+}
 
 void EqMainWindow::loadEqParams()
 {
@@ -422,6 +531,77 @@ void EqMainWindow::loadEqParams()
   changeAB(m_CurParams);
 }
 
+void EqMainWindow::saveToFile()
+{
+  Gtk::FileChooserDialog *fileChosser = new Gtk::FileChooserDialog("Save curve to file", Gtk::FILE_CHOOSER_ACTION_SAVE);
+  fileChosser->add_button("Save", Gtk::RESPONSE_ACCEPT);
+  fileChosser->add_button("Cancel", Gtk::RESPONSE_CANCEL);
+  fileChosser->set_current_folder( getenv("HOME"));
+  fileChosser->set_select_multiple(false);
+  fileChosser->set_do_overwrite_confirmation(true);
+  
+  //File filter
+  Gtk::FileFilter filter;
+  std::stringstream ss;
+  ss << "EQ" << m_iNumOfBands << "Q Curve File";
+  filter.set_name(ss.str());
+  ss.str( std::string() );
+  ss.clear();
+  ss << "*.eq" << m_iNumOfBands << "q";
+  filter.add_pattern(ss.str());
+  fileChosser->add_filter(filter);
+  
+  if (fileChosser->run() == Gtk::RESPONSE_ACCEPT)
+  { 
+    ss.str( std::string() );
+    ss.clear();
+    ss << fileChosser->get_filename() << ".eq" << m_iNumOfBands << "q";   
+    m_CurParams->saveToFile(ss.str().c_str());
+  }
+  delete fileChosser;
+}
+
+void EqMainWindow::loadFromFile()
+{
+  Gtk::FileChooserDialog *fileChosser = new Gtk::FileChooserDialog("Load curve from file", Gtk::FILE_CHOOSER_ACTION_OPEN);
+  fileChosser->add_button("Load", Gtk::RESPONSE_ACCEPT);
+  fileChosser->add_button("Cancel", Gtk::RESPONSE_CANCEL);
+  fileChosser->set_current_folder( getenv("HOME"));
+  fileChosser->set_select_multiple(false);
+  
+  //File filter
+  Gtk::FileFilter filter;
+  std::stringstream ss;
+  ss << "EQ" << m_iNumOfBands << "Q Curve File";
+  filter.set_name(ss.str());
+  ss.str( std::string() );
+  ss.clear();
+  ss << "*.eq" << m_iNumOfBands << "q";
+  filter.add_pattern(ss.str());
+  fileChosser->add_filter(filter);
+  
+  if (fileChosser->run() == Gtk::RESPONSE_ACCEPT)
+  {     
+      if (m_CurParams->loadFromFile(fileChosser->get_filename().c_str()))
+      {
+	changeAB(m_CurParams);
+      }
+      else //This is the error case
+      {
+      	//Popup a error message
+	Gtk::MessageDialog dialog((Gtk::Window&)(*this->get_toplevel()),"Error loading curve file, number of bands does not match or this is not a valid eq10q file.\n\rNothing is loaded.",
+        false /* use_markup */, Gtk::MESSAGE_ERROR,
+        Gtk::BUTTONS_OK);
+	dialog.run();
+      }
+  }
+  
+  delete fileChosser;
+}
+
+
+/****************************************************************************************+
+  ///TODO REMOVE THIS EMIT()
 // LV2 Input Control ports handlers
 void EqMainWindow::setBypass(bool bBypass)
 {
@@ -519,3 +699,4 @@ EqMainWindow::signal_BandEnabledChanged EqMainWindow::signal_BandEnabled_Changed
 {
   return m_BandEnabledChangedSignal;
 }
+*************************************************************************************/

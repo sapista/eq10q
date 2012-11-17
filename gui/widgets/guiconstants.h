@@ -43,8 +43,8 @@
 // #define  NOTCH       11
 
 //Filter default values ///TODO: Aixo ha de venir del .ttl
-#define GAIN_MIN -15.0
-#define GAIN_MAX 15.0
+#define GAIN_MIN -20.0
+#define GAIN_MAX 20.0
 #define FREQ_MIN 20.0
 #define FREQ_MAX 20000.0
 #define PEAK_Q_MIN 0.02

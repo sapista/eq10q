@@ -36,18 +36,15 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
   
   signal_button_press_event().connect(sigc::mem_fun(*this, &CtlButton::onButtonDoubleClicked),false);
   signal_released().connect( sigc::mem_fun(*this,&CtlButton::onButtonDepressed));
-  signal_show().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
-  signal_realize().connect(sigc::mem_fun(*this,&CtlButton::onButtonRealize));
-  signal_state_changed().connect(sigc::mem_fun(*this,&CtlButton::onButtonStateChanged));
   add_events(Gdk::POINTER_MOTION_MASK);
   
   //Set font type
-  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 8"));
-  btnLabel.modify_fg(Gtk::STATE_ACTIVE, Gdk::Color::Color("#FFFFFF"));
-  btnLabel.modify_fg(Gtk::STATE_INSENSITIVE, Gdk::Color::Color("#FFFFFF"));
-  btnLabel.modify_fg(Gtk::STATE_NORMAL, Gdk::Color::Color("#FFFFFF"));
-  btnLabel.modify_fg(Gtk::STATE_PRELIGHT, Gdk::Color::Color("#FFFFFF"));
-  btnLabel.modify_fg(Gtk::STATE_SELECTED, Gdk::Color::Color("#FFFFFF")); 
+  btnLabel.modify_font(Pango::FontDescription("Monospace 8"));
+  btnLabel.modify_fg(Gtk::STATE_ACTIVE, Gdk::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_INSENSITIVE, Gdk::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_NORMAL, Gdk::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_PRELIGHT, Gdk::Color("#FFFFFF"));
+  btnLabel.modify_fg(Gtk::STATE_SELECTED, Gdk::Color("#FFFFFF")); 
   add(btnLabel);
 
   //Set custom theme style    
@@ -57,18 +54,6 @@ m_iActValue(0), m_iAntValue(0), m_fValue(0.0)
 CtlButton::~CtlButton()
 {
 
-}
-
-void CtlButton::onButtonRealize()
-{
-  ///TODO: remove this method and his connection to on_realize, now is don with Gtk::Style Object
-  //Set Start Colors
-  //m_WidgetColors.setButtonColors(this);
-}
-
-void CtlButton::onButtonStateChanged(Gtk::StateType previous_state)
-{
-  onButtonRealize();
 }
 
 bool CtlButton::onButtonDoubleClicked(GdkEventButton* event)

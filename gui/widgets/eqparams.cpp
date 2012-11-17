@@ -20,6 +20,10 @@
 #include "eqparams.h"
 #include <stdlib.h>
 #include <string>
+#include <fstream>
+#include <iomanip>
+
+#define  EQ10Q_SIGNATURE 12871
 
 //#define USE_SLV2 ///TODO: check this-> esta donant problemes amb algunes versions de ardour, ull slv2 esta anticuat!!!
 #ifdef USE_SLV2 
@@ -224,5 +228,46 @@ void EqParams::loadFromTtlFile(const char *uri)
       
     }
   #endif
+}
+
+bool EqParams::loadFromFile(const char* path)
+{
+  int preBandCount;
+  int signature;
+  std::ifstream f;
+  f.open(path, std::ofstream::in);
+  
+  f.read((char*)(&signature), sizeof(signature));
+  if (signature != EQ10Q_SIGNATURE)
+  {
+    f.close();
+    return false;
+  }
+  
+  f.read((char*)(&preBandCount), sizeof (preBandCount));
+  if(m_iNumberOfBands != preBandCount)
+  {
+    f.close();
+    return false;
+  }
+  
+  f.read((char*)(&m_fInGain), sizeof (m_fInGain));
+  f.read((char*)(&m_fOutGain), sizeof (m_fOutGain));
+  f.read((char*)(m_ptr_BandArray), sizeof(EqBandStruct) * m_iNumberOfBands);  
+  f.close();
+  return true;
+}
+
+void EqParams::saveToFile(const char* path)
+{
+  std::ofstream f;  
+  int signature = EQ10Q_SIGNATURE;
+  f.open(path, std::ofstream::out);
+  f.write((const char*)(&signature), sizeof(signature));
+  f.write((const char*)(&m_iNumberOfBands), sizeof (m_iNumberOfBands));
+  f.write((const char*)(&m_fInGain), sizeof (m_fInGain));
+  f.write((const char*)(&m_fOutGain), sizeof (m_fOutGain));
+  f.write((const char*)(m_ptr_BandArray), sizeof(EqBandStruct) * m_iNumberOfBands);  
+  f.close();
 }
 

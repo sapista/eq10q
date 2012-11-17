@@ -132,6 +132,15 @@ void PlotEQCurve::reComputeRedrawAll()
   redraw();
 }
 
+void PlotEQCurve::setBandParamsQuiet(int bd_ix, float newGain, float newFreq, float newQ, int newType, bool bIsEnabled)
+{
+  m_filters[bd_ix]->bIsOn = bIsEnabled;
+  m_filters[bd_ix]->Gain = newGain;
+  m_filters[bd_ix]->Freq = newFreq;
+  m_filters[bd_ix]->Q = newQ;
+  m_filters[bd_ix]->fType = int2FilterType(newType);
+  
+}
 
 void PlotEQCurve::resetCurve()
 {
@@ -317,17 +326,27 @@ bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
   //Check if is over some control pointer
   for(int i = 0; i < m_TotalBandsCount; i++)
   {
-    if( m_filters[i]->bIsOn &&
-	event->x > freq2Pixels(m_filters[i]->Freq) - 8 &&
+    if( event->x > freq2Pixels(m_filters[i]->Freq) - 8 &&
 	event->x < freq2Pixels(m_filters[i]->Freq) + 8 &&
 	event->y > dB2Pixels(m_filters[i]->Gain) - 8 &&
 	event->y < dB2Pixels(m_filters[i]->Gain) + 8 )
     {
       m_iBandSel = i;
-      if (!bMotionIsConnected)
+      
+      //Check if is a double click or simple
+      if(event->button == 1)
       {
-	m_motion_connection = signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
-	bMotionIsConnected = true;
+	if(event->type == GDK_2BUTTON_PRESS) //Double click on the 1st button
+	{
+	  //Emit signal button double click, this is enable or disable band
+	  setBandEnable(m_iBandSel, !m_filters[m_iBandSel]->bIsOn);
+	  m_BandEnabledSignal.emit(m_iBandSel, m_filters[m_iBandSel]->bIsOn);
+	}
+	else if (!bMotionIsConnected && m_filters[i]->bIsOn)
+	{
+	  m_motion_connection = signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
+	  bMotionIsConnected = true;
+	}
       }
       break;
     }
@@ -595,8 +614,6 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       double ball_x, ball_y;     
       for(int i = 0; i < m_TotalBandsCount; i++) //for each band
       {
-	if(m_filters[i]->bIsOn) //If band is enabled
-	{
 	  ball_x = (double)freq2Pixels(m_filters[i]->Freq);
 	  if( m_filters[i]->fType == PEAK || 
 	      m_filters[i]->fType == LOW_SHELF ||
@@ -623,7 +640,6 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
 	  cr->arc(ball_x, ball_y, 4.0, 0.0, 6.28318530717958647693);
 	  cr->stroke();
 	  cr->restore();
-	}
       }
     }// end Bypass check
     
@@ -680,3 +696,9 @@ PlotEQCurve::signal_BandChanged PlotEQCurve::signal_changed()
 {
   return m_BandChangedSignal;
 }
+
+PlotEQCurve::signal_BandEnabled PlotEQCurve::signal_enabled()
+{
+  return m_BandEnabledSignal;
+}
+

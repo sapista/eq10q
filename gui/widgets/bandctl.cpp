@@ -26,7 +26,10 @@
 BandCtl::BandCtl( const int iBandNum, bool *bSemafor, const char* bundlepath):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_ComboAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
-m_iBandNum(iBandNum)
+m_iBandNum(iBandNum),
+m_DisableComboEvent(false),
+m_DisableButtonEvent(false),
+m_bBandIsEnabled(false)
 {
   m_FilterSel = Gtk::manage(new PixMapCombo(bundlepath));
   m_Gain = Gtk::manage(new EQButton(GAIN_TYPE, bSemafor));
@@ -72,6 +75,9 @@ m_iBandNum(iBandNum)
   m_Q->set_tooltip_text("Press and drag to adjust Q.\nAlso you can double click to enter value.");
   m_OnButton.set_tooltip_text("Enable/Disable this band");
 
+  m_Gain->spinState_changed().connect(sigc::mem_fun(*this, &BandCtl::onSpinStateChanged));
+  m_Freq->spinState_changed().connect(sigc::mem_fun(*this, &BandCtl::onSpinStateChanged));
+  m_Q->spinState_changed().connect(sigc::mem_fun(*this, &BandCtl::onSpinStateChanged));
   m_OnButton.signal_clicked().connect(sigc::mem_fun(*this, &BandCtl::onButtonClicked));
   m_FilterSel->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onComboChanged));
   m_Gain->signal_changed().connect(sigc::mem_fun(*this, &BandCtl::onGainChanged));
@@ -80,7 +86,7 @@ m_iBandNum(iBandNum)
   signal_realize().connect(sigc::mem_fun(*this, &BandCtl::onThisWidgetRealize));
   
   //Set ON Button font type and ON text
-  btnLabel.modify_font(Pango::FontDescription::FontDescription("Monospace 9"));
+  btnLabel.modify_font(Pango::FontDescription("Monospace 9"));
   m_OnButton.add(btnLabel);
   btnLabel.set_text("ON");
   
@@ -140,29 +146,45 @@ void BandCtl::setQ(float fQ){
   m_Q->setValue(fQ);
 }
 
-void BandCtl::setFilterType(float fType){
+void BandCtl::setFilterType(float fType, bool DisableEvent)
+{
+  m_DisableComboEvent = DisableEvent && ((int)fType != (int) m_FilterSel->get_active_row_number() + 1); //Disable only if event will happend
   m_FilterSel->set_active((int)fType - 1);
 }
 
-void BandCtl::setEnabled(bool bIsEnabled)
+void BandCtl::setEnabled(bool bIsEnabled, bool DisableEvent)
 {
-//TODO: This don't works properly, breakpoint here and see what happens
+  m_DisableButtonEvent = DisableEvent && (bIsEnabled != m_bBandIsEnabled); //Disable only if event will happend
   m_OnButton.set_active(bIsEnabled);
+  m_bBandIsEnabled = bIsEnabled;
 }
 
 //GTK signal Handlers
-void BandCtl::onButtonClicked()
+void BandCtl::onSpinStateChanged(bool SpinState)
 {
+  m_OnButton.set_sensitive(!SpinState);
+}
+
+
+void BandCtl::onButtonClicked()
+{ 
   m_bBandIsEnabled = m_OnButton.get_active();
   configSensitive();
   float fIsOn = 0;
   if(m_bBandIsEnabled) fIsOn = 1;
-  m_bandChangedSignal.emit(m_iBandNum, ONOFF_TYPE, fIsOn);
+  
+  if (m_DisableButtonEvent)
+  {
+    m_DisableButtonEvent = false;
+  }
+  else
+  {
+    m_bandChangedSignal.emit(m_iBandNum, ONOFF_TYPE, fIsOn);
+  }
 }
 
 void BandCtl::onComboChanged()
-{
-  //m_iFilterType = m_FilterSel->get_active_row_number();
+{ 
   m_FilterType = int2FilterType(m_FilterSel->get_active_row_number() + 1);
   configSensitive();
   
@@ -175,24 +197,37 @@ void BandCtl::onComboChanged()
     case HPF_ORDER_2:
     case HPF_ORDER_3:
     case HPF_ORDER_4:
-      setQ(HPF_LPF_Q_DEFAULT); 
+      setQ(HPF_LPF_Q_DEFAULT);
+      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
     break;
     
     case NOTCH:
       setQ(NOTCH_Q_DEFAULT);
+      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
     break;
 
     case LOW_SHELF:
     case HIGH_SHELF:
       setQ(HIGH_LOW_SHELF_Q_DEFAULT);
+      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
+      m_bandChangedSignal.emit(m_iBandNum, GAIN_TYPE, getGain());
     break;
     
     case PEAK:
       setQ(PEAK_Q_DEFAULT);
+      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
+      m_bandChangedSignal.emit(m_iBandNum, GAIN_TYPE, getGain());
     break;
   }
   
-  m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
+  if (m_DisableComboEvent)
+  {
+    m_DisableComboEvent = false;
+  }
+  else
+  {
+    m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
+  }
 }
 
 void BandCtl::onGainChanged()

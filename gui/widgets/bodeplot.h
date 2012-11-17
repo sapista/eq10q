@@ -53,7 +53,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     
     void reComputeRedrawAll();
     void resetCurve();
-    void redraw();
+    void setBandParamsQuiet(int bd_ix, float newGain, float newFreq, float newQ, int newType, bool bIsEnabled);
     virtual void setBandGain(int bd_ix, float newGain);
     virtual void setBandFreq(int bd_ix, float newFreq);
     virtual void setBandQ(int bd_ix, float newQ);
@@ -66,12 +66,17 @@ class PlotEQCurve : public Gtk::DrawingArea
     typedef sigc::signal<void, int, float, float, float> signal_BandChanged;
     signal_BandChanged signal_changed();
     
+    //Slot prototype: void on_band_enabled(int band_ix, bool enabled);
+    typedef sigc::signal<void, int, bool> signal_BandEnabled;
+    signal_BandEnabled signal_enabled();
+    
   protected:    
       //Mouse grab signal handlers
       virtual bool on_button_press_event(GdkEventButton* event);
       virtual bool on_button_release_event(GdkEventButton* event);
       virtual bool on_scrollwheel_event(GdkEventScroll* event);
       virtual bool on_mouse_motion_event(GdkEventMotion* event);
+      virtual void redraw();
   
       //Override default signal handler:
       virtual void on_realize();
@@ -100,8 +105,9 @@ class PlotEQCurve : public Gtk::DrawingArea
     double *main_y; //This pointer is initialized by construcor to an array of total num of points
     double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
   
-    //Fader change signal
+    //Bode change signal
     signal_BandChanged m_BandChangedSignal;
+    signal_BandEnabled m_BandEnabledSignal;
     
     //Method to initialize base vectors xPixels_Grind, f, xPixels
     void initBaseVectors();

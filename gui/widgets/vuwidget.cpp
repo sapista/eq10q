@@ -38,7 +38,9 @@ VUWidget::VUWidget(int iChannels, float fMin)
   :m_iChannels(iChannels),
   m_fMin(fMin),
   m_fValues(new float[m_iChannels]),
-  m_fPeaks(new float[m_iChannels])
+  m_fPeaks(new float[m_iChannels]),
+  m_start(new timeval[m_iChannels]),
+  m_end(new timeval[m_iChannels])
 {
   
   for (int i = 0; i < m_iChannels; i++) {
@@ -52,9 +54,17 @@ VUWidget::VUWidget(int iChannels, float fMin)
   m_fBarStep = BAR_SEPARATION + m_fBarWidth;
   
   //TODO: Bug- sometime the VU widget is not drawn !!! only text is drawn no LEDs
-  //this signal connection does not solves the problem, so I coment out it
+  //this signal connection does not solves the problem, so I coment it out
   //checj the on_expose_event method, the problem could be related with initialitzation of LEDs
   //signal_expose_event().connect(sigc::mem_fun(*this, &VUWidget::on_expose_event));
+  
+  
+  //Initialize peak time counters
+  for (int i = 0; i < m_iChannels; i++)
+  {
+    gettimeofday(&m_start[i], NULL);
+    gettimeofday(&m_end[i], NULL);
+  } 
 
 }
 
@@ -62,24 +72,29 @@ VUWidget::~VUWidget()
 {
   delete [] m_fValues;
   delete [] m_fPeaks;
+  delete [] m_start;
+  delete [] m_end;
 }
   
 void VUWidget::setValue(int iChannel, float fValue)
 { 
+  long mtime, seconds, useconds;
+  gettimeofday(&m_end[iChannel], NULL);
+  
+  seconds  = m_end[iChannel].tv_sec  - m_start[iChannel].tv_sec;
+  useconds = m_end[iChannel].tv_usec - m_start[iChannel].tv_usec;
+  mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+
   m_fValues[iChannel] = fValue;
-  if (m_fValues[iChannel] > m_fPeaks[iChannel])
+  if (m_fValues[iChannel] >= m_fPeaks[iChannel])
   {
     m_fPeaks[iChannel] = m_fValues[iChannel];
-    Glib::signal_timeout().connect_once(sigc::mem_fun(*this, &VUWidget::onTimeout), 3000);
+    gettimeofday(&m_start[iChannel] , NULL);
   }
-  redraw();
-}
-
-void VUWidget::onTimeout()
-{
-  for(int i = 0; i < m_iChannels; i++)
+  
+  else if (mtime > PEAK_CLEAR_TIMEOUT)
   {
-    clearPeak(i);
+    m_fPeaks[iChannel] = 0.0;
   }
   redraw();
 }
@@ -291,7 +306,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->stroke();
     */
     
-    /*
+    
     //draw a rectangle arround the VU Widget
     cr->set_source_rgb(0.22, 0.30, 0.53);
 
@@ -318,7 +333,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->move_to(0, -1);
     cr->line_to(0, 0);
     cr->stroke();
-    */
+    
     
   }
   return true;  
