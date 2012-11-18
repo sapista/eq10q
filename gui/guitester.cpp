@@ -87,7 +87,7 @@ void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_
 
 HelloWorld::HelloWorld()
 {
-  m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs","/home/sapista/build/LV2/trunk/gui"));
+  m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs",@Eq_Gui_Test_Path@));
   add(*m_EqWin);
 
   show_all_children();

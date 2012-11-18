@@ -15,8 +15,10 @@ link_directories(${GTKMM_LIBRARY_DIRS})
 
 include_directories(${GTKMM_INCLUDE_DIRS})
 
-#Tests GUI TODO coment out for the final release
-ADD_EXECUTABLE(eq10q_gui_tester  main.cpp guitester.cpp)
+#Tests GUI
+set( Eq_Gui_Test_Path "\"${PROJECT_SOURCE_DIR}/gui\"" )
+configure_file("${PROJECT_SOURCE_DIR}/gui/guitester.cpp" "${PROJECT_SOURCE_DIR}/gui/guitester_cfg_.cpp")
+ADD_EXECUTABLE(eq10q_gui_tester  main.cpp guitester_cfg_.cpp)
 target_link_libraries( eq10q_gui_tester  eqwin ${GTKMM_LIBRARIES})
 
 #===========================BUILD EQ10Q ALL GUI FILES=============================================

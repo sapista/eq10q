@@ -83,7 +83,7 @@ m_bTextEntryMode(false)
   m_TextEntry.set_no_show_all();
   
   //Set Colors and fonts
-  m_TextEntry.modify_font(Pango::FontDescription::FontDescription("Monospace 7"));
+  m_TextEntry.modify_font(Pango::FontDescription("Monospace 7"));
   SetWidgetColors m_WidgetColors;
   m_WidgetColors.setGenericWidgetColors(&m_TextEntry); 
   
