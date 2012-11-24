@@ -25,13 +25,13 @@ This file contains the filter definitions
 #ifndef  FILTER_H
   #define FILTER_H
 
+#include "smooth.h"
+
 //Constants definitions
 #define PI 3.1416
-
 #define BUFFER_SIZE 3
 #define BUFFER_1_SIZE 2
 #define BUFFER_EXTRA_SIZE 3
-
 #define NUM_OF_CHANNELS @Num_Of_Channels@
 
 typedef enum
@@ -53,6 +53,16 @@ typedef enum
 
 typedef struct
 {
+  //Smooth params
+  Smooth *smooth_b0;
+  Smooth *smooth_b1;
+  Smooth *smooth_b2;
+  Smooth *smooth_a1;
+  Smooth *smooth_a2;
+  Smooth *smooth_b1_0;
+  Smooth *smooth_b1_1;
+  Smooth *smooth_a1_1;
+  
   float b0, b1, b2, a1, a2; //Second Order coeficients
   float b1_0, b1_1, a1_1; //First order coeficients
   float buffer[NUM_OF_CHANNELS][BUFFER_SIZE];  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
@@ -78,7 +88,7 @@ inline void calcCoefs(Filter *f);
 void flushBuffers(Filter *f);
 
 //The DSP processor
-inline float computeFilter(Filter *filter, float inputSample, int ch);
+inline void computeFilter(Filter *filter, float *inputSample, int ch);
 
 //Check a Change on a band and return 1 if change exisit, otherwise return 0
 int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);

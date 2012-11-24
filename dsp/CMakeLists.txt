@@ -1,7 +1,7 @@
 ###DSP CMake
 
 #denormals are handled using -ffast-math
-ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -ffast-math)
+ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -msse -mfpmath=sse -ffast-math)
 
 ##Build Mono Filter lib
 set( Num_Of_Channels  1)

@@ -48,8 +48,14 @@ Smooth *SmoothInit(double rate)
   for(i=0; i < 2; i++)
   {
     s->bufferA[i] = 0.0;
-	s->bufferB[i] = 0.0;
+    s->bufferB[i] = 0.0;
   }
+  
+  
+  //NEW WAY TEST
+  s->step = MAX_STEP_PER_SECOND/(float)rate;
+  s->current_sample = 0.0;
+  
   return s;
 }
 
@@ -62,8 +68,9 @@ void SmoothClean(Smooth *s)
 //The DSP processor
 inline float computeSmooth(Smooth *s, float inputSample)
 {
+  /****************************
   float w = inputSample;
-
+ 
   //First Stage
   //w(n)=x(n)-a1*w(n-1)
   s->bufferA[0] = w-s->a1_1*s->bufferA[1];
@@ -81,8 +88,17 @@ inline float computeSmooth(Smooth *s, float inputSample)
   w = s->b1_0*s->bufferB[0] + s->b1_1*s->bufferB[1];
 
   s->bufferB[1] = s->bufferB[0];
-
-return w;
-
+  return w;
+  *********************************/
+  
+  
+  //New way TEST
+  float jump = inputSample - s->current_sample;
+  jump = jump > s->step? s->step : jump;
+  jump = jump < -s->step? -s->step : jump;
+  s->current_sample = s->current_sample + jump;
+  
+  return s->current_sample;
+  
 }
 

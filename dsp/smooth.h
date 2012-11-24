@@ -29,8 +29,10 @@ without care of the speed of the automation control.
   #define SMOOTH_H
 
 //Cut off frequency of the LPF filter, this freq is adjusted experimentally
-#define F_CUT_OFF 500
-#define PI 3.1416
+#define F_CUT_OFF 500  ///TODO REMOVE THAT
+#define PI 3.1416 ///TODO REMOVE THAT
+
+#define MAX_STEP_PER_SECOND 500.0
 
 typedef struct
 {
@@ -38,7 +40,9 @@ typedef struct
   float bufferA[2]; //First order buffers for the first stage
   float bufferB[2]; //First order buffers for the second stage
   float fs; //sample rate
-
+  
+  float step;
+  float current_sample;
 } Smooth;
 
 //Initialize smooth instance

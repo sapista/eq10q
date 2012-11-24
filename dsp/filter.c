@@ -30,6 +30,14 @@
   #include "filter_stereo.h"
 #endif
 
+#define DENORMAL_TO_ZERO(x) if (((*(unsigned int *) &(x)) & 0x7f800000) == 0) x = 0;
+//#define SMALL_TO_ZERO(x) if (x < 1e-32) x = 0;
+inline void SMALL_TO_ZERO(float *value)
+{
+    if (abs(*value) < (10e-40))
+        *value = 0.f;
+}
+
 //Initialize filter
 Filter *FilterInit(double rate)
 {
@@ -44,19 +52,34 @@ Filter *FilterInit(double rate)
   flushBuffers(filter);
   filter->fs=(float)rate;
 
+  filter->smooth_b0 = SmoothInit(rate);
+  filter->smooth_b1 = SmoothInit(rate);
+  filter->smooth_b2 = SmoothInit(rate);
+  filter->smooth_a1 = SmoothInit(rate);
+  filter->smooth_a2 = SmoothInit(rate);
+  filter->smooth_b1_0 = SmoothInit(rate);
+  filter->smooth_b1_1 = SmoothInit(rate);
+  filter->smooth_a1_1 = SmoothInit(rate);
+  
   return filter;
 }
 
 //Destroy a filter instance
 void FilterClean(Filter *filter)
 { 
+  SmoothClean(filter->smooth_b0);
+  SmoothClean(filter->smooth_b1);
+  SmoothClean(filter->smooth_b2);
+  SmoothClean(filter->smooth_a1);
+  SmoothClean(filter->smooth_a2);
+  SmoothClean(filter->smooth_b1_0);
+  SmoothClean(filter->smooth_b1_1);
+  SmoothClean(filter->smooth_a1_1);
   free(filter);
 }
 //Compute filter
-inline float computeFilter(Filter *filter, float inputSample, int ch)
+inline void computeFilter(Filter *filter, float *inputSample, int ch)
 {
-  float w = inputSample;
-
   if(filter->iFilterEnabled)
   {
     switch(filter->filter_order)
@@ -64,9 +87,10 @@ inline float computeFilter(Filter *filter, float inputSample, int ch)
       //Process first order
       case 1:
         //w(n)=x(n)-a1*w(n-1)
-        filter->buffer1[ch][0] = w-filter->a1_1*filter->buffer1[ch][1];
+        filter->buffer1[ch][0] = *inputSample-filter->a1_1*filter->buffer1[ch][1];
         //y(n)=bo*w(n)+b1*w(n-1)
-        w = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
+	SMALL_TO_ZERO(&(filter->buffer1[ch][0]));
+        *inputSample = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
   
         filter->buffer1[ch][1] = filter->buffer1[ch][0];
       break;
@@ -74,9 +98,10 @@ inline float computeFilter(Filter *filter, float inputSample, int ch)
       //Process second order
       case 2:
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
+        filter->buffer[ch][0] = *inputSample-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
+	SMALL_TO_ZERO(&(filter->buffer[ch][0]));
+        *inputSample = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
         filter->buffer[ch][2] = filter->buffer[ch][1];
         filter->buffer[ch][1] = filter->buffer[ch][0];
@@ -85,16 +110,18 @@ inline float computeFilter(Filter *filter, float inputSample, int ch)
       //Processat 3r ordre
       case 3:
         //w(n)=x(n)-a1*w(n-1)
-        filter->buffer1[ch][0] = w-filter->a1_1*filter->buffer1[ch][1];
+        filter->buffer1[ch][0] = *inputSample-filter->a1_1*filter->buffer1[ch][1];
         //y(n)=bo*w(n)+b1*w(n-1)
-        w = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
+	SMALL_TO_ZERO(&(filter->buffer[ch][0]));
+        *inputSample = filter->b1_0*filter->buffer1[ch][0] + filter->b1_1*filter->buffer1[ch][1];
   
         filter->buffer1[ch][1] = filter->buffer1[ch][0];
   
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
+        filter->buffer[ch][0] = *inputSample-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
+	SMALL_TO_ZERO(&(filter->buffer[ch][0]));
+        *inputSample = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
         filter->buffer[ch][2] = filter->buffer[ch][1];
         filter->buffer[ch][1] = filter->buffer[ch][0];
@@ -103,24 +130,99 @@ inline float computeFilter(Filter *filter, float inputSample, int ch)
       //Processat 4t ordre
       case 4:
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer[ch][0] = w-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
+        filter->buffer[ch][0] = *inputSample-filter->a1*filter->buffer[ch][1]-filter->a2*filter->buffer[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
+	SMALL_TO_ZERO(&(filter->buffer[ch][0]));
+        *inputSample = filter->b0*filter->buffer[ch][0] + filter->b1*filter->buffer[ch][1]+ filter->b2*filter->buffer[ch][2];
   
         filter->buffer[ch][2] = filter->buffer[ch][1];
         filter->buffer[ch][1] = filter->buffer[ch][0];
   
         //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-        filter->buffer_extra[ch][0] = w-filter->a1*filter->buffer_extra[ch][1]-filter->a2*filter->buffer_extra[ch][2];
+        filter->buffer_extra[ch][0] = *inputSample-filter->a1*filter->buffer_extra[ch][1]-filter->a2*filter->buffer_extra[ch][2];
         //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-        w = filter->b0*filter->buffer_extra[ch][0] + filter->b1*filter->buffer_extra[ch][1]+ filter->b2*filter->buffer_extra[ch][2];
+	SMALL_TO_ZERO(&(filter->buffer_extra[ch][0]));
+        *inputSample = filter->b0*filter->buffer_extra[ch][0] + filter->b1*filter->buffer_extra[ch][1]+ filter->b2*filter->buffer_extra[ch][2];
+  
+        filter->buffer_extra[ch][2] = filter->buffer_extra[ch][1];
+        filter->buffer_extra[ch][1] = filter->buffer_extra[ch][0];
+      break;
+    }//END SWITCH ORDER
+    
+  //TEST Print buffers
+  //printf("buf0 = %e\r\n",filter->buffer[ch][0]);
+  
+  }//END of if filter activated
+  
+
+  
+  
+  /********************************** SMOOTH ******************************************************************
+  if(filter->iFilterEnabled)
+  {
+    switch(filter->filter_order)
+    { 
+      //Process first order
+      case 1:
+        //w(n)=x(n)-a1*w(n-1)
+        filter->buffer1[ch][0] = w- computeSmooth(filter->smooth_a1_1, filter->a1_1)*filter->buffer1[ch][1];
+        //y(n)=bo*w(n)+b1*w(n-1)
+        w = computeSmooth(filter->smooth_b1_0, filter->b1_0)*filter->buffer1[ch][0] + computeSmooth(filter->smooth_b1_1, filter->b1_1) *filter->buffer1[ch][1];
+  
+        filter->buffer1[ch][1] = filter->buffer1[ch][0];
+	break;
+  
+      //Process second order
+      case 2:
+        //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+        filter->buffer[ch][0] = w- computeSmooth(filter->smooth_a1,filter->a1) *filter->buffer[ch][1]- computeSmooth(filter->smooth_a2, filter->a2) *filter->buffer[ch][2];
+        //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+        w = computeSmooth(filter->smooth_b0, filter->b0) *filter->buffer[ch][0] + computeSmooth(filter->smooth_b1, filter->b1) *filter->buffer[ch][1]+ computeSmooth(filter->smooth_b2, filter->b2) *filter->buffer[ch][2];
+  
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
+      break;
+    
+      //Processat 3r ordre
+      case 3:
+        //w(n)=x(n)-a1*w(n-1)
+        filter->buffer1[ch][0] = w- computeSmooth(filter->smooth_a1_1, filter->a1_1)*filter->buffer1[ch][1];
+        //y(n)=bo*w(n)+b1*w(n-1)
+        w = computeSmooth(filter->smooth_b1_0, filter->b1_0)*filter->buffer1[ch][0] + computeSmooth(filter->smooth_b1_1, filter->b1_1) *filter->buffer1[ch][1];
+  
+        filter->buffer1[ch][1] = filter->buffer1[ch][0];
+  
+        //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+        filter->buffer[ch][0] = w- computeSmooth(filter->smooth_a1,filter->a1) *filter->buffer[ch][1]- computeSmooth(filter->smooth_a2, filter->a2) *filter->buffer[ch][2];
+        //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+        w = computeSmooth(filter->smooth_b0, filter->b0) *filter->buffer[ch][0] + computeSmooth(filter->smooth_b1, filter->b1) *filter->buffer[ch][1]+ computeSmooth(filter->smooth_b2, filter->b2) *filter->buffer[ch][2];
+  
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
+      break;
+    
+      //Processat 4t ordre
+      case 4:
+        //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+        filter->buffer[ch][0] = w- computeSmooth(filter->smooth_a1,filter->a1) *filter->buffer[ch][1]- computeSmooth(filter->smooth_a2, filter->a2) *filter->buffer[ch][2];
+        //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+        w = computeSmooth(filter->smooth_b0, filter->b0) *filter->buffer[ch][0] + computeSmooth(filter->smooth_b1, filter->b1) *filter->buffer[ch][1]+ computeSmooth(filter->smooth_b2, filter->b2) *filter->buffer[ch][2];
+  
+        filter->buffer[ch][2] = filter->buffer[ch][1];
+        filter->buffer[ch][1] = filter->buffer[ch][0];
+  
+        //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+        filter->buffer_extra[ch][0] = w- computeSmooth(filter->smooth_a1,filter->a1) *filter->buffer_extra[ch][1]- computeSmooth(filter->smooth_a2, filter->a2) *filter->buffer_extra[ch][2];
+        //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+        w = computeSmooth(filter->smooth_b0, filter->b0) *filter->buffer_extra[ch][0] + computeSmooth(filter->smooth_b1, filter->b1) *filter->buffer_extra[ch][1]+ computeSmooth(filter->smooth_b2, filter->b2) *filter->buffer_extra[ch][2];
   
         filter->buffer_extra[ch][2] = filter->buffer_extra[ch][1];
         filter->buffer_extra[ch][1] = filter->buffer_extra[ch][0];
       break;
     }//END SWITCH ORDER
   }//END of if filter activated
-  return w;
+  ***********************************************************************/
+
 }
 
 
@@ -251,14 +353,22 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
  } //End of switch
 
   //Normalice coeficients to a0=1
+  DENORMAL_TO_ZERO(b0);
   b0 = b0/a0; //b0
+  DENORMAL_TO_ZERO(b1);
   b1 =b1/a0; //b1
+  DENORMAL_TO_ZERO(b2);
   b2 =b2/a0; //b2
+  DENORMAL_TO_ZERO(a1);
   a1 =a1/a0; //a1
+  DENORMAL_TO_ZERO(a2);
   a2 =a2/a0; //a2
 
+  DENORMAL_TO_ZERO(b1_0);
   b1_0 = b1_0/a1_0;
+  DENORMAL_TO_ZERO(b1_1);
   b1_1 = b1_1/a1_0;
+  DENORMAL_TO_ZERO(b1_1);
   a1_1 = a1_1/a1_0;
 
 
@@ -270,7 +380,7 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
 
   filter->b1_0 =b1_0;
   filter->b1_1 =b1_1;
-  filter->a1_1 =a1_1;
+  filter->a1_1 =a1_1; 
 }
 
 //Clean buffers
@@ -289,7 +399,7 @@ void flushBuffers(Filter *filter)
 }
 
 //Check a Change on a band and return 1 if change exist, otherwise return 0
-int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
+inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
 {
   if(filter->gain < fGain - 0.05 || filter->gain > fGain + 0.05)
     return 1;
@@ -315,7 +425,7 @@ FilterType int2FilterType(int iType)
 }
 
 //Save filter data
-void setFilterParams(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
+inline void setFilterParams(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
 {
   filter->gain = fGain;
   filter->freq = fFreq;
