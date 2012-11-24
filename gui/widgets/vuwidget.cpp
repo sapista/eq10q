@@ -127,9 +127,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Compute number of bars for each zone
     float fdBValue[m_iChannels];
     float fdBPeak[m_iChannels];
-    int iActiveVu;
     float fTextOffset = TEXT_OFFSET/(float)width;
-    float fTextHeight = TEXT_OFFSET/(float)height;
     float fChannelWidth = (1 - fTextOffset - 2*MARGIN)/(float)m_iChannels;
   
     //Translate input to dBu
@@ -193,7 +191,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
 
     
  
-    for(int c; c < m_iChannels; c++)
+    for(int c = 0; c < m_iChannels; c++)
     {
       //draw active VU in green
       cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);

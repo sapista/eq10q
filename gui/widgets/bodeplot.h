@@ -79,7 +79,6 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual void redraw();
   
       //Override default signal handler:
-      virtual void on_realize();
       virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
@@ -89,6 +88,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     bool m_Bypass;
     int m_iBandSel;
     bool bMotionIsConnected;
+    bool bIsFirstRun;
     
     //To hadle mouse mouve events
     sigc::connection m_motion_connection;

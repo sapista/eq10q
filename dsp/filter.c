@@ -130,6 +130,7 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
 
   float w0=2*PI*(filter->freq/filter->fs);
   float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, a1_0, a1_1;
+  alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = a1_0 = a1_1 = 1;
 
   switch((int)filter->filter_type){
 

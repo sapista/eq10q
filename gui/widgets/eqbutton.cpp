@@ -24,9 +24,9 @@
 
 EQButton::EQButton(int iType, bool *bSemafor):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
-m_bStop(bSemafor),
 m_FilterType(int2FilterType(iType)),
-m_bTextEntryMode(false)
+m_bTextEntryMode(false),
+m_bStop(bSemafor)
 {
   *m_bStop = false;
   m_ptr_CtlButton = Gtk::manage(new CtlButton(iType));

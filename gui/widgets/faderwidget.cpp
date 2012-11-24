@@ -26,7 +26,7 @@
 #include "faderwidget.h"
 
 FaderWidget::FaderWidget(double dMax, double dMin, const char *bundlePath)
-  :m_max(dMax), m_min(dMin), m_value(0), bMotionIsConnected(false), m_bundlePath(bundlePath)
+  :bMotionIsConnected(false), m_value(0), m_max(dMax), m_min(dMin), m_bundlePath(bundlePath)
 {
   m_image_surface_ptr = Cairo::ImageSurface::create_from_png (m_bundlePath + "/" + std::string(FADER_ICON_FILE));
   set_size_request(2*m_image_surface_ptr->get_width()+4*FADER_MARGIN, FADER_INITAL_HIGHT);
@@ -193,7 +193,6 @@ bool  FaderWidget::on_button_press_event(GdkEventButton* event)
   //Act in case mouse pointer is inside faderwidget
   Gtk::Allocation allocation = get_allocation();
   const int width = allocation.get_width();
-  const int height = allocation.get_height();
   int x,y;
   get_pointer(x,y);
   if( x > width/2 - m_image_surface_ptr->get_width()/2 &&
@@ -208,12 +207,14 @@ bool  FaderWidget::on_button_press_event(GdkEventButton* event)
       bMotionIsConnected = true;
     }
   }
+  return true;
 }
 
 bool  FaderWidget::on_button_release_event(GdkEventButton* event)
 {
   m_motion_connection.disconnect();
   bMotionIsConnected = false;
+  return true;
 }
 
 bool  FaderWidget::on_scrollwheel_event(GdkEventScroll* event)
@@ -233,6 +234,7 @@ bool  FaderWidget::on_scrollwheel_event(GdkEventScroll* event)
     set_value(m_value - increment);
   }
   m_FaderChangedSignal.emit();
+  return true;
 }
 
 bool  FaderWidget::on_mouse_motion_event(GdkEventMotion* event)
@@ -240,7 +242,6 @@ bool  FaderWidget::on_mouse_motion_event(GdkEventMotion* event)
     int yPixels;
     double m, n;
     Gtk::Allocation allocation = get_allocation();
-    const int width = allocation.get_width();
     const int height = allocation.get_height();
 
     yPixels = event->y - m_image_surface_ptr->get_height()/2; //Offset fader icon to grab the center of the fader
@@ -255,6 +256,7 @@ bool  FaderWidget::on_mouse_motion_event(GdkEventMotion* event)
     
     set_value(((double)yPixels - n)/m);
     m_FaderChangedSignal.emit();
+    return true;
 }
 
  FaderWidget::signal_FaderChanged  FaderWidget::signal_changed()

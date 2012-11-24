@@ -29,8 +29,12 @@
 #include <cstring>
 
 PlotEQCurve::PlotEQCurve(int iNumOfBands)
-:m_TotalBandsCount(iNumOfBands), m_Bypass(false), bMotionIsConnected(false),
-height(PLOT_HIGHT), width(PLOT_WIDTH)
+:width(PLOT_WIDTH),
+height(PLOT_HIGHT),
+m_TotalBandsCount(iNumOfBands), 
+m_Bypass(false),
+bMotionIsConnected(false),
+bIsFirstRun(true)
 {
    //Calc the number of points
    m_NumOfPoints = floor(log10(MAX_FREQ/MIN_FREQ)*NUM_POINTS_PER_DECADE) + 1;
@@ -88,18 +92,6 @@ PlotEQCurve::~PlotEQCurve()
   }
   delete band_y;
   
-}
-
-void PlotEQCurve::on_realize()
-{
-  
-  Gtk::Widget::on_realize();
-  
-  Gtk::Allocation allocation = get_allocation();
-  width = allocation.get_width();
-  height = allocation.get_height();
-  initBaseVectors();
-  reComputeRedrawAll();
 }
 
 void PlotEQCurve::initBaseVectors()
@@ -166,20 +158,13 @@ void PlotEQCurve::resetCurve()
 }
 
 void PlotEQCurve::ComputeFilter(int bd_ix)
-{
-  /*
-  //Restem a la main curve la corba de la banda que s'actualitza
-  if (m_filters[bd_ix]->bIsOn)
-  {
-    for(int i = 0; i<m_NumOfPoints; i++)
-    {
-      main_y[i] = main_y[i] - band_y[bd_ix][i];
-    }
-  }
-  */
-  
+{ 
   //Calculem els valors de la banda actualitzada
-  switch(m_filters[bd_ix]->fType){    
+  switch(m_filters[bd_ix]->fType){
+    case NOT_SET:
+      //Do Nothing
+    break;
+      
     case LPF_ORDER_1:
       CalcBand_lpf_order1(bd_ix);
     break;
@@ -246,17 +231,6 @@ void PlotEQCurve::ComputeFilter(int bd_ix)
       }
     }
   }
-  
-  /*
-  //sumem els nous valors de la banda actualitzada  a la main curve
-  if (m_filters[bd_ix]->bIsOn)
-  {
-    for(int i = 0; i<m_NumOfPoints; i++)
-    {
-      main_y[i] = main_y[i] + band_y[bd_ix][i];
-    }
-  }
-  */
 }
 
 //===============================DATA ACCESORS===================================================================
@@ -439,6 +413,12 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     Gtk::Allocation allocation = get_allocation();
     width = allocation.get_width();
     height = allocation.get_height();
+  
+    if(bIsFirstRun)
+    {
+      initBaseVectors();
+      bIsFirstRun = false;
+    }     
     
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
 

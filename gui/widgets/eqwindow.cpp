@@ -31,22 +31,22 @@
 
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath)
-  :m_FlatButton(" Flat "),
+  :m_BypassButton(" Bypass "),
   m_AButton(" A "),
   m_BButton(" B "),
-  m_BypassButton(" Bypass "),
-  m_LoadButton("Load"),
+  m_FlatButton(" Flat "),
   m_SaveButton("Save"),
+  m_LoadButton("Load"),  
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
   m_bMutex(false),
   m_port_event_InGain(false),
   m_port_event_OutGain(false),
+  m_port_event_Curve(false),  
   m_port_event_Bypass(false),
-  m_port_event_Curve(false),
+  m_DisableBypassEvent(false),
   m_pluginUri(uri),
-  m_bundlePath(bundlePath),
-  m_DisableBypassEvent(false)
+  m_bundlePath(bundlePath)
 {
  
   //load image logo
@@ -239,7 +239,8 @@ bool EqMainWindow::on_timeout()
       m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
     }
     m_Bode->reComputeRedrawAll();
-  }  
+  }
+  return true;
 }
 
 void EqMainWindow::changeAB(EqParams *toBeCurrent)

@@ -27,9 +27,9 @@ BandCtl::BandCtl( const int iBandNum, bool *bSemafor, const char* bundlepath):
 m_ButtonAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_ComboAlign(Gtk::ALIGN_CENTER, Gtk::ALIGN_CENTER, 0.0, 0.0),
 m_iBandNum(iBandNum),
+m_bBandIsEnabled(false),
 m_DisableComboEvent(false),
-m_DisableButtonEvent(false),
-m_bBandIsEnabled(false)
+m_DisableButtonEvent(false)
 {
   m_FilterSel = Gtk::manage(new PixMapCombo(bundlepath));
   m_Gain = Gtk::manage(new EQButton(GAIN_TYPE, bSemafor));
