@@ -30,10 +30,10 @@ extern "C" {
 #endif
 
 //Converts a value from dB to Linear 1 Linear = 0 dB
-float dB2Lin(float dbIn);
+inline float dB2Lin(float dbIn);
 
 //Converts a value from Linear to dB 1 Linear = 0 dB
-float Lin2dB(float LinIn);
+inline float Lin2dB(float LinIn);
 
 
 #ifdef __cplusplus

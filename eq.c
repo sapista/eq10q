@@ -48,8 +48,11 @@ This file implements functionalities for a large numbers of equalizers
   #include "dsp/filter_stereo.h"
 #endif
 
+#define EQ_INPUT_GAIN 10000.0
+#define EQ_OUTPUT_GAIN 0.0001
+
 //LV2 Control port polling period in seconds
-#define PORT_POLLING_PERIOD 0.1
+#define PORT_POLLING_PERIOD 0.05
 
 static LV2_Descriptor *eqDescriptor = NULL;
 
@@ -73,8 +76,10 @@ typedef struct {
   Smooth *smooth[NUM_BANDS][3]; //3 smooth per cada banda (Gain, Freq, Q)
   Vu *InputVu[NUM_CHANNELS];
   Vu *OutputVu[NUM_CHANNELS];
+ 
   int sample_count;
   int port_polling_samples;
+  
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -191,7 +196,8 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   for(i=0; i<NUM_BANDS; i++)
   {
     plugin_data->filter[i] = FilterInit(s_rate);
-    for(j=0;j<3;j++) plugin_data->smooth[i][j] = SmoothInit(1.0/(double)PORT_POLLING_PERIOD);
+    
+    for(j=0;j<3;j++) plugin_data->smooth[i][j] = SmoothInit(s_rate);
   }
 
   for(i=0; i<NUM_CHANNELS; i++)
@@ -224,11 +230,13 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
   int i, j, pos; //loop index
   float sample; //actual processing sample
 
+/***
   //Filter parameters from ports
   plugin_data->sample_count += sample_count;
   if(plugin_data->sample_count > plugin_data->port_polling_samples)
   {
     plugin_data->sample_count = 0;
+        
     for(i = 0; i<NUM_BANDS; i++)
     {
       //Smooth ///TODO Remove that
@@ -253,23 +261,30 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
 
     }
   }
-
-  //Get the audio input and output buffers
-  float *fInput[NUM_CHANNELS];
-  float *fOutput[NUM_CHANNELS];
-
-  for(i = 0; i<NUM_CHANNELS; i++)
-  {
-    fInput[i] = plugin_data->fInput[i];
-    fOutput[i] = plugin_data->fOutput[i];
-  }
+  ******/
 
   //STEP2: Compute the filter
   for (pos = 0; pos < sample_count; pos++) 
-  {
+  { 
+    
+    for(i = 0; i<NUM_BANDS; i++)
+    {
+      fBandGain[i] = computeSmooth(plugin_data->smooth[i][0], *(plugin_data->fBandGain[i]));
+      fBandFreq[i] = computeSmooth(plugin_data->smooth[i][1], *(plugin_data->fBandFreq[i]));
+      fBandParam[i] = computeSmooth(plugin_data->smooth[i][2], *(plugin_data->fBandParam[i]));
+      iBandType[i] = (int)(*(plugin_data->fBandType[i]));
+      iBandEnabled[i] = (int)(*(plugin_data->fBandEnabled[i]));
+      if(checkBandChange(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]))
+      {
+        setFilterParams(plugin_data->filter[i], fBandGain[i], fBandFreq[i], fBandParam[i], iBandType[i], iBandEnabled[i]);
+        calcCoefs(plugin_data->filter[i]);
+      }
+    }  
+    
     for(i = 0; i<NUM_CHANNELS; i++)
     { 
-      sample = fInput[i][pos];
+      //Get input
+      sample = plugin_data->fInput[i][pos];
       
       //Process every band
       if(iBypass != 1)
@@ -281,13 +296,13 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
         SetSample(plugin_data->InputVu[i], sample);
 
 	//Apply gain to the sample to move it to de-normalized state
-	sample *= 1000;
+	sample *= EQ_INPUT_GAIN;
         for(j = 0; j< NUM_BANDS; j++)
-        {
+        {  
           computeFilter(plugin_data->filter[j], &sample, i);
         }
         //Apply gain to the sample to move it to de-normalized state
-	sample *= 0.001;
+	sample *= EQ_OUTPUT_GAIN;
         
         //The output amplifier
         sample *= fOutGain;
@@ -302,7 +317,8 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
         resetVU(plugin_data->OutputVu[i]);
       }
       
-      fOutput[i][pos] = sample;
+      //Write on output
+      plugin_data->fOutput[i][pos] = sample;
     }
   }
   
@@ -312,6 +328,7 @@ static void runEQ(LV2_Handle instance, uint32_t sample_count)
     *(plugin_data->fVuIn[i]) = ComputeVu(plugin_data->InputVu[i], sample_count);
     *(plugin_data->fVuOut[i]) = ComputeVu(plugin_data->OutputVu[i], sample_count);
   }
+  
   
   ///printf("runEQ Return\n\r");
 }

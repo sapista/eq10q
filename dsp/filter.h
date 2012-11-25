@@ -25,8 +25,6 @@ This file contains the filter definitions
 #ifndef  FILTER_H
   #define FILTER_H
 
-#include "smooth.h"
-
 //Constants definitions
 #define PI 3.1416
 #define BUFFER_SIZE 3
@@ -53,16 +51,8 @@ typedef enum
 
 typedef struct
 {
-  //Smooth params
-  Smooth *smooth_b0;
-  Smooth *smooth_b1;
-  Smooth *smooth_b2;
-  Smooth *smooth_a1;
-  Smooth *smooth_a2;
-  Smooth *smooth_b1_0;
-  Smooth *smooth_b1_1;
-  Smooth *smooth_a1_1;
-  
+  float enableGain; //Used to smooth the transition when filter enable/disable
+  float enableStep; //Used to smooth the transition when filter enable/disable
   float b0, b1, b2, a1, a2; //Second Order coeficients
   float b1_0, b1_1, a1_1; //First order coeficients
   float buffer[NUM_OF_CHANNELS][BUFFER_SIZE];  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
@@ -91,11 +81,14 @@ void flushBuffers(Filter *f);
 inline void computeFilter(Filter *filter, float *inputSample, int ch);
 
 //Check a Change on a band and return 1 if change exisit, otherwise return 0
-int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);
+inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);
 
 //Convert int to FilterType
 FilterType int2FilterType(int iType);
 
 //Save filter data
-void setFilterParams(Filter *f, float fGain, float fFreq, float fQ, int iType, int iEnabled);
+inline void setFilterParams(Filter *f, float fGain, float fFreq, float fQ, int iType, int iEnabled);
+
+//Denormals handling
+inline void SMALL_TO_ZERO(float *value);
 #endif

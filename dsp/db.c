@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 //Converts a value from dB to Linear 1 Linear = 0 dB
-float dB2Lin(float dbIn)
+inline float dB2Lin(float dbIn)
 {
   int index = (int)(DB2LIN_M*dbIn + DB2LIN_N);
   index = index > 0 ? index : 0;
@@ -39,7 +39,7 @@ float dB2Lin(float dbIn)
 }
 
 //Converts a value from Linear to dB 1 Linear = 0 dB
-float Lin2dB(float LinIn)
+inline float Lin2dB(float LinIn)
 {
   int index = (int)(LIN2DB_M*LinIn + LIN2DB_N);
   index = index > 0 ? index : 0;

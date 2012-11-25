@@ -30,12 +30,15 @@
   #include "filter_stereo.h"
 #endif
 
-#define DENORMAL_TO_ZERO(x) if (((*(unsigned int *) &(x)) & 0x7f800000) == 0) x = 0;
-//#define SMALL_TO_ZERO(x) if (x < 1e-32) x = 0;
+//#define DENORMAL_TO_ZERO(x) if (((*(unsigned int *) &(x)) & 0x7f800000) == 0) x = 0;
+
+//Handle denormals and make it zero
 inline void SMALL_TO_ZERO(float *value)
 {
-    if (abs(*value) < (10e-40))
+  if (abs(*value) < (10e-40))
+  {
         *value = 0.f;
+  }
 }
 
 //Initialize filter
@@ -44,6 +47,10 @@ Filter *FilterInit(double rate)
   
   Filter *filter = (Filter *)malloc(sizeof(Filter));
   
+  //Smooth on/off
+  filter->enableStep = 1.0/(0.01*rate);
+  filter->enableGain = 0.0;
+  
   filter->gain = 0.0;
   filter->freq = 20.0;
   filter->Q = 2.0;
@@ -51,15 +58,6 @@ Filter *FilterInit(double rate)
   filter->iFilterEnabled = 0;
   flushBuffers(filter);
   filter->fs=(float)rate;
-
-  filter->smooth_b0 = SmoothInit(rate);
-  filter->smooth_b1 = SmoothInit(rate);
-  filter->smooth_b2 = SmoothInit(rate);
-  filter->smooth_a1 = SmoothInit(rate);
-  filter->smooth_a2 = SmoothInit(rate);
-  filter->smooth_b1_0 = SmoothInit(rate);
-  filter->smooth_b1_1 = SmoothInit(rate);
-  filter->smooth_a1_1 = SmoothInit(rate);
   
   return filter;
 }
@@ -67,21 +65,24 @@ Filter *FilterInit(double rate)
 //Destroy a filter instance
 void FilterClean(Filter *filter)
 { 
-  SmoothClean(filter->smooth_b0);
-  SmoothClean(filter->smooth_b1);
-  SmoothClean(filter->smooth_b2);
-  SmoothClean(filter->smooth_a1);
-  SmoothClean(filter->smooth_a2);
-  SmoothClean(filter->smooth_b1_0);
-  SmoothClean(filter->smooth_b1_1);
-  SmoothClean(filter->smooth_a1_1);
   free(filter);
 }
 //Compute filter
 inline void computeFilter(Filter *filter, float *inputSample, int ch)
 {
-  if(filter->iFilterEnabled)
-  {
+  float bypass_in = *inputSample;
+  float en_jump;
+  //printf("Pre_ EnGain = %f\r\n",filter->enableGain); 
+  en_jump = (float)filter->iFilterEnabled - filter->enableGain;
+  en_jump = en_jump > filter->enableStep ? filter->enableStep : en_jump;
+  en_jump = en_jump < -filter->enableStep ? -filter->enableStep : en_jump;
+  filter->enableGain += en_jump;
+  //printf("EnGain = %f   Jump = %f\r\n",filter->enableGain, en_jump); 
+  //SMALL_TO_ZERO(&(filter->enableGain));
+
+  
+  if(filter->enableGain > filter->enableStep)
+  {  
     switch(filter->filter_order)
     { 
       //Process first order
@@ -151,12 +152,13 @@ inline void computeFilter(Filter *filter, float *inputSample, int ch)
     
   //TEST Print buffers
   //printf("buf0 = %e\r\n",filter->buffer[ch][0]);
-  
-  }//END of if filter activated
-  
+  } //END of if filter activated
 
-  
-  
+  //Crossover with clean
+  bypass_in *= (1.0 -  filter->enableGain);
+  *inputSample *= filter->enableGain;
+  *inputSample += bypass_in;
+
   /********************************** SMOOTH ******************************************************************
   if(filter->iFilterEnabled)
   {
@@ -229,7 +231,6 @@ inline void computeFilter(Filter *filter, float *inputSample, int ch)
 //Compute filter coeficients
 inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
 { 
-
   float w0=2*PI*(filter->freq/filter->fs);
   float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, a1_0, a1_1;
   alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = a1_0 = a1_1 = 1;
@@ -352,26 +353,69 @@ inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
     break;
  } //End of switch
 
+
+
+/***********************
+  //Filter coeficients print
+  printf("Not Norm b0 = %e\r\n", b0);
+  printf("Not Norm b1 = %e\r\n", b1);
+  printf("Not Norm b2 = %e\r\n", b2);
+  printf("Not Norm a0 = %e\r\n", a0);
+  printf("Not Norm a1 = %e\r\n", a1);
+  printf("Not Not Norm a2 = %e\r\n", a2);
+  printf("Not Norm b1_0 = %e\r\n", b1_0);
+  printf("Not Norm b1_1 = %e\r\n", b1_1);
+  printf("Not Norm a1_0 = %e\r\n", a1_0);
+  printf("Not Norm a1_1 = %e\r\n", a1_1);
+  **************************/
+
   //Normalice coeficients to a0=1
-  DENORMAL_TO_ZERO(b0);
   b0 = b0/a0; //b0
-  DENORMAL_TO_ZERO(b1);
   b1 =b1/a0; //b1
-  DENORMAL_TO_ZERO(b2);
   b2 =b2/a0; //b2
-  DENORMAL_TO_ZERO(a1);
   a1 =a1/a0; //a1
-  DENORMAL_TO_ZERO(a2);
   a2 =a2/a0; //a2
 
-  DENORMAL_TO_ZERO(b1_0);
   b1_0 = b1_0/a1_0;
-  DENORMAL_TO_ZERO(b1_1);
   b1_1 = b1_1/a1_0;
-  DENORMAL_TO_ZERO(b1_1);
   a1_1 = a1_1/a1_0;
 
+  /*********************************
+  //Filter coeficients print
+  printf("Norm b0 = %e\r\n", b0);
+  printf("Norm b1 = %e\r\n", b1);
+  printf("Norm b2 = %e\r\n", b2);
+  printf("Norm a1 = %e\r\n", a1);
+  printf("Norm a2 = %e\r\n", a2);
+  printf("Norm b1_0 = %e\r\n", b1_0);
+  printf("Norm b1_1 = %e\r\n", b1_1);
+  printf("Norm a1_1 = %e\r\n", a1_1);
+  *****************************************/
+  
+  //Re-calc buffer values only for LPF Filters this is a improved smooth method that only works for LPF
+  if( (int)filter->filter_type == LPF_ORDER_1 ||
+	(int)filter->filter_type == LPF_ORDER_2 ||
+	(int)filter->filter_type == LPF_ORDER_3 ||
+	(int)filter->filter_type == LPF_ORDER_4)
+  {
 
+    int i;
+    for(i=0; i< CMAKE_FILTER_CHANNEL_COUNT; i++)
+    {
+
+      //Using B
+      //filter->buffer1[i][0] *= (filter->b1_0 / b1_0);
+      filter->buffer1[i][1] *= (filter->b1_1 / b1_1);  
+      //filter->buffer[i][0] *= (filter->b0 / b0);
+      filter->buffer[i][1] *= (filter->b1 / b1);
+      filter->buffer[i][2] *= (filter->b2 / b2);
+      //filter->buffer_extra[i][0] *= (filter->b0 / b0);
+      filter->buffer_extra[i][1] *= (filter->b1 / b1);
+      filter->buffer_extra[i][2] *= (filter->b2 / b2);
+    }
+  }
+
+    
   filter->b0 = b0;
   filter->b1 = b1;
   filter->b2 = b2;
@@ -401,6 +445,7 @@ void flushBuffers(Filter *filter)
 //Check a Change on a band and return 1 if change exist, otherwise return 0
 inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled)
 {
+  /*******************************************************
   if(filter->gain < fGain - 0.05 || filter->gain > fGain + 0.05)
     return 1;
   if(filter->freq < fFreq * 0.9999 || filter->freq > fFreq * 1.0001) 
@@ -411,7 +456,12 @@ inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, i
     return 1;
   if(filter->iFilterEnabled != iEnabled)
     return 1;
-
+  ************************************/
+  
+  if(filter->gain != fGain || filter->freq != fFreq || filter->Q != fQ || filter->filter_type != int2FilterType(iType) || filter->iFilterEnabled != iEnabled)
+  {
+    return 1;
+  }
   return 0;
 }
 
@@ -457,10 +507,5 @@ inline void setFilterParams(Filter *filter, float fGain, float fFreq, float fQ, 
         filter->filter_order = 4;
       break;
     }
-  }
-  else
-  {
-   flushBuffers(filter);
-  }
- 
+  }  
 }

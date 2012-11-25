@@ -29,10 +29,10 @@ without care of the speed of the automation control.
   #define SMOOTH_H
 
 //Cut off frequency of the LPF filter, this freq is adjusted experimentally
-#define F_CUT_OFF 500  ///TODO REMOVE THAT
+#define F_CUT_OFF 2.0  ///TODO REMOVE THAT
 #define PI 3.1416 ///TODO REMOVE THAT
 
-#define MAX_STEP_PER_SECOND 500.0
+#define MAX_STEP_PER_SECOND 20000
 
 typedef struct
 {
