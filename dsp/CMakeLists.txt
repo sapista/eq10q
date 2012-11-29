@@ -1,8 +1,5 @@
 ###DSP CMake
 
-#denormals are handled using -ffast-math
-ADD_DEFINITIONS(-Wall -O3 -fPIC -DPIC -msse -mfpmath=sse -ffast-math)
-
 ##Build Mono Filter lib
 set( Num_Of_Channels  1)
 configure_file("${PROJECT_SOURCE_DIR}/dsp/filter.h" "${PROJECT_SOURCE_DIR}/dsp/filter_mono.h")
@@ -22,7 +19,7 @@ add_library( lib_vumeter  STATIC vu.c)
 add_library( lib_smooth  STATIC smooth.c)
 
 ##Build the db converter
-add_library( lib_db  STATIC db.c)
+##add_library( lib_db  STATIC db.c)
 
 #CLEAN generated .c files on run 'make clean'
 SET(generatedDspConfigFiles 

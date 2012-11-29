@@ -21,11 +21,9 @@
 #include "smooth.h"
 #include <stdio.h>
 #include <stdlib.h>
-//#include <math.h>
-
 
 //Initialize smooth
-Smooth *SmoothInit(double rate)
+Smooth *SmoothInit(double rate, float max_step_per_second)
 {
   Smooth *s = (Smooth *)malloc(sizeof(Smooth));
   s->fs=(float)rate;
@@ -53,7 +51,7 @@ Smooth *SmoothInit(double rate)
   
   
   //NEW WAY TEST
-  s->step = MAX_STEP_PER_SECOND/(float)rate;
+  s->step = max_step_per_second/(float)rate;
   s->current_sample = 0.0;
 
   return s;
@@ -64,41 +62,3 @@ void SmoothClean(Smooth *s)
 {
   free(s);
 }
-
-//The DSP processor
-inline float computeSmooth(Smooth *s, float inputSample)
-{
-  
-  /*******************
-  float w = inputSample;
- 
-  //First Stage
-  //w(n)=x(n)-a1*w(n-1)
-  s->bufferA[0] = w-s->a1_1*s->bufferA[1];
-
-  //y(n)=bo*w(n)+b1*w(n-1)
-  w = s->b1_0*s->bufferA[0] + s->b1_1*s->bufferA[1];
-
-  s->bufferA[1] = s->bufferA[0];
-  
-  //Second Stage
-  //w(n)=x(n)-a1*w(n-1)
-  s->bufferB[0] = w-s->a1_1*s->bufferB[1];
-
-  //y(n)=bo*w(n)+b1*w(n-1)
-  w = s->b1_0*s->bufferB[0] + s->b1_1*s->bufferB[1];
-
-  s->bufferB[1] = s->bufferB[0];
-  return w;
-  *****************************/
-
-  //New way TEST
-  float jump = inputSample - s->current_sample;
-  jump = jump > s->step? s->step : jump;
-  jump = jump < -s->step? -s->step : jump;
-  s->current_sample = s->current_sample + jump;
-  
-  return s->current_sample;
-  
-}
-

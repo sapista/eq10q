@@ -23,6 +23,7 @@ This file contains a VU meter definitions
 ****************************************************************************/
 
 #include <stdint.h>
+#include <math.h>
 
 #ifndef  VU_H
   #define VU_H
@@ -39,11 +40,30 @@ Vu *VuInit(double rate);
 void VuClean(Vu *vu);
 
 //Clear the VU
-void resetVU(Vu *vu);
+static inline void resetVU(Vu *vu)
+{
+  vu->vu_max = 0.0;
+  vu->vu_value = 0.0;
+}
 
 //Inputs a sample to VU
-inline void SetSample(Vu *vu, float sample);
+static inline void SetSample(Vu *vu, float sample)
+{
+  vu->vu_value = fabsf(sample);
+  vu->vu_max = vu->vu_value > vu->vu_max ? vu->vu_value :  vu->vu_max;
+}
 
 //Compute the VU's
-inline float ComputeVu(Vu *vu, uint32_t nframes);
+static inline float ComputeVu(Vu *vu, uint32_t nframes)
+{
+  const float fVuOut = vu->vu_max > vu->m_min ? vu->vu_max : 0;
+      if (vu->vu_max > vu->m_min)
+		vu->vu_max *= pow(vu->m_decay, nframes);  ///TODO: estas perdent rendiment amb akest pow!!!
+      else
+	vu->vu_max = 0.0;
+
+  //TESTING liner output
+  //return 20*log10(fVuOut/CONSTANT_VU);
+  return fVuOut;
+}
 #endif

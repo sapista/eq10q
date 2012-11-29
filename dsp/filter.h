@@ -25,11 +25,10 @@ This file contains the filter definitions
 #ifndef  FILTER_H
   #define FILTER_H
 
+#include <math.h>
+
 //Constants definitions
 #define PI 3.1416
-#define BUFFER_SIZE 3
-#define BUFFER_1_SIZE 2
-#define BUFFER_EXTRA_SIZE 3
 #define NUM_OF_CHANNELS @Num_Of_Channels@
 
 typedef enum
@@ -51,15 +50,16 @@ typedef enum
 
 typedef struct
 {
-  float enableGain; //Used to smooth the transition when filter enable/disable
-  float enableStep; //Used to smooth the transition when filter enable/disable
   float b0, b1, b2, a1, a2; //Second Order coeficients
-  float b1_0, b1_1, a1_1; //First order coeficients
-  float buffer[NUM_OF_CHANNELS][BUFFER_SIZE];  //second order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
-  float buffer1[NUM_OF_CHANNELS][BUFFER_1_SIZE]; //First order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc
-  float buffer_extra[NUM_OF_CHANNELS][BUFFER_EXTRA_SIZE]; //4st order buffers, format: pointer to poiner acording buffer[channel][buffer_position] the channel is iniialized wih malloc      
+  float b1_0, b1_1, b1_2, a1_1, a1_2; //Second Order extra coeficients 
+  float buf_0[NUM_OF_CHANNELS];
+  float buf_1[NUM_OF_CHANNELS];
+  float buf_2[NUM_OF_CHANNELS];
+  float buf_e0[NUM_OF_CHANNELS];
+  float buf_e1[NUM_OF_CHANNELS];
+  float buf_e2[NUM_OF_CHANNELS]; 
   FilterType filter_type; //filter type
-  int iFilterEnabled; //1 if filter is enabled
+  float iFilterEnabled; //1 if filter is enabled
   int filter_order;  //filter order
   float gain, freq, Q; //analog filter parameters
   float fs; //sample rate
@@ -71,24 +71,307 @@ Filter *FilterInit(double rate);
 //Destroy a filter instance
 void FilterClean(Filter *f);
 
-//Compute filter coeficients acording the order and type
-inline void calcCoefs(Filter *f);
+//Compute filter coeficients
+static inline void calcCoefs(Filter *filter) //p2 = GAIN p3 = Q
+{ 
+  float w0=2*PI*(filter->freq/filter->fs);
+  float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, b1_2, a1_0, a1_1, a1_2;
+  alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = b1_2 = a1_0 = a1_1 = a1_2 = 1.0;
+
+  switch((int)filter->filter_type){
+
+    case HPF_ORDER_1:
+      b0 = 2; //b0
+      b1 = -2; //b1
+      b2 = 0.0; //b2
+      a0 = w0+2; //a0
+      a1 = w0-2; //a1
+      a2 = 0.0; //a2
+    break;
+
+    case HPF_ORDER_2:  case HPF_ORDER_4:
+      alpha = sin(w0)/(2*filter->Q);
+
+      b1_0 = b0 = (1 + cos(w0))/2; //b0
+      b1_1 = b1 = -(1 + cos(w0)); //b1
+      b1_2 = b2 = (1 + cos(w0))/2; //b2
+      a1_0 = a0 = 1 + alpha; //a0
+      a1_1 = a1 = -2*cos(w0); //a1
+      a1_2 = a2 = 1 - alpha; //a2
+    break;
+
+    case HPF_ORDER_3: 
+      alpha = sin(w0)/(2*filter->Q);
+      b1_0 = 2; //b0
+      b1_1 = -2; //b1
+      b1_2 = 0.0; //b2
+      a1_0 = w0+2; //a0
+      a1_1 = w0-2; //a1
+      a1_2 = 0.0; //a2
+      b0 = (1 + cos(w0))/2; //b0
+      b1 = -(1 + cos(w0)); //b1
+      b2 = (1 + cos(w0))/2; //b2
+      a0 = 1 + alpha; //a0
+      a1 = -2*cos(w0); //a1
+      a2 = 1 - alpha; //a2
+    break;
+
+    case LPF_ORDER_1: 
+      b0 = w0; //b0
+      b1 = w0; //b1
+      b2 = 0.0; //b2
+      a0 = w0+2; //a0
+      a1 = w0-2; //a1
+      a2 = 0.0; //a2
+    break;
+
+    case LPF_ORDER_2: case LPF_ORDER_4:
+      alpha = sin(w0)/(2*filter->Q);
+      b1_0 = b0 = (1 - cos(w0))/2; //b0
+      b1_1 = b1 = 1 - cos(w0); //b1
+      b1_2 = b2 = (1 - cos(w0))/2; //b2
+      a1_0 = a0 = 1 + alpha; //a0
+      a1_1 = a1 = -2*cos(w0); //a1
+      a1_2 = a2 = 1 - alpha; //a2
+    break;
+
+    case LPF_ORDER_3:
+      alpha = sin(w0)/(2*filter->Q);
+      b1_0 = w0; //b0
+      b1_1 = w0; //b1
+      b1_2 = 0.0; //b2
+      a1_0 = w0+2; //a0
+      a1_1 = w0-2; //a1
+      a1_2 = 0.0; //a2
+      b0 = (1 - cos(w0))/2; //b0
+      b1 = 1 - cos(w0); //b1
+      b2 = (1 - cos(w0))/2; //b2
+      a0 = 1 + alpha; //a0
+      a1 = -2*cos(w0); //a1
+      a2 = 1 - alpha; //a2
+    break;
+
+    case LOW_SHELF:
+      A = sqrt((filter->gain));
+      //A=pow(10,(filter->gain/40));
+      alpha =sin(w0)/2 * (1/filter->Q);
+
+      b0 = A*((A+1)-(A-1)*cos(w0)+2*sqrt(A)*alpha); //b0
+      b1 = 2*A*((A-1)-(A+1)*cos(w0)); //b1
+      b2 = A*((A+1)-(A-1)*cos(w0)-2*sqrt(A)*alpha); //b2
+      a0 = (A+1) + (A-1)*cos(w0) + 2*sqrt(A)*alpha; //a0
+      a1 = -2*((A-1) + (A+1)*cos(w0)); //a1
+      a2 = (A+1) + (A-1)*cos(w0) - 2*sqrt(A)*alpha; //a2
+    break;
+
+    case HIGH_SHELF:
+      A = sqrt((filter->gain));
+      //A=pow(10,(filter->gain/40));
+      alpha =sin(w0)/2 * (1/filter->Q);
+
+      b0 = A*( (A+1) + (A-1)*cos(w0) + 2*sqrt(A)*alpha ); //b0
+      b1 = -2*A*( (A-1) + (A+1)*cos(w0)); //b1
+      b2 = A*( (A+1) + (A-1)*cos(w0) - 2*sqrt(A)*alpha ); //b2
+      a0 = (A+1) - (A-1)*cos(w0) + 2*sqrt(A)*alpha; //a0
+      a1 = 2*( (A-1) - (A+1)*cos(w0)); //a1
+      a2 = (A+1) - (A-1)*cos(w0) - 2*sqrt(A)*alpha; //a2
+    break;
+
+    case PEAK:
+      A = sqrt((filter->gain));
+      //A=pow(10,(filter->gain/40));
+      alpha = sin(w0)/(2*filter->Q);
+
+      b0 = 1 + alpha*A; //b0
+      b1 =  -2*cos(w0); //b1
+      b2 =   1 - alpha*A; //b2
+      a0 =   1 + alpha/A; //a0
+      a1 =  -2*cos(w0); //a1
+      a2 =   1 - alpha/A; //a2
+      
+      //TEST
+      printf("peak FS = %f\r\n", filter->fs);
+      //printf("peak A = %e alpha = %e  w0 = %e  a0 = %e  a1 = %e  a2 = %e\r\n",A,alpha,w0,a0,a1,a2);
+    break;
+
+    case NOTCH:
+      alpha = sin(w0)/(2*filter->Q);
+
+      b0 =  1; //b0
+      b1 = -2*cos(w0); //b1
+      b2 =  1; //b2
+      a0 =  1 + alpha; //a0
+      a1 = -2*cos(w0); //a1
+      a2 =  1 - alpha; //a2
+    break;
+ } //End of switch
+
+
+
+/***********************
+  //Filter coeficients print
+  printf("Not Norm b0 = %e\r\n", b0);
+  printf("Not Norm b1 = %e\r\n", b1);
+  printf("Not Norm b2 = %e\r\n", b2);
+  printf("Not Norm a0 = %e\r\n", a0);
+  printf("Not Norm a1 = %e\r\n", a1);
+  printf("Not Not Norm a2 = %e\r\n", a2);
+  printf("Not Norm b1_0 = %e\r\n", b1_0);
+  printf("Not Norm b1_1 = %e\r\n", b1_1);
+  printf("Not Norm a1_0 = %e\r\n", a1_0);
+  printf("Not Norm a1_1 = %e\r\n", a1_1);
+  **************************/
+
+  //Normalice coeficients to a0=1
+  b0 = b0/a0; //b0
+  b1 =b1/a0; //b1
+  b2 =b2/a0; //b2
+  a1 =a1/a0; //a1
+  a2 =a2/a0; //a2
+  b1_0 = b1_0/a1_0;
+  b1_1 = b1_1/a1_0;
+  b1_2 = b1_2/a1_0;
+  a1_1 = a1_1/a1_0;
+  a1_2 = a1_2/a1_0;
+
+  /*********************************
+  //Filter coeficients print
+  printf("Norm b0 = %e\r\n", b0);
+  printf("Norm b1 = %e\r\n", b1);
+  printf("Norm b2 = %e\r\n", b2);
+  printf("Norm a1 = %e\r\n", a1);
+  printf("Norm a2 = %e\r\n", a2);
+  printf("Norm b1_0 = %e\r\n", b1_0);
+  printf("Norm b1_1 = %e\r\n", b1_1);
+  printf("Norm a1_1 = %e\r\n", a1_1);
+  *****************************************/
+  
+  //Re-calc buffer values only for LPF Filters this is a improved smooth method that only works for LPF
+  if( (int)filter->filter_type == LPF_ORDER_2 || (int)filter->filter_type == LPF_ORDER_4)
+  {
+    int i;
+    for(i=0; i< NUM_OF_CHANNELS; i++)
+    {
+      //Using B
+      filter->buf_1[i] *= (filter->b1 / b1);
+      filter->buf_2[i] *= (filter->b2 / b2);
+      filter->buf_e1[i] *= (filter->b1_1 / b1_1);
+      filter->buf_e2[i] *= (filter->b1_2 / b1_2);
+    }
+  }
+    
+  filter->b0 = b0;
+  filter->b1 = b1;
+  filter->b2 = b2;
+  filter->a1 = a1;
+  filter->a2 = a2;
+  filter->b1_0 =b1_0;
+  filter->b1_1 =b1_1;
+  filter->b1_2 =b1_2;
+  filter->a1_1 =a1_1; 
+  filter->a1_2 =a1_2;
+}
 
 //Clean buffers
 void flushBuffers(Filter *f);
 
-//The DSP processor
-inline void computeFilter(Filter *filter, float *inputSample, int ch);
 
-//Check a Change on a band and return 1 if change exisit, otherwise return 0
-inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, int iEnabled);
+#define DENORMAL_TO_ZERO(x) if (fabs(x) < (10e-40)) x = 0.f;
+//Compute filter
+static inline void computeFilter(Filter *filter, float *inputSample, int ch)
+{
+  float bypass_in = *inputSample;
+  if(filter->iFilterEnabled > 0.1)
+  {    
+    //Process 1, 2 orders
+    //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+    filter->buf_0[ch] = *inputSample-filter->a1*filter->buf_1[ch]-filter->a2*filter->buf_2[ch];
+    //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+    DENORMAL_TO_ZERO(filter->buf_0[ch]);
+    *inputSample = filter->b0*filter->buf_0[ch] + filter->b1*filter->buf_1[ch]+ filter->b2*filter->buf_2[ch];
 
-//Convert int to FilterType
-FilterType int2FilterType(int iType);
+    filter->buf_2[ch] = filter->buf_1[ch];
+    filter->buf_1[ch] = filter->buf_0[ch];
+    
+    //Process 3,4 orders if applis
+    if(filter->filter_order > 2)
+    {
+        //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
+        filter->buf_e0[ch] = *inputSample-filter->a1_1*filter->buf_e1[ch]-filter->a1_2*filter->buf_e2[ch];
+        //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
+	DENORMAL_TO_ZERO(filter->buf_e0[ch]);
+        *inputSample = filter->b1_0*filter->buf_e0[ch] + filter->b1_1*filter->buf_e1[ch]+ filter->b1_2*filter->buf_e2[ch];
+  
+        filter->buf_e2[ch] = filter->buf_e1[ch];
+        filter->buf_e1[ch] = filter->buf_e0[ch];
+    }
+   
+  //TEST Print buffers
+  //printf("buf0 = %e\r\n",filter->buf_0[ch]);
+  } //END of if filter activated
+
+  //Crossover with clean
+  bypass_in *= (1.0 -  filter->iFilterEnabled);
+  *inputSample *= filter->iFilterEnabled;
+  *inputSample += bypass_in;
+}
+
+//Convert int  to FilterType
+static inline FilterType int2FilterType(int iType)
+{
+  FilterType f;
+  f = (FilterType)iType;
+  return f;
+}
+
+
+
+//Check a Change on a band and return 1 if change exist, otherwise return 0
+static inline int checkBandChange(Filter *filter, float fGain, float fFreq, float fQ, int iType, float iEnabled)
+{ 
+  if(filter->gain != fGain || filter->freq != fFreq || filter->Q != fQ || filter->filter_type != int2FilterType(iType) || filter->iFilterEnabled != iEnabled)
+  {
+    return 1;
+  }
+  return 0;
+}
+
 
 //Save filter data
-inline void setFilterParams(Filter *f, float fGain, float fFreq, float fQ, int iType, int iEnabled);
+static inline void setFilterParams(Filter *filter, float fGain, float fFreq, float fQ, int iType, float iEnabled)
+{
+  filter->gain = fGain;
+  filter->freq = fFreq;
+  filter->Q = fQ;
+  filter->filter_type = int2FilterType(iType);
+  filter->iFilterEnabled = iEnabled;
 
-//Denormals handling
-inline void SMALL_TO_ZERO(float *value);
+  if(filter->iFilterEnabled)
+  {
+    //Get filter order
+    switch((int)filter->filter_type)
+    {
+ 
+      case LPF_ORDER_1: case HPF_ORDER_1:
+        filter->filter_order = 1;
+      break;
+    
+      case LPF_ORDER_2: case HPF_ORDER_2:
+      case LOW_SHELF: case HIGH_SHELF: 
+      case PEAK: case NOTCH:
+        filter->filter_order = 2;
+      break;
+    
+      case LPF_ORDER_3: case HPF_ORDER_3:
+        filter->filter_order = 3;
+      break;
+    
+      case LPF_ORDER_4: case HPF_ORDER_4:
+        filter->filter_order = 4;
+      break;
+    }
+  } 
+}
+
+
 #endif

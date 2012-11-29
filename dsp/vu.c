@@ -25,7 +25,6 @@ This file contains a VU meter implementation
 #include "vu.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 //Constant to dBu conversion is sqrt(2)
 #define CONSTANT_VU 1.4142136
@@ -44,35 +43,7 @@ Vu *VuInit(double rate)
   return vu;
 }
 
-//Clear the VU
-void resetVU(Vu *vu)
-{
-  vu->vu_max = 0.0;
-  vu->vu_value = 0.0;
-}
-
 //Destroy a Vu instance
 void VuClean(Vu *vu){
   free(vu);
-}
-
-//Inputs a sample to VU
-inline void SetSample(Vu *vu, float sample)
-{
-  vu->vu_value = fabsf(sample);
-  vu->vu_max = vu->vu_value > vu->vu_max ? vu->vu_value :  vu->vu_max;
-}
-
-//Compute the VU's
-inline float ComputeVu(Vu *vu, uint32_t nframes)
-{
-  const float fVuOut = vu->vu_max > vu->m_min ? vu->vu_max : 0;
-      if (vu->vu_max > vu->m_min)
-		vu->vu_max *= pow(vu->m_decay, nframes);  ///TODO: estas perdent rendiment amb akest pow!!!
-      else
-	vu->vu_max = 0.0;
-
-  //TESTING liner output
-  //return 20*log10(fVuOut/CONSTANT_VU);
-  return fVuOut;
 }

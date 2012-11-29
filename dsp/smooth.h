@@ -32,8 +32,6 @@ without care of the speed of the automation control.
 #define F_CUT_OFF 2.0  ///TODO REMOVE THAT
 #define PI 3.1416 ///TODO REMOVE THAT
 
-#define MAX_STEP_PER_SECOND 20000
-
 typedef struct
 {
   float b1_0, b1_1, a1_1; //First order coeficients
@@ -46,12 +44,46 @@ typedef struct
 } Smooth;
 
 //Initialize smooth instance
-Smooth *SmoothInit(double rate);
+Smooth *SmoothInit(double rate, float max_step_per_second);
 
 //Destroy a smooth instance
 void SmoothClean(Smooth *s);
 
 //The DSP processor
-inline float computeSmooth(Smooth *s, float inputSample);
+static inline float computeSmooth(Smooth *s, float inputSample)
+{
+  
+  /*******************
+  float w = inputSample;
+ 
+  //First Stage
+  //w(n)=x(n)-a1*w(n-1)
+  s->bufferA[0] = w-s->a1_1*s->bufferA[1];
+
+  //y(n)=bo*w(n)+b1*w(n-1)
+  w = s->b1_0*s->bufferA[0] + s->b1_1*s->bufferA[1];
+
+  s->bufferA[1] = s->bufferA[0];
+  
+  //Second Stage
+  //w(n)=x(n)-a1*w(n-1)
+  s->bufferB[0] = w-s->a1_1*s->bufferB[1];
+
+  //y(n)=bo*w(n)+b1*w(n-1)
+  w = s->b1_0*s->bufferB[0] + s->b1_1*s->bufferB[1];
+
+  s->bufferB[1] = s->bufferB[0];
+  return w;
+  *****************************/
+
+  //New way TEST
+  float jump = inputSample - s->current_sample;
+  jump = jump > s->step? s->step : jump;
+  jump = jump < -s->step? -s->step : jump;
+  s->current_sample = s->current_sample + jump;
+  
+  return s->current_sample;
+  
+}
 
 #endif
