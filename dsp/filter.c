@@ -20,27 +20,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#if CMAKE_FILTER_CHANNEL_COUNT == 1
-  #include "filter_mono.h"
-#else
-  #include "filter_stereo.h"
-#endif
+#include "filter.h"
 
 //Initialize filter
 Filter *FilterInit(double rate)
 {
-  
   Filter *filter = (Filter *)malloc(sizeof(Filter));
-  
-  filter->gain = 0.0;
-  filter->freq = 20.0;
-  filter->Q = 2.0;
-  filter->filter_type = NOT_SET;
-  filter->iFilterEnabled = 0;
-  flushBuffers(filter);
   filter->fs=(float)rate;
-  printf("Init rate = %f   FS = %f\r\n",rate, filter->fs); 
   return filter;
 }
 
@@ -51,16 +37,12 @@ void FilterClean(Filter *filter)
 }
 
 //Clean buffers
-void flushBuffers(Filter *filter)
+void flushBuffers(Buffers *buf)
 {
-  int i;
-    for(i=0; i<NUM_OF_CHANNELS; i++)
-    {   
-      filter->buf_0[i] = 0.0;
-      filter->buf_1[i] = 0.0;
-      filter->buf_2[i] = 0.0;
-      filter->buf_e0[i] = 0.0;
-      filter->buf_e1[i] = 0.0;
-      filter->buf_e2[i] = 0.0;
-    }
+    buf->buf_0 = 0.0;
+    buf->buf_1 = 0.0;
+    buf->buf_2 = 0.0;
+    buf->buf_e0 = 0.0;
+    buf->buf_e1 = 0.0;
+    buf->buf_e2 = 0.0;
 }

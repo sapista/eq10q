@@ -59,40 +59,7 @@ class EqMainWindow : public Gtk::EventBox
 {
   public:
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath);
-    virtual ~EqMainWindow();
-    
-    ///TODO: comprobar si tot aixo es necessari en realitat----------- En teoria he de invocar la LV2 WriteFunction directament
-    /***************************************************************
-    //Input control ports handlers
-    void setBypass(bool bBypass);
-    void setInputGain(float Gain);
-    void setOutputGain(float Gain);
-    void setInputVuLevel(int Channel, float Level);
-    void setOutputVuLevel(int Channel, float Level);
-    void setBandGain(int Band, float Gain);
-    void setBandFreq(int Band, float Freq);
-    void setBandQ(int Band, float Q);
-    void setBandType(int Band, float Type);
-    void setBandEnabled(int Band, bool Enabled);
-    
-    //Output control ports handlers (signals eimted by this widget)
-    typedef sigc::signal<void, bool> signal_BypassChanged;
-    typedef sigc::signal<void, float> signal_ControlGainChanged;
-    typedef sigc::signal<void, int, float> signal_BandParamChanged;
-    typedef sigc::signal<void, int, int> signal_BandTypeChanged;
-    typedef sigc::signal<void, int, bool> signal_BandEnabledChanged;
-    
-    signal_BypassChanged signal_Bypass_Changed();
-    signal_ControlGainChanged signal_InputGain_Changed();
-    signal_ControlGainChanged signal_OutputGain_Changed();
-    signal_BandParamChanged signal_BandGain_Changed();
-    signal_BandParamChanged signal_BandFreq_Changed();
-    signal_BandParamChanged signal_BandQ_Changed();
-    signal_BandTypeChanged signal_BandType_Changed();
-    signal_BandEnabledChanged signal_BandEnabled_Changed();
-    *******************************************************************/
-    ///------------------------------------------------------------------TODO: fins aki
-    
+    virtual ~EqMainWindow();   
     
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
@@ -159,6 +126,7 @@ class EqMainWindow : public Gtk::EventBox
 	      ///m_Bode->setBandGain((int)port - PORT_OFFSET - 2*m_iNumOfChannels, data);
 	      m_CurParams->setBandGain((int)port - PORT_OFFSET - 2*m_iNumOfChannels, data);
 	      m_port_event_Curve = true; //Marck port even boolean
+	      m_port_event_Curve_Gain[(int)port - PORT_OFFSET - 2*m_iNumOfChannels] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Gain"<<std::endl;
 	      #endif  
@@ -171,6 +139,7 @@ class EqMainWindow : public Gtk::EventBox
 	      ///m_Bode->setBandFreq((int)port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands, data);
 	      m_CurParams->setBandFreq((int)port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands, data);
 	      m_port_event_Curve = true; //Marck port even boolean
+	      m_port_event_Curve_Freq[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - m_iNumOfBands] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Freq"<<std::endl;
 	      #endif  
@@ -183,6 +152,7 @@ class EqMainWindow : public Gtk::EventBox
 	      ///m_Bode->setBandQ((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands, data);
 	      m_CurParams->setBandQ((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands, data);
 	      m_port_event_Curve = true; //Marck port even boolean
+	      m_port_event_Curve_Q[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 2*m_iNumOfBands] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Q"<<std::endl;
 	      #endif  
@@ -195,6 +165,7 @@ class EqMainWindow : public Gtk::EventBox
 	      ///m_Bode->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, data);
 	      m_CurParams->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, (int)data);
 	      m_port_event_Curve = true; //Marck port even boolean
+	      m_port_event_Curve_Type[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Type"<<std::endl;
 	      #endif  
@@ -207,6 +178,7 @@ class EqMainWindow : public Gtk::EventBox
 	      ///m_Bode->setBandEnable((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands, data > 0.5);
 	      m_CurParams->setBandEnabled((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands, data > 0.5);
 	      m_port_event_Curve = true; //Marck port even boolean
+	      m_port_event_Curve_Enable[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Enabled"<<std::endl;
 	      #endif  
@@ -283,31 +255,13 @@ class EqMainWindow : public Gtk::EventBox
     bool on_timeout();
     
   private:
-    float m_bypassValue;
-    
-    //TODO this vars are redundant with m_curParams!!! REMOVE IT!!!
-    //float m_InGainValue, m_OutGainValue;
-    
+    float m_bypassValue;   
     const int m_iNumOfChannels;
     const int m_iNumOfBands;
-    bool m_bMutex, m_port_event_InGain, m_port_event_OutGain, m_port_event_Curve, m_port_event_Bypass, m_DisableBypassEvent;
+    bool m_bMutex, m_port_event_InGain, m_port_event_OutGain, m_port_event_Bypass, m_port_event_Curve;
+    bool *m_port_event_Curve_Gain, *m_port_event_Curve_Freq, *m_port_event_Curve_Q, *m_port_event_Curve_Type, *m_port_event_Curve_Enable;
     std::string m_pluginUri;
-    std::string m_bundlePath;
-    
-    ///TODO: comprobar si tot aixo es necessari en realitat--------------------------------------------
-    /*************************************************************************
-    //LV2 Ports Signals
-    signal_BypassChanged m_BypassChangedSignal;
-    signal_ControlGainChanged m_InputGainChangedSignal;
-    signal_ControlGainChanged m_OutputGainChangedSignal;
-    signal_BandParamChanged m_BandGainChangedSignal;
-    signal_BandParamChanged m_BandFreqChangedSignal;
-    signal_BandParamChanged m_BandQChangedSignal;
-    signal_BandTypeChanged m_BandTypeChangedSignal;
-    signal_BandEnabledChanged m_BandEnabledChangedSignal;
-    ***************************************************************************/
-    ///TODO: Fins aki----------------------------------------------------------------------------------------
-    
+    std::string m_bundlePath;    
 };
 
 #endif

@@ -28,9 +28,12 @@ without care of the speed of the automation control.
 #ifndef  SMOOTH_H
   #define SMOOTH_H
 
+#include <math.h>
+
 //Cut off frequency of the LPF filter, this freq is adjusted experimentally
 #define F_CUT_OFF 2.0  ///TODO REMOVE THAT
 #define PI 3.1416 ///TODO REMOVE THAT
+
 
 typedef struct
 {
@@ -50,7 +53,7 @@ Smooth *SmoothInit(double rate, float max_step_per_second);
 void SmoothClean(Smooth *s);
 
 //The DSP processor
-static inline float computeSmooth(Smooth *s, float inputSample)
+static inline float computeSmooth(Smooth *s, float inputSample, int *portChange)
 {
   
   /*******************
@@ -81,9 +84,8 @@ static inline float computeSmooth(Smooth *s, float inputSample)
   jump = jump > s->step? s->step : jump;
   jump = jump < -s->step? -s->step : jump;
   s->current_sample = s->current_sample + jump;
-  
+  *portChange += jump;
   return s->current_sample;
-  
 }
 
 #endif

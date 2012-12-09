@@ -118,10 +118,6 @@ void EQButton::setValue(float fVal)
       else if (m_fValue < PEAK_Q_MIN) m_fValue = PEAK_Q_MIN;
     break;
   }
-  
-///TODO Automation bug could be there!!!!
-/// m_TextEntry.set_value((double)m_fValue);
-
   m_ptr_CtlButton->setButtonNumber(m_fValue);
 }
 
