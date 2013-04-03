@@ -46,7 +46,7 @@ This file implements functionalities for a large numbers of equalizers
 #define EQ_INPUT_GAIN 10000.0
 #define EQ_OUTPUT_GAIN 0.0001
 
-//LV2 Control port polling period in seconds
+//LV2 Control port polling period in seconds TODO REMOVE!!!
 #define PORT_POLLING_PERIOD 0.005
 #define SMOOTH_GAIN_STEP_PER_SECOND 1000
 #define SMOOTH_FREQ_STEP_PER_SECOND 12000.0
@@ -54,9 +54,10 @@ This file implements functionalities for a large numbers of equalizers
 #define SMOOTH_ON_STEP_PER_SECOND 10
 #include <sys/stat.h>
 
-static LV2_Descriptor *eqDescriptor = NULL;
+//LV2 Port polling new
+#define PORT_POLL_SAMPLES 1024
 
-int to_remove_count = 0;
+static LV2_Descriptor *eqDescriptor = NULL;
 
 typedef struct {
   //Plugin ports
@@ -83,9 +84,8 @@ typedef struct {
   Vu *InputVu[NUM_CHANNELS];
   Vu *OutputVu[NUM_CHANNELS];
  
-  //LV2 Port Polling
-  int port_polling_samples; 
-  int port_events[NUM_BANDS];
+  //Port polling, new methode
+  int port_samples;
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -195,10 +195,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   ///printf("Entinring instantiateEQ...\n\r"); 
 
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));
-  ///printf("Malloc return OK");
-  
-  //Prepare polling interval
-  plugin_data->port_polling_samples = (int)(s_rate*PORT_POLLING_PERIOD);
+  plugin_data->port_samples = 0;
   
   int i,ch;
   for(i=0; i<NUM_BANDS; i++)
@@ -240,12 +237,35 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   static float sampleR; //Current processing sampleright signal
   #endif
   
-  //Process band change
-  for ( bd = 0; bd<NUM_BANDS; bd++)
-  {
-    calcCoefs(plugin_data->filter[bd], dB2Lin(*(plugin_data->fBandGain[bd])), *(plugin_data->fBandFreq[bd]), *(plugin_data->fBandParam[bd]), (int)(*(plugin_data->fBandType[bd])), *(plugin_data->fBandEnabled[bd]));
-  }
 
+///TODO: He descobert ke fer copies de dades en plugin_data a variables locals es en realitat mes lent que  treballar directamente amb plugin_data
+//TODO: de forma que mes et val revisar el polling de ports.... esta mal!!!! 
+
+    //for ( bd = 0; bd<NUM_BANDS; bd++)
+    //{
+      ///TODO::: Aixo esta generant DENORMALS!!!!!!!!!
+      //calcCoefs(plugin_data->filter[plugin_data->port_samples], 
+	//	0.2f*dB2Lin(*(plugin_data->fBandGain[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->gain, 
+	//	0.2f*(*(plugin_data->fBandFreq[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->freq, 
+	//	0.2f*(*(plugin_data->fBandParam[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->q, 
+	//	(int)(*(plugin_data->fBandType[plugin_data->port_samples])), 
+	//	0.2f*(*(plugin_data->fBandEnabled[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->enable);
+      bd = plugin_data->port_samples;
+      calcCoefs(plugin_data->filter[plugin_data->port_samples],
+		dB2Lin(*(plugin_data->fBandGain[plugin_data->port_samples])),
+		*(plugin_data->fBandFreq[plugin_data->port_samples]),
+		*(plugin_data->fBandParam[plugin_data->port_samples]),
+		(int)(*(plugin_data->fBandType[plugin_data->port_samples])),
+		*(plugin_data->fBandEnabled[plugin_data->port_samples]));
+    //}
+  
+  //Process band change
+  //bd++;
+  //bd %= NUM_BANDS;
+  //plugin_data->port_samples = bd;
+  plugin_data->port_samples++;
+  plugin_data->port_samples %= NUM_BANDS;
+  
   //Compute the filter
   for (pos = 0; pos < sample_count; pos++) 
   {    

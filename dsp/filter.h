@@ -50,6 +50,7 @@ typedef struct
   float b1_0, b1_1, b1_2, a1_1, a1_2; //Second Order extra coeficients 
   int filter_order;  //filter order
   float fs; //sample rate
+  float gain, freq, q, enable;
 }Filter;
 
 typedef struct
@@ -72,31 +73,20 @@ void FilterClean(Filter *f);
 void flushBuffers(Buffers *buf);
 
 //Compute filter coeficients
+#define LOWGAIN_TO_ZERO(x) if (fabs(x) < (0.05f)) x = 0.f;
 static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ, int iType, float iEnabled) //p2 = GAIN p3 = Q
-{  
-  if(iEnabled)
-  {  
-    //Get filter order
-    switch(iType)
-    {   
-      case F_LPF_ORDER_1: case F_HPF_ORDER_1:
-      case F_LPF_ORDER_2: case F_HPF_ORDER_2:
-      case F_LOW_SHELF: case F_HIGH_SHELF: 
-      case F_PEAK: case F_NOTCH:
-	filter->filter_order = 0;
-      break;
-    
-      case F_LPF_ORDER_3: case F_HPF_ORDER_3:   
-      case F_LPF_ORDER_4: case F_HPF_ORDER_4:
-	filter->filter_order = 1;
-      break;
-    }
-    
-    
+{   
+    float Gain = fGain;
+    //LOWGAIN_TO_ZERO(Gain);
     float w0=2*PI*(fFreq/filter->fs);
     float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, b1_2, a1_0, a1_1, a1_2;
     alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = b1_2 = a1_0 = a1_1 = a1_2 = 1.0;
-
+    filter->filter_order = 0;
+    filter->gain = Gain;
+    filter->freq = fFreq;
+    filter->q = fQ;
+    filter->enable = iEnabled;
+    
     switch(iType){
 
       case F_HPF_ORDER_1:
@@ -108,7 +98,9 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a2 = 0.0; //a2
       break;
 
-      case F_HPF_ORDER_2:  case F_HPF_ORDER_4:
+      case F_HPF_ORDER_4:
+	filter->filter_order = 1;
+      case F_HPF_ORDER_2: 
 	alpha = sinf(w0)/(2*fQ);
 	b1_0 = b0 = (1 + cosf(w0))/2; //b0
 	b1_1 = b1 = -(1 + cosf(w0)); //b1
@@ -118,7 +110,8 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1_2 = a2 = 1 - alpha; //a2
       break;
 
-      case F_HPF_ORDER_3: 
+      case F_HPF_ORDER_3:
+	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
 	b1_0 = 2; //b0
 	b1_1 = -2; //b1
@@ -142,8 +135,10 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1 = w0-2; //a1
 	a2 = 0.0; //a2
       break;
-
-      case F_LPF_ORDER_2: case F_LPF_ORDER_4:
+ 
+      case F_LPF_ORDER_4:
+	filter->filter_order = 1;
+      case F_LPF_ORDER_2:
 	alpha = sinf(w0)/(2*fQ);
 	b1_0 = b0 = (1 - cosf(w0))/2; //b0
 	b1_1 = b1 = 1 - cosf(w0); //b1
@@ -154,6 +149,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
 
       case F_LPF_ORDER_3:
+	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
 	b1_0 = w0; //b0
 	b1_1 = w0; //b1
@@ -170,7 +166,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
 
       case F_LOW_SHELF:
-	A = sqrtf((fGain));
+	A = sqrtf((Gain));
 	alpha =sinf(w0)/2 * (1/fQ);
 	b0 = A*((A+1)-(A-1)*cosf(w0)+2*sqrtf(A)*alpha); //b0
 	b1 = 2*A*((A-1)-(A+1)*cosf(w0)); //b1
@@ -181,7 +177,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
 
       case F_HIGH_SHELF:
-	A = sqrtf((fGain));
+	A = sqrtf((Gain));
 	alpha =sinf(w0)/2 * (1/fQ);
 	b0 = A*( (A+1) + (A-1)*cosf(w0) + 2*sqrtf(A)*alpha ); //b0
 	b1 = -2*A*( (A-1) + (A+1)*cosf(w0)); //b1
@@ -192,8 +188,8 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
 
       case F_PEAK:
-	A = sqrtf((fGain));
-	//A=powf(10,(fGain/40));
+	A = sqrtf((Gain));
+	//A=powf(10,(Gain/40));
 	alpha = sinf(w0)/(2*fQ);
 
 	b0 = 1 + alpha*A; //b0
@@ -216,33 +212,17 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
   } //End of switch
 
-    //Normalice coeficients to a0=1
-    filter->b0 = b0/a0; //b0
-    filter->b1 =b1/a0; //b1
-    filter->b2 =b2/a0; //b2
-    filter->a1 =a1/a0; //a1
-    filter->a2 =a2/a0; //a2
-    filter->b1_0 = b1_0/a1_0;
-    filter->b1_1 = b1_1/a1_0;
-    filter->b1_2 = b1_2/a1_0;
-    filter->a1_1 = a1_1/a1_0;
-    filter->a1_2 = a1_2/a1_0;
-  }
-  else
-  {
-    //Filter is disabled
-    filter->b0 = 1.0f;
-    filter->b1 = 0.0f;
-    filter->b2 = 0.0f;
-    filter->a1 = 0.0f;
-    filter->a2 = 0.0f;
-    filter->b1_0 = 0.0f;
-    filter->b1_1 = 0.0f;
-    filter->b1_2 = 0.0f;
-    filter->a1_1 = 0.0f; 
-    filter->a1_2 = 0.0f;
-    filter->filter_order = 0;
-  }
+    //Normalice coeficients to a0=1 and apply iEnabled
+    filter->b0 = (b0/a0)* iEnabled + (1.0f - iEnabled); //b0
+    filter->b1 = (b1/a0)* iEnabled; //b1
+    filter->b2 = (b2/a0)* iEnabled; //b2
+    filter->a1 = (a1/a0)* iEnabled; //a1
+    filter->a2 = (a2/a0)* iEnabled; //a2
+    filter->b1_0 = (b1_0/a1_0)* iEnabled + (1.0f - iEnabled);
+    filter->b1_1 = (b1_1/a1_0)* iEnabled;
+    filter->b1_2 = (b1_2/a1_0)* iEnabled;
+    filter->a1_1 = (a1_1/a1_0)* iEnabled;
+    filter->a1_2 = (a1_2/a1_0)* iEnabled;
 }
 
 
