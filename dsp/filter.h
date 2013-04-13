@@ -257,7 +257,7 @@ static inline  void computeFilter(Filter *filter, Buffers *buf, float *inputSamp
   buf->buf_2 = buf->buf_1;
   buf->buf_1 = buf->buf_0;
   
-  //Process 3,4 orders if applis
+  //Process 3,4 orders if apply
   if(filter->filter_order)
   {
       //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)

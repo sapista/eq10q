@@ -199,24 +199,20 @@ void BandCtl::onComboChanged()
     case HPF_ORDER_3:
     case HPF_ORDER_4:
       default_Q = HPF_LPF_Q_DEFAULT;
-      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
     break;
     
     case NOTCH:
       default_Q = NOTCH_Q_DEFAULT;
-      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
     break;
 
     case LOW_SHELF:
     case HIGH_SHELF:
       default_Q = HIGH_LOW_SHELF_Q_DEFAULT;
-      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
       m_bandChangedSignal.emit(m_iBandNum, GAIN_TYPE, getGain());
     break;
     
     case PEAK:
       default_Q = PEAK_Q_DEFAULT;
-      m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
       m_bandChangedSignal.emit(m_iBandNum, GAIN_TYPE, getGain());
     break;
   }
@@ -228,6 +224,7 @@ void BandCtl::onComboChanged()
   else
   {
     setQ(default_Q);
+    m_bandChangedSignal.emit(m_iBandNum, Q_TYPE, getQ());
     m_bandChangedSignal.emit(m_iBandNum, FILTER_TYPE, (float)m_FilterType);
   }
 }

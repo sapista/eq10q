@@ -234,7 +234,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   static int bd, pos; //loop index
   static float  sampleL; //Current processing sample left signal
   #if NUM_CHANNELS == 2
-  static float sampleR; //Current processing sampleright signal
+  static float sampleR; //Current processing sample right signal
   #endif
   
 
@@ -250,7 +250,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 	//	0.2f*(*(plugin_data->fBandParam[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->q, 
 	//	(int)(*(plugin_data->fBandType[plugin_data->port_samples])), 
 	//	0.2f*(*(plugin_data->fBandEnabled[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->enable);
-      bd = plugin_data->port_samples;
+      //bd = plugin_data->port_samples;
       calcCoefs(plugin_data->filter[plugin_data->port_samples],
 		dB2Lin(*(plugin_data->fBandGain[plugin_data->port_samples])),
 		*(plugin_data->fBandFreq[plugin_data->port_samples]),
