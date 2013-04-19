@@ -21,6 +21,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <gdkmm.h>//For the function Gdk::Cairo::set_source_pixbuf()
 
 #include "colors.h"
 #include "faderwidget.h"
@@ -28,7 +29,29 @@
 FaderWidget::FaderWidget(double dMax, double dMin, const char *bundlePath)
   :bMotionIsConnected(false), m_value(0), m_max(dMax), m_min(dMin), m_bundlePath(bundlePath)
 {
-  m_image_surface_ptr = Cairo::ImageSurface::create_from_png (m_bundlePath + "/" + std::string(FADER_ICON_FILE));
+  m_image_ptr =  Gdk::Pixbuf::create_from_file(m_bundlePath + "/" + std::string(FADER_ICON_FILE));
+
+  // Detect transparent colors for loaded image
+  Cairo::Format format = Cairo::FORMAT_RGB24;
+  if (m_image_ptr->get_has_alpha())
+  {
+      format = Cairo::FORMAT_ARGB32;
+  }
+  
+  // Create a new ImageSurface
+  m_image_surface_ptr = Cairo::ImageSurface::create  (format, m_image_ptr->get_width(), m_image_ptr->get_height());
+  
+  // Create the new Context for the ImageSurface
+  m_image_context_ptr = Cairo::Context::create (m_image_surface_ptr);     
+  
+  // Draw the image on the new Context
+  Gdk::Cairo::set_source_pixbuf (m_image_context_ptr, m_image_ptr, 0.0, 0.0);
+  m_image_context_ptr->paint();
+  
+  //TODO Ja ho tinc bastant clar, crec k la Cairo que distribueix Ardour no te suport per PNG ja que segons DOC de
+  // Cairo es possible compilar Cairo sense suport per png i de fet no es recomana usar-lo mes que per un "TOY THING"
+  //m_image_surface_ptr = Cairo::ImageSurface::create_from_png (m_bundlePath + "/" + std::string(FADER_ICON_FILE));
+
   set_size_request(2*m_image_surface_ptr->get_width()+4*FADER_MARGIN, FADER_INITAL_HIGHT);
   
   //Connect mouse signals

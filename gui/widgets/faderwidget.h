@@ -22,6 +22,9 @@
   #define FADER_WIDGET_H
 
 #include <gtkmm/drawingarea.h>
+#include <gdkmm/pixbuf.h>
+#include <glibmm/refptr.h>
+#include <cairomm/surface.h>
 
 #define FADER_ICON_FILE "knobs/fader_dark.png"
 #define FADER_INITAL_HIGHT 350
@@ -64,6 +67,8 @@ class  FaderWidget : public Gtk::DrawingArea
       double m_value, m_max, m_min;
       sigc::connection m_motion_connection;
       Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
+      Glib::RefPtr<Gdk::Pixbuf> m_image_ptr;
+      Cairo::RefPtr< Cairo::Context> m_image_context_ptr;
       std::string m_bundlePath;
       
       //Fader change signal
