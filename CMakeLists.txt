@@ -2,7 +2,10 @@
 cmake_minimum_required(VERSION 2.8)
 PROJECT(eq10q)
 
-ADD_DEFINITIONS(-Wall -O3 -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse)
+##ADD_DEFINITIONS(-Wall -O3 -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse -std=c99)
+set(CMAKE_C_FLAGS "-Wall -O3 -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse -std=c99")
+set(CMAKE_CXX_FLAGS "-Wall -fPIC")
+
 ##ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC) ###USED FOR DEBUG
 
 #Set Install prefix

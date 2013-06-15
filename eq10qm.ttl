@@ -17,7 +17,7 @@
   doap:name "EQ10Q Mono";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
-
+  
 guiext:ui <http://eq10q.sourceforge.net/eq/eq10qm/gui>;
 
 doap:maintainer [
@@ -44,7 +44,7 @@ doap:maintainer [
     lv2:name "Input Gain";
     lv2:minimum -20;
     lv2:maximum 6;
-    lv2:default 0;
+    lv2:default 0;   
   ],
 
   [

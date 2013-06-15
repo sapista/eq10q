@@ -29,7 +29,6 @@ This file implements functionalities for a large numbers of equalizers
 #include <string.h>
 //#include <math.h>
 
-
 #include "lv2.h"
 #include "gui/eq_defines.h"
 #include "dsp/smooth.h"
@@ -193,11 +192,11 @@ static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
 static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
 {
   ///printf("Entinring instantiateEQ...\n\r"); 
-
-  EQ *plugin_data = (EQ *)malloc(sizeof(EQ));
+  int i,ch;
+  EQ *plugin_data = (EQ *)malloc(sizeof(EQ)); 
   plugin_data->port_samples = 0;
   
-  int i,ch;
+
   for(i=0; i<NUM_BANDS; i++)
   {
     plugin_data->filter[i] = FilterInit(s_rate);
@@ -237,6 +236,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   static float sampleR; //Current processing sample right signal
   #endif
   
+  
 
 ///TODO: He descobert ke fer copies de dades en plugin_data a variables locals es en realitat mes lent que  treballar directamente amb plugin_data
 //TODO: de forma que mes et val revisar el polling de ports.... esta mal!!!! 
@@ -251,13 +251,38 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 	//	(int)(*(plugin_data->fBandType[plugin_data->port_samples])), 
 	//	0.2f*(*(plugin_data->fBandEnabled[plugin_data->port_samples])) + 0.8f * plugin_data->filter[plugin_data->port_samples]->enable);
       //bd = plugin_data->port_samples;
+      
+      
+      
+      /*
       calcCoefs(plugin_data->filter[plugin_data->port_samples],
 		dB2Lin(*(plugin_data->fBandGain[plugin_data->port_samples])),
 		*(plugin_data->fBandFreq[plugin_data->port_samples]),
 		*(plugin_data->fBandParam[plugin_data->port_samples]),
 		(int)(*(plugin_data->fBandType[plugin_data->port_samples])),
 		*(plugin_data->fBandEnabled[plugin_data->port_samples]));
+		*/
     //}
+  
+  //TEST Port polling sembla que aixo es la clau... gasta un 1% menys k linux DSP
+  //TODO carreguet tota la parida de ports sample_count etc... 
+  for(bd = 0; bd<NUM_BANDS; bd++)
+  {
+    if(dB2Lin(*(plugin_data->fBandGain[bd])) != plugin_data->filter[bd]->gain ||
+	*plugin_data->fBandFreq[bd] != plugin_data->filter[bd]->freq ||
+	*plugin_data->fBandParam[bd] != plugin_data->filter[bd]->q ||
+	(int)(*plugin_data->fBandType[bd]) != plugin_data->filter[bd]->iType ||
+	*plugin_data->fBandEnabled[bd] != plugin_data->filter[bd]->enable)
+    {
+	calcCoefs(plugin_data->filter[bd],
+		  dB2Lin(*(plugin_data->fBandGain[bd])),
+		  *plugin_data->fBandFreq[bd],
+		  *plugin_data->fBandParam[bd],
+		  (int)(*plugin_data->fBandType[bd]),
+		  *plugin_data->fBandEnabled[bd]);
+    }
+  }
+  
   
   //Process band change
   //bd++;

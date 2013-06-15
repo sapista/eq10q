@@ -51,6 +51,7 @@ typedef struct
   int filter_order;  //filter order
   float fs; //sample rate
   float gain, freq, q, enable;
+  int iType; //Filter type
 }Filter;
 
 typedef struct
@@ -86,10 +87,12 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     filter->freq = fFreq;
     filter->q = fQ;
     filter->enable = iEnabled;
+    filter->iType = iType;
     
     switch(iType){
 
       case F_HPF_ORDER_1:
+	///TODO corregeix aixo amb el k tens al Matlab
 	b0 = 2; //b0
 	b1 = -2; //b1
 	b2 = 0.0; //b2
@@ -113,6 +116,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       case F_HPF_ORDER_3:
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
+	///TODO corregeix aixo amb el k tens al Matlab
 	b1_0 = 2; //b0
 	b1_1 = -2; //b1
 	b1_2 = 0.0; //b2
@@ -128,6 +132,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
 
       case F_LPF_ORDER_1: 
+	///TODO corregeix aixo amb el k tens al Matlab (de-cramped)
 	b0 = w0; //b0
 	b1 = w0; //b1
 	b2 = 0.0; //b2
@@ -151,6 +156,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       case F_LPF_ORDER_3:
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
+	///TODO corregeix aixo amb el k tens al Matlab (de-cramped)
 	b1_0 = w0; //b0
 	b1_1 = w0; //b1
 	b1_2 = 0.0; //b2
@@ -189,6 +195,47 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 
       case F_PEAK:
 	A = sqrtf((Gain));
+	float A2 = A*A;
+	float PI2 = PI*PI;
+	float Q2 = fQ*fQ;
+	float w02 = w0 * w0;
+	float w02_PI22 = (w02 - PI2)*(w02 - PI2);
+	
+	//Equivalent analog filter and analog gains
+	float G1 = sqrtf((w02_PI22 + (A2*w02*PI2)/Q2)/(w02_PI22 + (w02*PI2)/(Q2*A2)));
+	float GB = sqrt(G1*Gain);
+	float GB2 = GB * GB;
+	float G2 = Gain * Gain;
+	float G12 = G1 * G1;
+
+	//Digital filter
+	float F   = fabsf(G2  - GB2);
+	float G00 = fabsf(G2  - 1.0f);
+	float F00 = fabsf(GB2 - 1.0f);
+	float G01 = fabsf(G2  - G1);
+	float G11 = fabsf(G2  - G12);
+	float F01 = fabsf(GB2 - G1);
+	float F11 = fabsf(GB2 - G12);
+	float W2 = sqrtf(G11 / G00) * tanf(w0/2.0f) * tanf(w0/2.0f);
+
+	//Bandwidth condition
+	float Aw = (w0/(A*fQ))*sqrtf((GB2-A2 * A2)/(1.0f - GB2)); //Analog filter bandwidth at GB
+	float DW = (1.0f + sqrtf(F00 / F11) * W2) * tanf(Aw/2.0f); //Prewarped digital bandwidth
+	
+	//Digital coefs
+	float C = F11 * DW * DW - 2.0f * W2 * (F01 - sqrtf(F00 * F11));
+	float D = 2.0f * W2 * (G01 - sqrtf(G00 * G11));
+	float A = sqrtf((C + D) / F);
+	float B = sqrtf((G2 * C + GB2 * D) / F);
+	b0 = G1 + W2 + B;
+	b1 =  -2.0f*(G1 - W2);
+	b2 = G1 - B + W2;
+	a0 = 1.0f + W2 + A;
+	a1 = -2.0f*(1.0f - W2);
+	a2 = 1.0f + W2 - A;
+	
+	/****************** OLD PARAMS
+	A = sqrtf((Gain));
 	//A=powf(10,(Gain/40));
 	alpha = sinf(w0)/(2*fQ);
 
@@ -198,6 +245,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 =   1 + alpha/A; //a0
 	a1 =  -2*cosf(w0); //a1
 	a2 =   1 - alpha/A; //a2
+	***********************************/
       break;
 
       case F_NOTCH:

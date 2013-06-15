@@ -256,7 +256,7 @@ inline void PlotEQCurve::CalcBand_high_shelv(int bd_ix)
  
 inline void PlotEQCurve::CalcBand_peak(int bd_ix)
 {
-  double w, w2, wo2w22, betha, Re, Im, den;
+  double w, w2; 
   double Q = m_filters[bd_ix]->Q;
   
   //Precalculables
@@ -264,28 +264,12 @@ inline void PlotEQCurve::CalcBand_peak(int bd_ix)
   double A=pow(10,((m_filters[bd_ix]->Gain)/40));
   double A2=A*A;
   double wo2=wo*wo;
-  double wo3=wo2*wo;
   double Q2=Q*Q;
-  double wo2Q2=wo2/Q2;
-  double gamma=(A2-1)/(A*Q);
-
-  //std::cout<<"\nPlotEQCurve::CalcBand_peak"<<std::endl;
-
   for(int i=0; i<m_NumOfPoints; i++)
   {
     w=2*PI*f[i]; 
     w2=w*w;
-
-    wo2w22=wo2-w2;
-    wo2w22=wo2w22*wo2w22;
-    betha=wo2Q2*w2;
-
-    Re=wo2w22+betha;
-    Im=gamma*((wo3*w)-(wo*w2*w));
-    den=wo2w22+(betha/A2);
-
-    band_y[bd_ix][i]=(double)20*log10(sqrt((Re*Re)+(Im*Im))/den);
-    //std::cout<<"i = "<<i<<"\tY = "<<band_y[bd_ix][i]<<std::endl;
+    band_y[bd_ix][i]=(double)20*log10(sqrt( ((wo2 - w2)*(wo2 - w2) + (A2*wo2*w2)/(Q2))/((wo2 - w2)*(wo2 - w2) + (wo2*w2)/(Q2*A2))));
   } 
 }
  

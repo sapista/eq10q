@@ -21,7 +21,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
-#include <gdkmm.h>//For the function Gdk::Cairo::set_source_pixbuf()
+//#include <gdkmm.h>//For the function Gdk::Cairo::set_source_pixbuf() //TODO I think that this include can be remove general.h is enougth
+#include <gdkmm/general.h>
 
 #include "colors.h"
 #include "faderwidget.h"

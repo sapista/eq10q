@@ -25,7 +25,7 @@ This plugin is inside the Sapista Plugins Bundle
 
 //LV2 UI headers
 #include "lv2_ui.h"
-#include <gtkmm/main.h>
+//#include <gtkmm/main.h> //TODO check if can be removed
 #include "widgets/eqwindow.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
@@ -44,7 +44,7 @@ static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, co
   cout<<"instantiateEq10q_gui Entring... ";
   #endif
   
-  Gtk::Main::init_gtkmm_internals();
+  //Gtk::Main::init_gtkmm_internals(); //TODO I think this line is not necessari and can be removed also the GTK::MAIN include
   //EqMainWindow* gui_data = Gtk::manage(new EqMainWindow(@Eq_Channels_Count@, @Eq_Bands_Count@, plugin_uri));
   EqMainWindow* gui_data = new EqMainWindow(@Eq_Channels_Count@, @Eq_Bands_Count@, plugin_uri, bundle_path);
   gui_data->controller = controller;
