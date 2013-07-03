@@ -92,13 +92,14 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     switch(iType){
 
       case F_HPF_ORDER_1:
-	///TODO corregeix aixo amb el k tens al Matlab
-	b0 = 2; //b0
-	b1 = -2; //b1
-	b2 = 0.0; //b2
-	a0 = w0+2; //a0
-	a1 = w0-2; //a1
-	a2 = 0.0; //a2
+	w0 = tanf(w0/2.0f);
+	b0 = 1.0f;
+	b1 = -1.0f;
+	b2 = 0.0f;
+	a0 = w0+1.0f;
+	a1 = w0-1.0f;
+	a2 = 0.0f;
+	
       break;
 
       case F_HPF_ORDER_4:
@@ -116,29 +117,29 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       case F_HPF_ORDER_3:
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
-	///TODO corregeix aixo amb el k tens al Matlab
-	b1_0 = 2; //b0
-	b1_1 = -2; //b1
-	b1_2 = 0.0; //b2
-	a1_0 = w0+2; //a0
-	a1_1 = w0-2; //a1
-	a1_2 = 0.0; //a2
 	b0 = (1 + cosf(w0))/2; //b0
 	b1 = -(1 + cosf(w0)); //b1
 	b2 = (1 + cosf(w0))/2; //b2
 	a0 = 1 + alpha; //a0
 	a1 = -2*cosf(w0); //a1
 	a2 = 1 - alpha; //a2
+	w0 = tanf(w0/2.0f);
+	b1_0 = 1.0f;
+	b1_1 = -1.0f;
+	b1_2 = 0.0f;
+	a1_0 = w0+1.0f;
+	a1_1 = w0-1.0f;
+	a1_2 = 0.0f;
       break;
 
       case F_LPF_ORDER_1: 
-	///TODO corregeix aixo amb el k tens al Matlab (de-cramped)
-	b0 = w0; //b0
-	b1 = w0; //b1
-	b2 = 0.0; //b2
-	a0 = w0+2; //a0
-	a1 = w0-2; //a1
-	a2 = 0.0; //a2
+	w0 = tanf(w0/2.0f);
+	b0 = w0;
+	b1 = w0;
+	b2 = 0.0f;
+	a0 = w0+1.0f;
+	a1 = w0-1.0f;
+	a2 = 0.0f;
       break;
  
       case F_LPF_ORDER_4:
@@ -156,19 +157,19 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       case F_LPF_ORDER_3:
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
-	///TODO corregeix aixo amb el k tens al Matlab (de-cramped)
-	b1_0 = w0; //b0
-	b1_1 = w0; //b1
-	b1_2 = 0.0; //b2
-	a1_0 = w0+2; //a0
-	a1_1 = w0-2; //a1
-	a1_2 = 0.0; //a2
 	b0 = (1 - cosf(w0))/2; //b0
 	b1 = 1 - cosf(w0); //b1
 	b2 = (1 - cosf(w0))/2; //b2
 	a0 = 1 + alpha; //a0
 	a1 = -2*cosf(w0); //a1
 	a2 = 1 - alpha; //a2
+	w0 = tanf(w0/2.0f);
+	b1_0 = w0;
+	b1_1 = w0;
+	b1_2 = 0.0f;
+	a1_0 = w0+1.0f;
+	a1_1 = w0-1.0f;
+	a1_2 = 0.0f;
       break;
 
       case F_LOW_SHELF:
@@ -233,19 +234,6 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 = 1.0f + W2 + A;
 	a1 = -2.0f*(1.0f - W2);
 	a2 = 1.0f + W2 - A;
-	
-	/****************** OLD PARAMS
-	A = sqrtf((Gain));
-	//A=powf(10,(Gain/40));
-	alpha = sinf(w0)/(2*fQ);
-
-	b0 = 1 + alpha*A; //b0
-	b1 =  -2*cosf(w0); //b1
-	b2 =   1 - alpha*A; //b2
-	a0 =   1 + alpha/A; //a0
-	a1 =  -2*cosf(w0); //a1
-	a2 =   1 - alpha/A; //a2
-	***********************************/
       break;
 
       case F_NOTCH:
@@ -270,7 +258,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     filter->b1_1 = (b1_1/a1_0)* iEnabled;
     filter->b1_2 = (b1_2/a1_0)* iEnabled;
     filter->a1_1 = (a1_1/a1_0)* iEnabled;
-    filter->a1_2 = (a1_2/a1_0)* iEnabled;
+    filter->a1_2 = (a1_2/a1_0)* iEnabled;    
 }
 
 
@@ -290,14 +278,15 @@ static inline void adjustBuffers(Filter *filter, Buffers *buf)
 }
 *********************************************************************************/
 
-#define DENORMAL_TO_ZERO(x) if (fabs(x) < (10e-40)) x = 0.f;
+#define DENORMAL_TO_ZERO(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38
+//#define DENORMAL_TO_ZERO(x) if (fabs(x) < (10e-40)) x = 0.f;
 
 //Compute filter
 static inline  void computeFilter(Filter *filter, Buffers *buf, float *inputSample)
 {
   //Process 1, 2 orders
   //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-  buf->buf_0 = *inputSample-filter->a1*buf->buf_1-filter->a2*buf->buf_2;
+  buf->buf_0 = (*inputSample)-filter->a1*buf->buf_1-filter->a2*buf->buf_2;
   //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
   DENORMAL_TO_ZERO(buf->buf_0);
   *inputSample = filter->b0*buf->buf_0 + filter->b1*buf->buf_1+ filter->b2*buf->buf_2;
@@ -309,10 +298,10 @@ static inline  void computeFilter(Filter *filter, Buffers *buf, float *inputSamp
   if(filter->filter_order)
   {
       //w(n)=x(n)-a1*w(n-1)-a2*w(n-2)
-      buf->buf_e0 = *inputSample-filter->a1_1*buf->buf_e1-filter->a1_2*buf->buf_e2;
+      buf->buf_e0 = (*inputSample)-filter->a1_1*buf->buf_e1-filter->a1_2*buf->buf_e2;
       //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
       DENORMAL_TO_ZERO(buf->buf_e0);
-      *inputSample = filter->b1_0*buf->buf_e0 + filter->b1_1*buf->buf_e1+ filter->b1_2*buf->buf_e2;
+      *inputSample =  filter->b1_0*buf->buf_e0 + filter->b1_1*buf->buf_e1+ filter->b1_2*buf->buf_e2;
 
       buf->buf_e2 = buf->buf_e1;
       buf->buf_e1 = buf->buf_e0;
