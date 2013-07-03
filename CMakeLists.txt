@@ -9,8 +9,8 @@ set(CMAKE_CXX_FLAGS "-Wall -fPIC")
 ##ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC) ###USED FOR DEBUG
 
 #Set Install prefix
-#set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix
-set (CMAKE_INSTALL_PREFIX  "$ENV{HOME}/.lv2") #Install prefix
+set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix
+#set (CMAKE_INSTALL_PREFIX  "$ENV{HOME}/.lv2") #Install prefix
 set (LV2_BUNDLE "sapistaEQv2.lv2") #LV2 Bundel dir
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
 set(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
