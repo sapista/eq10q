@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include "smooth.h"
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 
 //Initialize smooth

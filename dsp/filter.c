@@ -18,7 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 #include "filter.h"
 
@@ -27,6 +27,11 @@ Filter *FilterInit(double rate)
 {
   Filter *filter = (Filter *)malloc(sizeof(Filter));
   filter->fs=(float)rate;
+  filter->gain = 0.0f;
+  filter->freq = 0.0f;
+  filter->q = 0.0f;
+  filter->enable = 0.0f;
+  filter->iType = 0;
   return filter;
 }
 

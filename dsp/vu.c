@@ -23,7 +23,7 @@ This file contains a VU meter implementation
 ****************************************************************************/
 
 #include "vu.h"
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 
 //Constant to dBu conversion is sqrt(2)
