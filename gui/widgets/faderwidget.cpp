@@ -259,7 +259,7 @@ bool  FaderWidget::on_scrollwheel_event(GdkEventScroll* event)
 bool  FaderWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
     int yPixels;
-    double m, n;
+    double m, n, fader_pos;
     Gtk::Allocation allocation = get_allocation();
     const int height = allocation.get_height();
 
@@ -273,7 +273,14 @@ bool  FaderWidget::on_mouse_motion_event(GdkEventMotion* event)
     m = ((double)(FADER_MARGIN - (height - FADER_MARGIN - m_image_surface_ptr->get_height())))/(m_max - m_min);
     n = (double)(height - FADER_MARGIN - m_image_surface_ptr->get_height()) - m_min*m;
     
-    set_value(((double)yPixels - n)/m);
+    fader_pos = ((double)yPixels - n)/m;
+
+    //snap to 0 dB a little bit
+    if(fader_pos < 0.5 && fader_pos > -0.5)
+    {
+      fader_pos = 0.0; 
+    }
+    set_value(fader_pos);
     m_FaderChangedSignal.emit();
     return true;
 }

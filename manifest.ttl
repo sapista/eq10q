@@ -35,3 +35,7 @@
 <http://eq10q.sourceforge.net/eq/eq10qs>
   a lv2:Plugin;
   rdfs:seeAlso <eq10qs.ttl>.
+  
+<http://eq10q.sourceforge.net/gate>
+  a lv2:Plugin;
+  rdfs:seeAlso <gate.ttl>.

@@ -1,0 +1,163 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix doap: <http://usefulinc.com/ns/doap#>.
+@prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
+
+##LV2 GUI extension
+##<http://eq10q.sourceforge.net/gate/gui>
+##  a guiext:GtkUI;
+##  guiext:binary <gui/gate_gui.so>;
+##  guiext:requiredFeature guiext:makeResident;
+##  guiext:optionalFeature guiext:noUserResize.
+
+##LV2 plugin binary
+<http://eq10q.sourceforge.net/gate>
+  a lv2:Plugin;
+  lv2:binary <gate.so>;
+  doap:name "GT10Q";
+  doap:license <http://usefulinc.com/doap/licenses/gpl>;
+  lv2:optionalFeature lv2:hardRtCapable;
+
+##guiext:ui <http://eq10q.sourceforge.net/gate/gui>;
+
+doap:maintainer [
+      foaf:name "Pere Rafols Soler";
+      foaf:homepage <http://eq10q.sourceforge.net/> ;
+      foaf:mbox <mailto:sapista2@gmail.com> ;
+   ] ;
+
+      lv2:port [
+	      a lv2:AudioPort, lv2:OutputPort;
+	      lv2:index 0;
+	      lv2:symbol "output";
+	      lv2:name "Output";
+      ],
+
+      [
+	      a lv2:AudioPort, lv2:InputPort;
+	      lv2:index 1;
+	      lv2:symbol "input";
+	      lv2:name "Input";
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 2;
+	      lv2:symbol "keylisten";
+	      lv2:name "Key Listen";
+	      lv2:minimum 0;
+	      lv2:maximum 1;
+	      lv2:default 0;
+	      lv2:portProperty pprops:hasStrictBounds;
+	      lv2:PortProperty lv2:toggled;
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 3;
+	      lv2:symbol "threshold";
+	      lv2:name "Threshold (dB)";
+	      lv2:minimum -70;
+	      lv2:maximum 12;
+	      lv2:default -70;
+	      lv2:portProperty pprops:hasStrictBounds;
+	      units:unit units:db;
+	      units:conversion [
+		      units:to units:s;
+		      units:factor 0.001;
+	      ];
+
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 4;
+	      lv2:symbol "attack";
+	      lv2:name "Attack (ms)";
+	      lv2:minimum 0.1;
+	      lv2:maximum 500;
+	      lv2:default 30;
+	      lv2:portProperty pprops:hasStrictBounds;
+	      units:unit units:ms;
+	      units:conversion [
+		      units:to units:s;
+		      units:factor 0.001;
+	      ];
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 5;
+	      lv2:symbol "hold";
+	      lv2:name "Hold (ms)";
+	      lv2:minimum 5;
+	      lv2:maximum 3000;
+	      lv2:default 500;
+	      lv2:portProperty pprops:hasStrictBounds;
+	      units:unit units:ms;
+	      units:conversion [
+		      units:to units:s;
+		      units:factor 0.001;
+	      ];
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 6;
+	      lv2:symbol "decay";
+	      lv2:name "Decay (ms)";
+	      lv2:minimum 5;
+	      lv2:maximum 4000;
+	      lv2:default 1000;
+	      lv2:portProperty pprops:hasStrictBounds;
+	      units:unit units:ms;
+	      units:conversion [
+		      units:to units:s;
+		      units:factor 0.001;
+	      ];
+      ],
+
+      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 7;
+	      lv2:symbol "gaterange";
+	      lv2:name "Range (dB)";
+	      lv2:portProperty pprops:hasStrictBounds;
+	      lv2:minimum -90;
+	      lv2:maximum -20;
+	      lv2:default -90;
+	      units:unit units:db;
+      ],
+      
+	      [
+	      a lv2:ControlPort, lv2:OutputPort;
+	      lv2:index 8;
+	      lv2:symbol "gateled";
+	      lv2:name "Gain Reduction (dB)";
+	      lv2:minimum 0;
+	      lv2:maximum 90;
+	      lv2:default 0;
+	      lv2:portProperty pprops:hasStrictBounds;
+      ],
+      
+	      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 9;
+	      lv2:symbol "hpf";
+	      lv2:name "HPF Key Filter (Hz)";
+	      lv2:portProperty pprops:hasStrictBounds;
+	      lv2:minimum 20;
+	      lv2:maximum 20000;
+	      lv2:default 40;
+      ],
+      
+	      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 10;
+	      lv2:symbol "lpf";
+	      lv2:name "LPF Key Filter (Hz)";
+	      lv2:portProperty pprops:hasStrictBounds;
+	      lv2:minimum 20;
+	      lv2:maximum 20000;
+	      lv2:default 18000;
+      ].
