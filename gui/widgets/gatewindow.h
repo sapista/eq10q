@@ -94,6 +94,7 @@ class GateMainWindow : public Gtk::EventBox
     LV2UI_Write_Function write_function;
 
   protected:
+    VUWidget *m_InputVu;
     VUWidget *m_GainReductionVu; 
     FaderWidget *m_ThresholdFader;
     Gtk::HBox m_VuBox;
@@ -108,10 +109,10 @@ class GateMainWindow : public Gtk::EventBox
     
     ///TODO: I'm here!
     ///Definicio preliminar de gatewindow.h practicament completada
-    ///Pendent de crear el gatewindow.cpp
     ///Pendent de probar que la implementacio nova de Vu funciona OK amb Gain reduction
     ///Pendent de implementar inversió de numeros a Vu
-    ///Millorar flexibilitat de VU
+    ///Millorant flexibilitat de VU
+    ///Calibracio dels VU es incorrecte! 0 dB no quadren amb 0 dB!!!
 };
 
 #endif

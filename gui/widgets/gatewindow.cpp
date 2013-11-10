@@ -18,54 +18,50 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "gainctl.h"
-#include "guiconstants.h"
+#include <stdlib.h>
+#include <iostream>
 
-GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, double Fader_dBMax, double Fader_dBMin, const char* bundlePath):
-m_iNumOfChannels(iNumOfChannel)
+#include <cmath> //TODO: si no u necessites eliminau!!!
+#include <cstring>
+#include <gtkmm/window.h>
+#include "gatewindow.h"
+
+GateMainWindow::GateMainWindow(const char *uri, const char *bundlePath)
+  :m_pluginUri(uri),
+  m_bundlePath(bundlePath)
 {
-
-  set_label(sTitle);
-  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin, bundlePath));
-  m_VuMeter = Gtk::manage(new VUWidget(iNumOfChannel, -24.0, 6.0));
-  m_HBox.pack_start(*m_GainFader);
-  m_HBox.pack_start(*m_VuMeter);
-  m_HBox.set_spacing(0);
-  m_HBox.set_homogeneous(false);
-  m_HBox.show();
-  m_GainFader->show();
-  m_VuMeter->show();
-  add(m_HBox);
-  show();
+  m_ThresholdFader = Gtk::manage(new FaderWidget(6.0, -24.0, bundlePath)); //TODO posa els limits que toca akests son per probar VU
+  m_InputVu = Gtk::manage(new VUWidget(1, -24.0, 6.0,false));
+  m_GainReductionVu = Gtk::manage(new VUWidget(1, -24.0, 6.0, true));
+  m_VuBox.pack_start(*m_ThresholdFader);
+  m_VuBox.pack_start(*m_InputVu);
+  m_VuBox.pack_start(*m_GainReductionVu);
+  m_VuBox.show_all_children();
+  m_VuBox.show();
+  add(m_VuBox);
   
-  m_GainFader->signal_changed().connect(sigc::mem_fun(*this, &GainCtl::onGainChanged));
+  //Connect signals
+  m_ThresholdFader->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onThresholdChange));
 }
 
-void GainCtl::setGain(float fValue){
-  m_GainFader->set_value((double) fValue);
-}
-
-void GainCtl::setVu(int channel, float fValue)
+GateMainWindow::~GateMainWindow()
 {
-  m_VuMeter->setValue(channel, fValue);
+  delete m_InputVu;
+  delete m_GainReductionVu;
+  delete m_ThresholdFader;
 }
 
-float GainCtl::getGain(){
-  return (float)m_GainFader->get_value();
-}
-
-GainCtl::signal_GainChanged GainCtl::signal_changed()
+void GateMainWindow::onRealize()
 {
-  return m_GainChangedSignal;
+  Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
+  toplevel->set_resizable(false);  
 }
 
-void GainCtl::onGainChanged()
+void GateMainWindow::onThresholdChange()
 {
-  m_GainChangedSignal.emit();
-}
-
-GainCtl::~GainCtl()
-{
-  delete m_GainFader;
-  delete m_VuMeter;
+ //TODO: to implement event handler this is just a simple test
+  
+  double th = m_ThresholdFader->get_value();
+  m_InputVu->setValue(0, pow(10.0, (th) *0.05));
+  m_GainReductionVu->setValue(0, (float)(pow(10.0, th*0.05)));
 }

@@ -5,6 +5,7 @@
 #include <gtkmm/box.h>
 
 #include "widgets/eqwindow.h"
+#include "widgets/gatewindow.h"
 
 class HelloWorld : public Gtk::Window
 {
@@ -15,6 +16,8 @@ public:
 
 protected:
   EqMainWindow *m_EqWin;
+  GateMainWindow *m_GateWin;
+  Gtk::HBox m_hbox;
   
   //Slots signal handlers
   void on_realize();

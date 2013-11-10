@@ -32,23 +32,27 @@
 class VUWidget : public Gtk::DrawingArea
 {
   public:
-    VUWidget(int iChannels, float fMin = 1.0 / 256, bool inverted = false);
+    VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction = false);
     ~VUWidget();
     void setValue(int iChannel, float fValue);
   
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
+  void redraw_Gr(GdkEventExpose* event);
+  void redraw_Normal(GdkEventExpose* event);
   void clearPeak(int uChannel);
   void redraw();
   
   int m_iChannels;
-  float m_inv;
-  float m_fMin;
+  float m_fMin; //Min representable value in dB
+  float m_fMax; //Max representable value in dB
+  bool m_bIsGainReduction;
   float* m_fValues;
   float* m_fPeaks;
   float m_fBarWidth;
   float m_fBarStep;
+  float m_fdBPerLed;
   //sigc::connection* m_peak_connections;
 private:
     void pangoLayout();
