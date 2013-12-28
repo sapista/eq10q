@@ -30,8 +30,8 @@ GateMainWindow::GateMainWindow(const char *uri, const char *bundlePath)
   :m_pluginUri(uri),
   m_bundlePath(bundlePath)
 {
-  m_ThresholdFader = Gtk::manage(new FaderWidget(6.0, -24.0, bundlePath)); //TODO posa els limits que toca akests son per probar VU
-  m_InputVu = Gtk::manage(new VUWidget(1, -24.0, 6.0,false));
+  m_ThresholdFader = Gtk::manage(new FaderWidget(6.0, -20.0, bundlePath)); //TODO posa els limits que toca akests son per probar VU
+  m_InputVu = Gtk::manage(new VUWidget(1, -24.0, 6.0,false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, -24.0, 6.0, true));
   m_VuBox.pack_start(*m_ThresholdFader);
   m_VuBox.pack_start(*m_InputVu);
@@ -41,7 +41,8 @@ GateMainWindow::GateMainWindow(const char *uri, const char *bundlePath)
   add(m_VuBox);
   
   //Connect signals
-  m_ThresholdFader->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onThresholdChange));
+  //m_ThresholdFader->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onThresholdChange));
+  m_InputVu->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onThresholdChange));
 }
 
 GateMainWindow::~GateMainWindow()
@@ -61,7 +62,8 @@ void GateMainWindow::onThresholdChange()
 {
  //TODO: to implement event handler this is just a simple test
   
-  double th = m_ThresholdFader->get_value();
+  //double th = m_ThresholdFader->get_value();
+  float th = m_InputVu->get_value_th();
   m_InputVu->setValue(0, pow(10.0, (th) *0.05));
   m_GainReductionVu->setValue(0, (float)(pow(10.0, th*0.05)));
 }

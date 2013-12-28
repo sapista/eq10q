@@ -32,33 +32,67 @@
 class VUWidget : public Gtk::DrawingArea
 {
   public:
-    VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction = false);
+    VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction = false, bool DrawThreshold = false);
     ~VUWidget();
     void setValue(int iChannel, float fValue);
   
+    //Data accessors
+    void set_value_th(double value);
+    double get_value_th();
+    
+    //signal accessor:
+    typedef sigc::signal<void> signal_FaderChanged;
+    signal_FaderChanged signal_changed();
+    
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
-  void redraw_Gr(GdkEventExpose* event);
-  void redraw_Normal(GdkEventExpose* event);
+  void redraw_Gr(Cairo::RefPtr<Cairo::Context> cr);
+  void redraw_Normal(Cairo::RefPtr<Cairo::Context> cr);
   void clearPeak(int uChannel);
   void redraw();
+  
+  //Mouse grab signal handlers
+  virtual bool on_button_press_event(GdkEventButton* event);
+  virtual bool on_button_release_event(GdkEventButton* event);
+  virtual bool on_scrollwheel_event(GdkEventScroll* event);
+  virtual bool on_mouse_motion_event(GdkEventMotion* event);
   
   int m_iChannels;
   float m_fMin; //Min representable value in dB
   float m_fMax; //Max representable value in dB
   bool m_bIsGainReduction;
+  bool bMotionIsConnected;
   float* m_fValues;
   float* m_fPeaks;
   float m_fBarWidth;
   float m_fBarStep;
   float m_fdBPerLed;
+  float m_ThFaderValue;
+  int m_iThFaderPositon;
+  bool m_bDrawThreshold;
   //sigc::connection* m_peak_connections;
 private:
     void pangoLayout();
    
     struct timeval *m_start; //Array of timeval start, on for each channel
     struct timeval *m_end; //Array of timeval end, on for each channel
+    
+    int width;
+    int height;
+    float m_Lmargin, m_Rmargin;
+
+    //Compute number of bars for each zone
+    float *fdBValue;
+    float *fdBPeak;
+    float fTextOffset;
+    float fChannelWidth;
+    int m_RedBarsCount, m_YellowBarsCount, m_GreenBarsCount;
+    
+    sigc::connection m_motion_connection;
+    
+    //Fader change signal
+    signal_FaderChanged m_FaderChangedSignal;
 
 };
 #endif

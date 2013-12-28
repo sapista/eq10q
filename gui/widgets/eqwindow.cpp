@@ -78,8 +78,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_LoadAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   
-  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -24, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
-  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -24, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
+  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
+  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
 
   m_BandBox.set_spacing(0);

@@ -39,6 +39,7 @@
 
 #include "vuwidget.h"
 #include "faderwidget.h"
+#include "eqbutton.h"
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
