@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere R�fols Soler                               *
+ *   Copyright (C) 2011 by Pere Rafols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,38 +18,29 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef VU_WIDGET_H
-#define VU_WIDGET_H
+#ifndef KNOB_WIDGET_H
+#define KNOB_WIDGET_H
 
 #include <cmath>
 #include <string>
 #include <vector>
 #include <gtkmm/drawingarea.h>
 
-#include <sys/time.h>
-#define PEAK_CLEAR_TIMEOUT 2000
-
-class VUWidget : public Gtk::DrawingArea
+class KnobWidget : public Gtk::DrawingArea
 {
   public:
-    VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction = false, bool DrawThreshold = false);
-    ~VUWidget();
-    void setValue(int iChannel, float fValue);
-  
-    //Data accessors
-    void set_value_th(double value);
-    double get_value_th();
+    KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, bool bIsFreqType = false);
+    ~KnobWidget();
+    void set_value(float fValue);
+    double get_value();
     
     //signal accessor:
-    typedef sigc::signal<void> signal_FaderChanged;
-    signal_FaderChanged signal_changed();
+    typedef sigc::signal<void> signal_KnobChanged;
+    signal_KnobChanged signal_changed();
     
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
-  void redraw_Gr(Cairo::RefPtr<Cairo::Context> cr);
-  void redraw_Normal(Cairo::RefPtr<Cairo::Context> cr);
-  void clearPeak(int uChannel);
   void redraw();
   
   //Mouse grab signal handlers
@@ -58,39 +49,20 @@ protected:
   virtual bool on_scrollwheel_event(GdkEventScroll* event);
   virtual bool on_mouse_motion_event(GdkEventMotion* event);
   
-  int m_iChannels;
-  float m_fMin; //Min representable value in dB
-  float m_fMax; //Max representable value in dB
-  bool m_bIsGainReduction;
+  float m_fMin; //Min representable value
+  float m_fMax; //Max representable value
   bool bMotionIsConnected;
-  float* m_fValues;
-  float* m_fPeaks;
-  float m_fBarWidth;
-  float m_fBarStep;
-  float m_fdBPerLed;
-  float m_ThFaderValue;
-  int m_iThFaderPositon;
-  bool m_bDrawThreshold;
-  //sigc::connection* m_peak_connections;
-private:  
-    struct timeval *m_start; //Array of timeval start, on for each channel
-    struct timeval *m_end; //Array of timeval end, on for each channel
-    
+  float m_Value;
+  std::string m_Label;
+  std::string m_Units;
+  bool m_FreqKnob;
+private:   
     int width;
     int height;
-    float m_Lmargin, m_Rmargin;
-
-    //Compute number of bars for each zone
-    float *fdBValue;
-    float *fdBPeak;
-    float fTextOffset;
-    float fChannelWidth;
-    int m_RedBarsCount, m_YellowBarsCount, m_GreenBarsCount;
-    
+    int mouse_move_ant;
     sigc::connection m_motion_connection;
     
     //Fader change signal
-    signal_FaderChanged m_FaderChangedSignal;
-
+    signal_KnobChanged m_KnobChangedSignal;
 };
 #endif

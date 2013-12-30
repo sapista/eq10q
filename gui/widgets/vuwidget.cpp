@@ -157,7 +157,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     fdBPeak = new float[m_iChannels];
     fTextOffset = TEXT_OFFSET/(float)width;
     
-    fChannelWidth = (1 - fTextOffset - m_Lmargin -m_Rmargin)/(float)m_iChannels; //TODO aplica el Rmargin!!!
+    fChannelWidth = (1 - fTextOffset - m_Lmargin -m_Rmargin)/(float)m_iChannels;
   
     //Translate input to dBu
     for(int i = 0; i<m_iChannels; i++)
@@ -192,9 +192,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     //Draw text with pango
     cr->save();
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 6.5");
+    Pango::FontDescription font_desc("sans 7");
     pangoLayout->set_font_description(font_desc);
-    pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
 
     cr->move_to(0.5,10);
     cr->set_source_rgba(0.9, 0.9, 1.0, 1.0);
@@ -217,6 +216,8 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
 	cr->move_to(3, height - py*height*m_fBarStep - height*0.035);
       }
       pangoLayout->set_text(ss.str());
+      pangoLayout->set_width(Pango::SCALE * (TEXT_OFFSET - 3));
+      pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
       pangoLayout->show_in_cairo_context(cr);
       cr->stroke();     
     }
@@ -234,19 +235,65 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     }
     
      
-    //Draw Threshold MicroFader
-    
+    //Draw Threshold MicroFader  
     if(m_bDrawThreshold)
     {
       cr->restore();  
-      cr->set_source_rgba(0.8, 0.8, 0.8, 1.0);
+      
+      //Draw vertical line
+      cr->set_source_rgba(0.5, 0.5, 0.6, 1.0);
       cr->set_line_width(1.0);
-      double  m = ((double)(-height - 20))/(m_fMax - m_fMin); //TODO oju akets 20 son la mida del microfader
-      double n = (double)(height - 20) - m_fMin*m;
-    
-      m_iThFaderPositon = (int)(m*m_ThFaderValue + n);
-      cr->rectangle(width - MICROFADER_WIDTH,  m_iThFaderPositon +10, MICROFADER_WIDTH, 20); //TODO oju el 10 es la meitat del 20
+      cr->move_to(width - MICROFADER_WIDTH/2, height - MICROFADER_HEIGHT);      
+      cr->line_to(width - MICROFADER_WIDTH/2, MICROFADER_HEIGHT);
       cr->stroke();
+      
+      //Draw threshold text with pango
+      Glib::RefPtr<Pango::Layout> pangoLayout_th = Pango::Layout::create(cr);
+      Pango::FontDescription font_desc_th("sans bold 7");
+      font_desc_th.set_gravity(Pango::GRAVITY_EAST);
+      pangoLayout_th->set_font_description(font_desc_th);
+      pangoLayout_th->set_alignment(Pango::ALIGN_LEFT);
+      cr->move_to(width - MICROFADER_WIDTH, height - MICROFADER_HEIGHT - 80);
+      cr->set_source_rgba(0.9, 0.9, 0.9, 1.0);
+      pangoLayout_th->update_from_cairo_context(cr);  //gets cairo cursor position
+      pangoLayout_th->set_text("d\r\nl\r\no\r\nh\r\ns\r\ne\r\nr\r\nh\r\nT");
+      pangoLayout_th->show_in_cairo_context(cr);
+      cr->stroke();
+          
+      //Calc coords for mini fader
+      double  m = ((double)(-height))/(m_fMax - m_fMin);
+      double n = (double)(height) - m_fMin*m;
+      m_iThFaderPositon = (int)(m*m_ThFaderValue + n);
+      
+      //Draw a filled triangle
+      cr->set_source_rgba(0.7, 0.7, 0.7, 1.0);
+      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
+      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
+      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
+      cr->line_to(width - 2, m_iThFaderPositon + (MICROFADER_HEIGHT/2));
+      cr->line_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
+      cr->fill();
+      
+      //Draw lines on triangle
+
+      cr->set_line_width(1.0);
+      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
+      cr->set_source_rgba(0.2, 0.2, 0.2, 1.0);
+      cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
+      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
+      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
+      cr->stroke();
+      cr->set_line_width(1.5);
+      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
+      cr->set_source_rgba(0.0, 0.0, 0.2, 1.0);
+      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
+      cr->line_to(width - 2, m_iThFaderPositon + (MICROFADER_HEIGHT/2));
+      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
+      cr->stroke();
+
     }     
   }
   return true; 
@@ -341,33 +388,6 @@ inline void VUWidget::redraw_Normal(Cairo::RefPtr<Cairo::Context> cr)
       cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep - m_fBarWidth/2);
       cr->stroke();
     }   
-    
-    //draw a rectangle arround the VU Widget
-    cr->set_source_rgb(0.22, 0.30, 0.53);
-
-     //top horitzontal line
-    cr->set_line_width(0.008);
-    cr->move_to(0, 0); 
-    cr->line_to(1, 0);
-    cr->stroke();
-    
-    //right vertical line
-    cr->set_line_width(0.04);
-    cr->move_to(1, 0);
-    cr->line_to(1, -1);
-    cr->stroke();
-    
-    //bottom Horitzontal line
-    cr->set_line_width(0.008);
-    cr->move_to(1, -1);
-    cr->line_to(0, -1);
-    cr->stroke();
-    
-    //left Vertical line_to
-    cr->set_line_width(0.04);
-    cr->move_to(0, -1);
-    cr->line_to(0, 0);
-    cr->stroke();   
 }
 
 inline void VUWidget::redraw_Gr(Cairo::RefPtr<Cairo::Context> cr)
@@ -408,42 +428,14 @@ inline void VUWidget::redraw_Gr(Cairo::RefPtr<Cairo::Context> cr)
 	cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, BT_VU_MARGIN +(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep + m_fBarWidth/2);
 	cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, BT_VU_MARGIN +(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep + m_fBarWidth/2);
 	cr->stroke();      
-    }
-      
-    //draw a rectangle arround the VU Widget
-    cr->set_source_rgb(0.22, 0.30, 0.53);
-
-     //top horitzontal line
-    cr->set_line_width(0.008);
-    cr->move_to(0, 0); 
-    cr->line_to(1, 0);
-    cr->stroke();
-    
-    //right vertical line
-    cr->set_line_width(0.04);
-    cr->move_to(1, 0);
-    cr->line_to(1, -1);
-    cr->stroke();
-    
-    //bottom Horitzontal line
-    cr->set_line_width(0.008);
-    cr->move_to(1, -1);
-    cr->line_to(0, -1);
-    cr->stroke();
-    
-    //left Vertical line_to
-    cr->set_line_width(0.04);
-    cr->move_to(0, -1);
-    cr->line_to(0, 0);
-    cr->stroke();
-    
+    }     
 }
 
 void VUWidget::set_value_th(double value)
 {
   m_ThFaderValue = value;
   m_ThFaderValue = m_ThFaderValue < m_fMin ? m_fMin : m_ThFaderValue;
-  m_ThFaderValue = m_ThFaderValue > m_fMax ? m_fMax : m_ThFaderValue;
+  m_ThFaderValue = m_ThFaderValue > m_fMax - 2.0 ? m_fMax - 2.0 : m_ThFaderValue; //Limit threshols 2dB less than VU
   redraw();
 }
 
@@ -455,13 +447,10 @@ double VUWidget::get_value_th()
 //Mouse grab signal handlers
 bool  VUWidget::on_button_press_event(GdkEventButton* event)
 {
-  //Act in case mouse pointer is inside faderwidget
-  //Gtk::Allocation allocation = get_allocation(); //TODO en principi no ho fare servir
-  //const int width = allocation.get_width(); //TODO en principi no ho fare servir
   int x,y;
   get_pointer(x,y);
-  if( y > m_iThFaderPositon - 20 &&
-      y < m_iThFaderPositon + 20)
+  if( y > m_iThFaderPositon - MICROFADER_HEIGHT &&
+      y < m_iThFaderPositon + MICROFADER_HEIGHT)
   {
 
     if (!bMotionIsConnected)
@@ -507,13 +496,12 @@ bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
     Gtk::Allocation allocation = get_allocation();
     const int height = allocation.get_height();
 
-    yPixels = event->y; //Offset fader icon to grab the center of the fader
+    yPixels = event->y;
 
     //Stoppers
     yPixels = yPixels < 0 ? 0 : yPixels;
     yPixels = yPixels > height - MICROFADER_HEIGHT ? height - MICROFADER_HEIGHT : yPixels;
 
-    
     m = -(double)height/(m_fMax - m_fMin);
     n = (double)(height) - m_fMin*m;
     
@@ -521,14 +509,7 @@ bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
 
     set_value_th(fader_pos);
     m_FaderChangedSignal.emit();
-    
-    
-    //Relacio db pixels empleat en el pic
-     -BT_VU_MARGIN -(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep - m_fBarWidth/2
-    
-    ///TODO remove this test
-    std::cout<<"Fader Y= "<<fader_pos<<std::endl;
-    
+      
     return true;
 }
 

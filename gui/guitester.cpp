@@ -88,7 +88,7 @@ void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_
 HelloWorld::HelloWorld()
 {
   m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs",@Eq_Gui_Test_Path@));
-  m_GateWin =  Gtk::manage(new GateMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",@Eq_Gui_Test_Path@));
+  m_GateWin =  Gtk::manage(new GateMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@) + "/icons/logodynamics.png", "~GT10Q~\r\nNoise Gate"));
   //add(*m_EqWin);
   m_hbox.pack_start(*m_EqWin);
   m_hbox.pack_start(*m_GateWin);
@@ -112,7 +112,7 @@ HelloWorld::HelloWorld()
   
   //Prepare writefunction
   m_EqWin->write_function = writeTestFunction;
-  
+  m_GateWin->write_function = writeTestFunction;
 }
 
 HelloWorld::~HelloWorld()

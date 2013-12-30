@@ -31,6 +31,7 @@
 #include <gtkmm/button.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/image.h>
+#include <gtkmm/label.h>
 
 #include <cmath>
 
@@ -38,8 +39,21 @@
 #include "../lv2_ui.h"
 
 #include "vuwidget.h"
-#include "faderwidget.h"
-#include "eqbutton.h"
+#include "knob.h"
+
+#define PORT_OUTPUT 0
+#define PORT_INPUT 1
+#define PORT_KEY_LISTEN 2
+#define PORT_THRESHOLD 3
+#define PORT_ATACK 4
+#define PORT_HOLD 5
+#define PORT_DECAY 6
+#define PORT_RANGE 7
+#define PORT_HPFFREQ 8
+#define PORT_LPFFREQ 9
+#define PORT_GAIN 10
+#define PORT_INVU 11
+#define PORT_GAINREDUCTION 12
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
@@ -49,14 +63,13 @@ using namespace sigc;
 class GateMainWindow : public Gtk::EventBox
 {
   public:
-    GateMainWindow(const char *uri, const char *bundlePath);
+    GateMainWindow(const char *uri, std::string logoPath, std::string title);
     virtual ~GateMainWindow();   
     
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
     {
       float data = * static_cast<const float*>(buffer);
-      
       
       #ifdef PRINT_DEBUG_INFO
 	std::cout<<"gui_port_event Entring....... "<<std::endl;
@@ -79,10 +92,49 @@ class GateMainWindow : public Gtk::EventBox
         // Updating values in GUI ========================================================
 	switch (port)
 	{
-	  case 0:
-	    //TODO A completar amb tots els ports del GATE
+	  case PORT_KEY_LISTEN:
+	    m_KeyButton.set_active(data > 0.5);
 	  break;
-
+	  
+	  case PORT_THRESHOLD:
+	    m_InputVu->set_value_th(data);
+	  break;
+	  
+	  case PORT_ATACK:
+	    m_Attack->set_value(data);
+	  break;
+	  
+	  case PORT_HOLD:
+	    m_Hold->set_value(data);
+	  break;
+	  
+	  case PORT_DECAY:
+	    m_Release->set_value(data);
+	  break;
+	  
+	  case PORT_RANGE:
+	    m_Range->set_value(data);
+	  break;
+	  
+	  case PORT_GAINREDUCTION:
+	    m_GainReductionVu->setValue(0,data);
+	  break;
+	  
+	  case PORT_HPFFREQ:
+	    m_HPF->set_value(data);
+	  break;
+	  
+	  case PORT_LPFFREQ:
+	    m_LPF->set_value(data);
+	  break;
+	  
+	  case PORT_GAIN:
+	    m_InGainFader->set_value(data);
+	  break;
+	  
+	  case PORT_INVU:
+	    m_InputVu->setValue(0,data);
+	  break;
 	}       
         
 	#ifdef PRINT_DEBUG_INFO	    
@@ -97,23 +149,37 @@ class GateMainWindow : public Gtk::EventBox
   protected:
     VUWidget *m_InputVu;
     VUWidget *m_GainReductionVu; 
-    FaderWidget *m_ThresholdFader;
+    KnobWidget *m_InGainFader;
+    KnobWidget *m_Attack;
+    KnobWidget *m_Hold;
+    KnobWidget *m_Release;
+    KnobWidget *m_Range;
+    KnobWidget *m_HPF;
+    KnobWidget *m_LPF;
+    Gtk::ToggleButton m_KeyButton;
+    Gtk::Alignment m_ButtonAlign;
     Gtk::HBox m_VuBox;
+    Gtk::VBox m_GattingBox, m_SideChainBox, m_TitleBox;
+    Gtk::Frame m_GattingFrame, m_SideChainFrame, m_VuInFrame, m_VuGrFrame, m_TitleFrame;       
+    Gtk::Alignment m_VuInAlign, m_VuGrAlign, m_MainWidgetAlign, m_TitleAlign;
+    Gtk::Image *image_logo;
+    Gtk::Label m_LTitle;
     
     //Signal Handlers
+    void onGainChange();
     void onThresholdChange();
+    void onRangeChange();
+    void onAttackChange();
+    void onHoldChange();
+    void onReleaseChange();
+    void onHPFChange();
+    void onLPFChange();
     void onRealize();
+    void onKeyListenChange();
     
   private:
     std::string m_pluginUri;
-    std::string m_bundlePath;    
-    
-    ///TODO: I'm here!
-    ///Definicio preliminar de gatewindow.h practicament completada
-    ///Pendent de probar que la implementacio nova de Vu funciona OK amb Gain reduction
-    ///Pendent de implementar inversió de numeros a Vu
-    ///Millorant flexibilitat de VU
-    ///Calibracio dels VU es incorrecte! 0 dB no quadren amb 0 dB!!!
+    std::string m_logoPath;  
 };
 
 #endif

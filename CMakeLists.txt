@@ -86,7 +86,7 @@ target_link_libraries( eq10qs  lib_filter lib_vumeter lib_smooth)
 
 #Build GATE DSP
 add_library(gate SHARED gate.c)
-target_link_libraries( gate)
+target_link_libraries( gate lib_vumeter lib_filter)
 
 #remove the lib prefix to all generated .so files
 set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate PROPERTIES PREFIX "")

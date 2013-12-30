@@ -4,11 +4,11 @@
 @prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
 
 ##LV2 GUI extension
-##<http://eq10q.sourceforge.net/gate/gui>
-##  a guiext:GtkUI;
-##  guiext:binary <gui/gate_gui.so>;
-##  guiext:requiredFeature guiext:makeResident;
-##  guiext:optionalFeature guiext:noUserResize.
+<http://eq10q.sourceforge.net/gate/gui>
+  a guiext:GtkUI;
+  guiext:binary <gui/gate_gui.so>;
+  guiext:requiredFeature guiext:makeResident;
+  guiext:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/gate>
@@ -18,7 +18,7 @@
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
-##guiext:ui <http://eq10q.sourceforge.net/gate/gui>;
+guiext:ui <http://eq10q.sourceforge.net/gate/gui>;
 
 doap:maintainer [
       foaf:name "Pere Rafols Soler";
@@ -57,9 +57,9 @@ doap:maintainer [
 	      lv2:index 3;
 	      lv2:symbol "threshold";
 	      lv2:name "Threshold (dB)";
-	      lv2:minimum -70;
-	      lv2:maximum 12;
-	      lv2:default -70;
+	      lv2:minimum -24;
+	      lv2:maximum 4;
+	      lv2:default -10;
 	      lv2:portProperty pprops:hasStrictBounds;
 	      units:unit units:db;
 	      units:conversion [
@@ -117,7 +117,7 @@ doap:maintainer [
 	      ];
       ],
 
-      [
+	      [
 	      a lv2:ControlPort, lv2:InputPort;
 	      lv2:index 7;
 	      lv2:symbol "gaterange";
@@ -130,19 +130,8 @@ doap:maintainer [
       ],
       
 	      [
-	      a lv2:ControlPort, lv2:OutputPort;
-	      lv2:index 8;
-	      lv2:symbol "gateled";
-	      lv2:name "Gain Reduction (dB)";
-	      lv2:minimum 0;
-	      lv2:maximum 90;
-	      lv2:default 0;
-	      lv2:portProperty pprops:hasStrictBounds;
-      ],
-      
-	      [
 	      a lv2:ControlPort, lv2:InputPort;
-	      lv2:index 9;
+	      lv2:index 8;
 	      lv2:symbol "hpf";
 	      lv2:name "HPF Key Filter (Hz)";
 	      lv2:portProperty pprops:hasStrictBounds;
@@ -153,11 +142,35 @@ doap:maintainer [
       
 	      [
 	      a lv2:ControlPort, lv2:InputPort;
-	      lv2:index 10;
+	      lv2:index 9;
 	      lv2:symbol "lpf";
 	      lv2:name "LPF Key Filter (Hz)";
 	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:minimum 20;
 	      lv2:maximum 20000;
 	      lv2:default 18000;
+      ],
+	      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 10;
+	      lv2:symbol "ingain";
+	      lv2:name "Gain (dB)";
+	      lv2:portProperty pprops:hasStrictBounds;
+	      lv2:minimum -20;
+	      lv2:maximum 20;
+	      lv2:default 0;
+	      units:unit units:db;
+      ],
+	      [
+	      a lv2:ControlPort, lv2:OutputPort;
+	      lv2:index 11;
+	      lv2:symbol "out_vu_ctl";
+	      lv2:name "Out VU CTL";
+      ],
+      
+      	      [
+	      a lv2:ControlPort, lv2:OutputPort;
+	      lv2:index 12;
+	      lv2:symbol "gateled";
+	      lv2:name "Gain Reduction";
       ].

@@ -87,8 +87,12 @@ configure_file("${PROJECT_SOURCE_DIR}/gui/eq10q_ui.cpp" "${PROJECT_SOURCE_DIR}/g
 add_library(eq10qs_gui SHARED eq10qs_ui.cpp)
 target_link_libraries( eq10qs_gui  eqwin ${GTKMM_LIBRARIES})
 
+#Build GATE GUI
+add_library(gate_gui SHARED gate_ui.cpp)
+target_link_libraries( gate_gui  gatewin ${GTKMM_LIBRARIES})
+
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui PROPERTIES PREFIX "")
+set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui PROPERTIES PREFIX "")
 
 ##CLEAN generated .cpp files on run 'make clean'
 SET(generatedGuiConfigFiles
@@ -104,7 +108,7 @@ SET(generatedGuiConfigFiles
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedGuiConfigFiles}")
 
 ##=================================INSTALLER===================================================================================
-INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui DESTINATION "${LV2_BUNDLE}/gui")
+INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/knobs" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/combopix" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/icons" DESTINATION "${LV2_BUNDLE}/gui")

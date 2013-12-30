@@ -61,9 +61,6 @@ static inline float ComputeVu(Vu *vu, uint32_t nframes)
 		vu->vu_max *= pow(vu->m_decay, nframes);  ///TODO: estas perdent rendiment amb akest pow!!!
       else
 	vu->vu_max = 0.0;
-
-  //TESTING liner output
-  //return 20*log10(fVuOut/CONSTANT_VU);
   return fVuOut;
 }
 #endif
