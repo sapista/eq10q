@@ -51,6 +51,10 @@ This file implements functionalities for a large numbers of equalizers
 #define FILTER_INPUT_GAIN 10000.0
 #define FILTER_OUTPUT_GAIN 0.0001
 
+#define PLUGIN_IS_COMPRESSOR
+//#define PLUGIN_IS_GATE
+
+
 static LV2_Descriptor *gateDescriptor = NULL;
 
 typedef struct {
@@ -58,11 +62,11 @@ typedef struct {
   float *key_listen;
   float *threshold;
   float *attack;
-  float *hold;
+  float *hold_makeup; //Hold for gate makeup for compressor/expander
   float *decay;
-  float *range;
+  float *range_ratio; //range for gate ratio for compressor/expander
   float *output;
-  float *gainreduction;
+  float *gainreduction; 
   const float *input;
   float *hpffreq;
   float *lpffreq;
@@ -102,13 +106,13 @@ static void connectPortGate(LV2_Handle instance, uint32_t port, void *data)
 	    plugin->attack = (float*)data;
 	    break;
     case PORT_HOLD:
-	    plugin->hold = (float*)data;
+	    plugin->hold_makeup = (float*)data;
 	    break;
     case PORT_DECAY:
 	    plugin->decay = (float*)data;
 	    break;
     case PORT_RANGE:
-	    plugin->range = (float*)data;
+	    plugin->range_ratio = (float*)data;
 	    break;
     case PORT_INPUT:
 	    plugin->input = (const float*)data;
@@ -138,7 +142,7 @@ static LV2_Handle instantiateGate(const LV2_Descriptor *descriptor, double s_rat
 {
   Gate *plugin_data = (Gate *)malloc(sizeof(Gate));  
   plugin_data->sample_rate = s_rate;
-  plugin_data->hold_count = 1000000; //TODO set to max int
+  plugin_data->hold_count = 1000000;
   plugin_data->g = 0.0f;
   plugin_data->InputVu[0] = VuInit(s_rate);
   plugin_data->noise = 0.01; //the noise to get the GR VU workin in GUI
@@ -154,29 +158,54 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
 {
   Gate *plugin_data = (Gate *)instance;
   
-  //Read ports
+  //Read ports (common)
   float * const output = plugin_data->output;
   const float * const input = plugin_data->input;
   const float threshold = pow(10, *(plugin_data->threshold) * 0.05);
   const float attack = *(plugin_data->attack);
-  const float hold = *(plugin_data->hold);
   const float decay = *(plugin_data->decay);
-  const float range = *(plugin_data->range);
   const float hpffreq = *(plugin_data->hpffreq);
   const float lpffreq = *(plugin_data->lpffreq);
   const float KeyListen = *(plugin_data->key_listen);
   const float InputGain = dB2Lin(*(plugin_data->ingain));
+  
+  //Read ports (gate)
+  #ifdef PLUGIN_IS_GATE
+  const float range = *(plugin_data->range_ratio);
+  const float hold = *(plugin_data->hold_makeup);
+  #endif
+  
+  //Read ports (compressor/expander)
+  #ifdef PLUGIN_IS_COMPRESSOR
+  //const float m = 1.0/(*(plugin_data->range_ratio));
+  const float m = 1.0/6.0; //TODO this is a test  with ratio at 6:1
+  //const float makeup = dB2Lin(*(plugin_data->hold_makeup));
+  const float makeup = 1.0; //TODO this is a test  with ratio at 6:1
+  #endif
   
   //Plguin data
   float sample_rate = plugin_data->sample_rate;
   float g = plugin_data->g;
   int hold_count = plugin_data->hold_count;
 
-  //Processor vars
+  //Processor vars (only for gate)
+  #ifdef PLUGIN_IS_GATE
   const float range_lin = pow(10, range * 0.05); //Range constant
+  const int hold_max = (int)round((attack + hold) * sample_rate * 0.001f);
+  #endif
+  
+  //Processor vars (only COMPRESSOR)
+  #ifdef PLUGIN_IS_COMPRESSOR
+  const int hold_max = (int)round((attack) * sample_rate * 0.001f);
+  const float th_1m = pow(threshold, 1.0 - m);
+  const float m_1 = m - 1.0;
+  float com_gain_lin = 0.0;
+  #endif
+  
+  //Processor vars  common
   const float ac = exp(-3.0f/(attack * sample_rate * 0.001f)); //Attack constant
   const float dc = exp(-3.0f/(decay * sample_rate * 0.001f)); //Decay constant
-  const int hold_max = (int)round((attack + hold) * sample_rate * 0.001f);
+
   float gain_reduction = 0.0f;
   
   //Compute filter coeficients
@@ -189,27 +218,26 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
     calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0);
   }
 
-  float input_filtered, input_detector;
+  float input_filtered, input_detector, input_pre;
   for (uint32_t i = 0; i < sample_count; ++i) 
   {
+    //Input gain
+    input_pre = input[i] * InputGain;
 
-    // Counting input dB
-    input_filtered = input[i] * InputGain;
-    
     //Sample to Input Vumeter
-    SetSample(plugin_data->InputVu[0], input_filtered);
+    SetSample(plugin_data->InputVu[0], input_pre);   
 
     //Apply Filters
-    input_filtered*= FILTER_INPUT_GAIN;
+    input_filtered = input_pre * FILTER_INPUT_GAIN;
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
-    input_filtered*=FILTER_OUTPUT_GAIN;
+    input_filtered*=FILTER_OUTPUT_GAIN;   
+    input_detector = fabs(input_filtered); //This is the detector signal filtered
     
-    input_detector = fabs(input_filtered);
-    
+    //===================== GATE CODE ================================
+    #ifdef PLUGIN_IS_GATE
     //Threshold
     hold_count = input_detector > threshold ? 0 : hold_count;
-    
     if(hold_count < hold_max)
     {
       //Gate Open
@@ -222,9 +250,45 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
       g = g*dc;
     }
     DENORMAL_TO_ZERO(g);
-    
     gain_reduction = range_lin * (1 - g) + g;
-    output[i] = input_filtered*(KeyListen) + input[i]*gain_reduction*(1-KeyListen);
+    #endif
+    //===================== END OF GATE CODE =========================
+    
+    //=================== COMPRESSOR CODE ============================
+    #ifdef PLUGIN_IS_COMPRESSOR
+    //Threshold
+    hold_count = input_detector > threshold ? 0 : hold_count;
+    if(hold_count < hold_max)
+    {
+      //Compressor is working
+      g = 1-(1-g)*ac;
+      hold_count++;
+    }
+    else
+    {
+      //Compressor off
+      g = g*dc;
+    }
+    
+    DENORMAL_TO_ZERO(g);
+    
+    //TODO:: I'm here
+    //TODO: aki tens un problema de balisitica amb input_detector, no pot anar directament contra el senyal en valor absolut!!!
+    //Has de llegir la doc k tens en PDF per trobar un bon detector amb un bon seguiment de envelop relatiu a attack/release
+    //Orfanidis tambe va escriure algu al respecte...
+    //L'equacio de calcul de guany de compressio (com_gain_lin) funciona molt b	
+    //Crec k es millor fer peak k RMS
+    com_gain_lin = pow(input_detector, m_1) * th_1m;
+    
+    
+    printf("Det = %f\tGain = %f\r\n",input_detector,com_gain_lin);
+    
+    gain_reduction =  makeup * ((1 - g) + g*com_gain_lin);
+    
+    #endif
+    //=================== END OF COMPRESSOR CODE ======================
+    
+    output[i] = input_filtered*(KeyListen) + input_pre*gain_reduction*(1-KeyListen);
 
   }
   plugin_data->g = g;
