@@ -168,7 +168,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       }
       else
       {
-	fdBValue[i] = -60;
+	fdBValue[i] = -100;
       }
       if (m_fPeaks[i] > 0)
       {
@@ -434,7 +434,7 @@ inline void VUWidget::redraw_Gr(Cairo::RefPtr<Cairo::Context> cr)
 void VUWidget::set_value_th(double value)
 {
   m_ThFaderValue = value;
-  m_ThFaderValue = m_ThFaderValue < m_fMin ? m_fMin : m_ThFaderValue;
+  m_ThFaderValue = m_ThFaderValue < m_fMin + 2.0 ? m_fMin + 2.0 : m_ThFaderValue;
   m_ThFaderValue = m_ThFaderValue > m_fMax - 2.0 ? m_fMax - 2.0 : m_ThFaderValue; //Limit threshols 2dB less than VU
   redraw();
 }
@@ -499,8 +499,8 @@ bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
     yPixels = event->y;
 
     //Stoppers
-    yPixels = yPixels < 0 ? 0 : yPixels;
-    yPixels = yPixels > height - MICROFADER_HEIGHT ? height - MICROFADER_HEIGHT : yPixels;
+    yPixels = yPixels < MICROFADER_HEIGHT/2 ? MICROFADER_HEIGHT/2 : yPixels;
+    yPixels = yPixels > height - MICROFADER_HEIGHT/2 ? height - MICROFADER_HEIGHT/2 : yPixels;
 
     m = -(double)height/(m_fMax - m_fMin);
     n = (double)(height) - m_fMin*m;

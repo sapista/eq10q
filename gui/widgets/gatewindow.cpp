@@ -36,7 +36,7 @@ GateMainWindow::GateMainWindow(const char *uri, std::string logoPath, std::strin
   m_logoPath(logoPath)
 { 
   m_InGainFader = Gtk::manage(new KnobWidget(-20.0, 20.0, "In Gain", "dB"));
-  m_InputVu = Gtk::manage(new VUWidget(1, -24.0, 6.0,false, true));
+  m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0,false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, true));
   m_Attack = Gtk::manage(new KnobWidget(0.1, 500.0, "Attack", "ms"));
   m_Release = Gtk::manage(new KnobWidget(5.0, 4000.0, "Release", "ms"));

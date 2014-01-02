@@ -196,15 +196,13 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
   
   //Processor vars (only COMPRESSOR)
   #ifdef PLUGIN_IS_COMPRESSOR
-  const int hold_max = (int)round((attack) * sample_rate * 0.001f);
   const float th_1m = pow(threshold, 1.0 - m);
   const float m_1 = m - 1.0;
-  float com_gain_lin = 0.0;
   #endif
   
   //Processor vars  common
-  const float ac = exp(-3.0f/(attack * sample_rate * 0.001f)); //Attack constant
-  const float dc = exp(-3.0f/(decay * sample_rate * 0.001f)); //Decay constant
+  const float ac = exp(-6.0f/(attack * sample_rate * 0.001f)); //Attack constant
+  const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
 
   float gain_reduction = 0.0f;
   
@@ -228,7 +226,7 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
     SetSample(plugin_data->InputVu[0], input_pre);   
 
     //Apply Filters
-    input_filtered = input_pre * FILTER_INPUT_GAIN;
+    input_filtered = input_pre * FILTER_INPUT_GAIN; 
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
     input_filtered*=FILTER_OUTPUT_GAIN;   
@@ -255,36 +253,30 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
     //===================== END OF GATE CODE =========================
     
     //=================== COMPRESSOR CODE ============================
-    #ifdef PLUGIN_IS_COMPRESSOR
-    //Threshold
-    hold_count = input_detector > threshold ? 0 : hold_count;
-    if(hold_count < hold_max)
+    #ifdef PLUGIN_IS_COMPRESSOR   
+    //Thresholding and gain computer
+    if(input_detector > threshold) ////TODO aplicar aki el nou gain computer k inclogui knee (estic fent ecuacions per treballar sempre en contect lineal)
     {
-      //Compressor is working
-      g = 1-(1-g)*ac;
-      hold_count++;
+      gain_reduction = pow(input_detector, m_1) * th_1m;
     }
     else
     {
-      //Compressor off
-      g = g*dc;
+      gain_reduction = 1.0;
     }
     
-    DENORMAL_TO_ZERO(g);
-    
-    //TODO:: I'm here
-    //TODO: aki tens un problema de balisitica amb input_detector, no pot anar directament contra el senyal en valor absolut!!!
-    //Has de llegir la doc k tens en PDF per trobar un bon detector amb un bon seguiment de envelop relatiu a attack/release
-    //Orfanidis tambe va escriure algu al respecte...
-    //L'equacio de calcul de guany de compressio (com_gain_lin) funciona molt b	
-    //Crec k es millor fer peak k RMS
-    com_gain_lin = pow(input_detector, m_1) * th_1m;
-    
-    
-    printf("Det = %f\tGain = %f\r\n",input_detector,com_gain_lin);
-    
-    gain_reduction =  makeup * ((1 - g) + g*com_gain_lin);
-    
+    //Ballistics and peak detector
+    if(gain_reduction > g)
+    {
+      //Compressor OFF
+      gain_reduction = 1.0f - (1.0f - g)*dc;
+    }
+    else
+    {
+      //Compressor ON
+      gain_reduction = gain_reduction  - (gain_reduction - g)*ac;
+    }
+    g = gain_reduction;
+    gain_reduction *= makeup;    
     #endif
     //=================== END OF COMPRESSOR CODE ======================
     
