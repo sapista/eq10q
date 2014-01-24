@@ -85,8 +85,18 @@ add_library(eq10qs SHARED eq10qs.c)
 target_link_libraries( eq10qs  lib_filter lib_vumeter lib_smooth)
 
 #Build GATE DSP
+set( Plugin_Is_Gate_Compressor "PLUGIN_IS_GATE")
+set( Dyn_Uri  "\"http://eq10q.sourceforge.net/gate\"")
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate.c")
 add_library(gate SHARED gate.c)
 target_link_libraries( gate lib_vumeter lib_filter)
+
+#Build Compressor DSP
+set( Plugin_Is_Gate_Compressor "PLUGIN_IS_COMPRESSOR")
+set( Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor\"")
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor.c")
+add_library(compressor SHARED compressor.c)
+target_link_libraries( compressor lib_vumeter lib_filter)
 
 #remove the lib prefix to all generated .so files
 set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate PROPERTIES PREFIX "")

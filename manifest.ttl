@@ -39,3 +39,7 @@
 <http://eq10q.sourceforge.net/gate>
   a lv2:Plugin;
   rdfs:seeAlso <gate.ttl>.
+  
+  <http://eq10q.sourceforge.net/compressor>
+  a lv2:Plugin;
+  rdfs:seeAlso <compressor.ttl>.

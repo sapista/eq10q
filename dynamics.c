@@ -33,7 +33,7 @@ This file implements functionalities for a large numbers of equalizers
 #include "dsp/vu.h"
 #include "dsp/filter.h"
 
-#define GATE_URI "http://eq10q.sourceforge.net/gate"
+#define DYN_URI @Dyn_Uri@
 #define PORT_OUTPUT 0
 #define PORT_INPUT 1
 #define PORT_KEY_LISTEN 2
@@ -47,15 +47,14 @@ This file implements functionalities for a large numbers of equalizers
 #define PORT_GAIN 10
 #define PORT_INVU 11
 #define PORT_GAINREDUCTION 12
+#define PORT_KNEE 13
 
 #define FILTER_INPUT_GAIN 10000.0
 #define FILTER_OUTPUT_GAIN 0.0001
 
-#define PLUGIN_IS_COMPRESSOR
-//#define PLUGIN_IS_GATE
+#define @Plugin_Is_Gate_Compressor@
 
-
-static LV2_Descriptor *gateDescriptor = NULL;
+static LV2_Descriptor *dynDescriptor = NULL;
 
 typedef struct {
   //Plugin ports
@@ -72,6 +71,9 @@ typedef struct {
   float *lpffreq;
   float *ingain;
   float *fVuIn;
+  #ifdef PLUGIN_IS_COMPRESSOR
+  float *knee;
+  #endif
   
   //Plugin Internal data
   float sample_rate;
@@ -83,7 +85,7 @@ typedef struct {
   Buffers LPF_buf, HPF_buf;
 } Gate;
 
-static void cleanupGate(LV2_Handle instance)
+static void cleanupDyn(LV2_Handle instance)
 {
   Gate *plugin = (Gate *)instance;
   VuClean(plugin->InputVu[0]);
@@ -92,7 +94,7 @@ static void cleanupGate(LV2_Handle instance)
   free(instance);
 }
 
-static void connectPortGate(LV2_Handle instance, uint32_t port, void *data)
+static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
 {
   Gate *plugin = (Gate *)instance;
   switch (port) {
@@ -135,10 +137,16 @@ static void connectPortGate(LV2_Handle instance, uint32_t port, void *data)
     case PORT_INVU:
 	    plugin->fVuIn=(float*)data;
 	    break;
+
+    #ifdef PLUGIN_IS_COMPRESSOR
+    case PORT_KNEE:
+	    plugin->knee = (float*)data;
+	    break;
+    #endif
   } 
 }
 
-static LV2_Handle instantiateGate(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
+static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
 {
   Gate *plugin_data = (Gate *)malloc(sizeof(Gate));  
   plugin_data->sample_rate = s_rate;
@@ -154,14 +162,14 @@ static LV2_Handle instantiateGate(const LV2_Descriptor *descriptor, double s_rat
 }
 
 #define DENORMAL_TO_ZERO(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38
-static void runGate(LV2_Handle instance, uint32_t sample_count)
+static void runDyn(LV2_Handle instance, uint32_t sample_count)
 {
   Gate *plugin_data = (Gate *)instance;
   
   //Read ports (common)
   float * const output = plugin_data->output;
   const float * const input = plugin_data->input;
-  const float threshold = pow(10, *(plugin_data->threshold) * 0.05);
+  
   const float attack = *(plugin_data->attack);
   const float decay = *(plugin_data->decay);
   const float hpffreq = *(plugin_data->hpffreq);
@@ -171,16 +179,20 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
   
   //Read ports (gate)
   #ifdef PLUGIN_IS_GATE
+  float input_detector;
   const float range = *(plugin_data->range_ratio);
   const float hold = *(plugin_data->hold_makeup);
+  const float threshold = pow(10, *(plugin_data->threshold) * 0.05);
   #endif
   
   //Read ports (compressor/expander)
   #ifdef PLUGIN_IS_COMPRESSOR
+  const float threshold = *(plugin_data->threshold);
   //const float m = 1.0/(*(plugin_data->range_ratio));
-  const float m = 1.0/6.0; //TODO this is a test  with ratio at 6:1
-  //const float makeup = dB2Lin(*(plugin_data->hold_makeup));
-  const float makeup = 1.0; //TODO this is a test  with ratio at 6:1
+  //const float m = 1.0/6.0; //TODO this is a test  with ratio at 6:1
+  const float ratio =  *(plugin_data->range_ratio);
+  const float makeup = pow(10.0f, *(plugin_data->hold_makeup) * 0.05f);  //TODO FAST db2Lin
+  const float knee = *(plugin_data->knee);
   #endif
   
   //Plguin data
@@ -190,14 +202,17 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
 
   //Processor vars (only for gate)
   #ifdef PLUGIN_IS_GATE
-  const float range_lin = pow(10, range * 0.05); //Range constant
+  const float range_lin = pow(10, range * 0.05); //Range constant  //TODO FAST db2Lin
   const int hold_max = (int)round((attack + hold) * sample_rate * 0.001f);
   #endif
   
   //Processor vars (only COMPRESSOR)
   #ifdef PLUGIN_IS_COMPRESSOR
-  const float th_1m = pow(threshold, 1.0 - m);
-  const float m_1 = m - 1.0;
+  //OLDCODE
+  //const float th_1m = pow(threshold, 1.0 - m);
+  //const float m_1 = m - 1.0;
+  float x_dB, y_dB;
+  float knee_range;
   #endif
   
   //Processor vars  common
@@ -216,7 +231,7 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
     calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0);
   }
 
-  float input_filtered, input_detector, input_pre;
+  float input_filtered, input_pre;
   for (uint32_t i = 0; i < sample_count; ++i) 
   {
     //Input gain
@@ -227,13 +242,14 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
 
     //Apply Filters
     input_filtered = input_pre * FILTER_INPUT_GAIN; 
+    
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
     input_filtered*=FILTER_OUTPUT_GAIN;   
-    input_detector = fabs(input_filtered); //This is the detector signal filtered
     
     //===================== GATE CODE ================================
     #ifdef PLUGIN_IS_GATE
+    input_detector = fabs(input_filtered); //This is the detector signal filtered
     //Threshold
     hold_count = input_detector > threshold ? 0 : hold_count;
     if(hold_count < hold_max)
@@ -255,15 +271,28 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
     //=================== COMPRESSOR CODE ============================
     #ifdef PLUGIN_IS_COMPRESSOR   
     //Thresholding and gain computer
-    if(input_detector > threshold) ////TODO aplicar aki el nou gain computer k inclogui knee (estic fent ecuacions per treballar sempre en contect lineal)
+    x_dB = 20.0f*log10(fabs(input_filtered) + 0.00001f); //Add -100dB constant to avoid zero crozing
+    knee_range = 2.0f*(x_dB - threshold);
+    
+    if (knee_range < -knee)
     {
-      gain_reduction = pow(input_detector, m_1) * th_1m;
+      //Under Threshold
+      y_dB = x_dB; 
+    }
+    else if(knee_range > knee )
+    {
+      //Over Threshold
+      y_dB = threshold + (x_dB - threshold)/ratio; 
     }
     else
     {
-      gain_reduction = 1.0;
+      //On Knee
+      y_dB = x_dB + ((1.0f/ratio -1.0f)*(x_dB - threshold + knee/2.0f)*(x_dB - threshold + knee/2.0f))/(2.0f*knee);
     }
-    
+
+    //Linear gain computing
+    gain_reduction = pow(10.0f, 0.05f*(y_dB - x_dB));
+        
     //Ballistics and peak detector
     if(gain_reduction > g)
     {
@@ -292,26 +321,26 @@ static void runGate(LV2_Handle instance, uint32_t sample_count)
 
 static void init()
 {
-  gateDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
+  dynDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
 
-  gateDescriptor->URI = GATE_URI;
-  gateDescriptor->activate = NULL;
-  gateDescriptor->cleanup = cleanupGate;
-  gateDescriptor->connect_port = connectPortGate;
-  gateDescriptor->deactivate = NULL;
-  gateDescriptor->instantiate = instantiateGate;
-  gateDescriptor->run = runGate;
-  gateDescriptor->extension_data = NULL;
+  dynDescriptor->URI = DYN_URI;
+  dynDescriptor->activate = NULL;
+  dynDescriptor->cleanup = cleanupDyn;
+  dynDescriptor->connect_port = connectPortDyn;
+  dynDescriptor->deactivate = NULL;
+  dynDescriptor->instantiate = instantiateDyn;
+  dynDescriptor->run = runDyn;
+  dynDescriptor->extension_data = NULL;
 }
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *lv2_descriptor(uint32_t index)
 {
-  if (!gateDescriptor) init();
+  if (!dynDescriptor) init();
 
   switch (index) {
   case 0:
-    return gateDescriptor;
+    return dynDescriptor;
   default:
     return NULL;
   }
