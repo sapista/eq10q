@@ -25,7 +25,7 @@ This plugin is inside the Sapista Plugins Bundle
 
 //LV2 UI headers
 #include "lv2_ui.h"
-#include "widgets/gatewindow.h"
+#include "widgets/dynamicswindow.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
 //#define TESTING_EQ10Q
@@ -34,16 +34,18 @@ This plugin is inside the Sapista Plugins Bundle
 using namespace std;
 #endif
 
-static LV2UI_Descriptor *gate_guiDescriptor = NULL;
+#define DYN_GUI_URI @Gui_Dyn_Uri@
+
+static LV2UI_Descriptor *dyn_guiDescriptor = NULL;
 
 
-static LV2UI_Handle instantiateGate_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
+static LV2UI_Handle instantiateDyn_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
   #ifdef TESTING_EQ10Q
   cout<<"instantiateEq10q_gui Entring... ";
   #endif
   
-  GateMainWindow* gui_data = new GateMainWindow(plugin_uri, std::string(bundle_path) + "/icons/logodynamics.png", "~GT10Q~\r\nNoise Gate");
+  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path) + "/icons/logodynamics.png", @Dyn_Title@, @bIsCompressor@);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();
@@ -56,14 +58,14 @@ static LV2UI_Handle instantiateGate_gui(const _LV2UI_Descriptor *descriptor, con
 }
 
 
-static void cleanupGate_gui(LV2UI_Handle instance)
+static void cleanupDyn_gui(LV2UI_Handle instance)
 {
   #ifdef TESTING_EQ10Q
   cout<<"cleanupEq10q_gui Entring... ";
   #endif
   
-  ///delete static_cast<GateMainWindow*>(instance);
-  GateMainWindow *gui = (GateMainWindow *)instance;
+  ///delete static_cast<DynMainWindow*>(instance);
+  DynMainWindow *gui = (DynMainWindow *)instance;
   delete gui;
   
   #ifdef TESTING_EQ10Q
@@ -71,13 +73,13 @@ static void cleanupGate_gui(LV2UI_Handle instance)
   #endif
 }
 
-static void portEventGate_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer)
+static void portEventDyn_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void *buffer)
 {
   #ifdef TESTING_EQ10Q
   cout<<"portEventEq10q_gui Entring... "<<"Port Index = "<<port_index;
   #endif
   
-  GateMainWindow *gui = (GateMainWindow *)ui;
+  DynMainWindow *gui = (DynMainWindow *)ui;
   gui->gui_port_event(ui, port_index, buffer_size, format, buffer);
   
   #ifdef TESTING_EQ10Q
@@ -92,12 +94,12 @@ static void init_gui()
   cout<<"init_gui Entring... ";
   #endif
   
-  gate_guiDescriptor = (LV2UI_Descriptor *)malloc(sizeof(LV2UI_Descriptor));
-  gate_guiDescriptor->URI = "http://eq10q.sourceforge.net/gate/gui";
-  gate_guiDescriptor->instantiate = instantiateGate_gui;
-  gate_guiDescriptor->cleanup = cleanupGate_gui;
-  gate_guiDescriptor->port_event = portEventGate_gui;
-  gate_guiDescriptor->extension_data = NULL;
+  dyn_guiDescriptor = (LV2UI_Descriptor *)malloc(sizeof(LV2UI_Descriptor));
+  dyn_guiDescriptor->URI = DYN_GUI_URI;
+  dyn_guiDescriptor->instantiate = instantiateDyn_gui;
+  dyn_guiDescriptor->cleanup = cleanupDyn_gui;
+  dyn_guiDescriptor->port_event = portEventDyn_gui;
+  dyn_guiDescriptor->extension_data = NULL;
   
   #ifdef TESTING_EQ10Q
   cout<<" Done"<<endl;
@@ -111,14 +113,14 @@ const LV2UI_Descriptor *lv2ui_descriptor(uint32_t index)
   cout<<"lv2ui_descriptor Entring... ";
   #endif
   
-    if (!gate_guiDescriptor) { init_gui(); }
+    if (!dyn_guiDescriptor) { init_gui(); }
 
     switch (index) {
 	    case 0:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with OK result (return LV2UI_Descriptor)"<<endl;
 		    #endif
-		    return gate_guiDescriptor;
+		    return dyn_guiDescriptor;
 	    default:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with NOK result (return NULL)"<<endl;

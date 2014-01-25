@@ -270,6 +270,9 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     
     //=================== COMPRESSOR CODE ============================
     #ifdef PLUGIN_IS_COMPRESSOR   
+    
+    //TODO remove log10() and use fastLog10()
+    
     //Thresholding and gain computer
     x_dB = 20.0f*log10(fabs(input_filtered) + 0.00001f); //Add -100dB constant to avoid zero crozing
     knee_range = 2.0f*(x_dB - threshold);
@@ -291,6 +294,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     }
 
     //Linear gain computing
+    //TODO Remove pow and use fast dB2Lin()
     gain_reduction = pow(10.0f, 0.05f*(y_dB - x_dB));
         
     //Ballistics and peak detector

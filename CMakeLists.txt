@@ -99,7 +99,7 @@ add_library(compressor SHARED compressor.c)
 target_link_libraries( compressor lib_vumeter lib_filter)
 
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate PROPERTIES PREFIX "")
+set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor PROPERTIES PREFIX "")
 
 #CLEAN generated .c files on run 'make clean'
 SET(generatedEqConfigFiles 
@@ -107,14 +107,15 @@ SET(generatedEqConfigFiles
       ${PROJECT_SOURCE_DIR}/eq4qm.c;${PROJECT_SOURCE_DIR}/eq4qs.c
       ${PROJECT_SOURCE_DIR}/eq6qm.c;${PROJECT_SOURCE_DIR}/eq6qs.c
       ${PROJECT_SOURCE_DIR}/eq10qm.c;${PROJECT_SOURCE_DIR}/eq10qs.c
+      ${PROJECT_SOURCE_DIR}/gate.c;${PROJECT_SOURCE_DIR}/compressor.c
       )
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedEqConfigFiles}")
 
 
 ##===========================THE LV2 INSTALLER================================================
 #INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/${LV2_BUNDLE}" DESTINATION "${LV2_BUNDLE}")
-INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" DESTINATION "${LV2_BUNDLE}")
-INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate DESTINATION "${LV2_BUNDLE}")
+INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" DESTINATION "${LV2_BUNDLE}")
+INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor DESTINATION "${LV2_BUNDLE}")
 
 INCLUDE(CPack)
 # cpack -G TGZ

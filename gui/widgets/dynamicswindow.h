@@ -18,8 +18,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef GATE_MAIN_WIN_H
-  #define GATE_MAIN_WIN_H
+#ifndef DYN_MAIN_WIN_H
+  #define DYN_MAIN_WIN_H
 
 #include <iostream>
 #include <string>
@@ -54,17 +54,18 @@
 #define PORT_GAIN 10
 #define PORT_INVU 11
 #define PORT_GAINREDUCTION 12
+#define PORT_KNEE 13
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
 
 using namespace sigc;
 
-class GateMainWindow : public Gtk::EventBox
+class DynMainWindow : public Gtk::EventBox
 {
   public:
-    GateMainWindow(const char *uri, std::string logoPath, std::string title);
-    virtual ~GateMainWindow();   
+    DynMainWindow(const char *uri, std::string logoPath, std::string title, bool isCompressor);
+    virtual ~DynMainWindow();   
     
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
@@ -105,7 +106,7 @@ class GateMainWindow : public Gtk::EventBox
 	  break;
 	  
 	  case PORT_HOLD:
-	    m_Hold->set_value(data);
+	    m_Hold_Makeup->set_value(data);
 	  break;
 	  
 	  case PORT_DECAY:
@@ -113,7 +114,7 @@ class GateMainWindow : public Gtk::EventBox
 	  break;
 	  
 	  case PORT_RANGE:
-	    m_Range->set_value(data);
+	    m_Range_Ratio->set_value(data);
 	  break;
 	  
 	  case PORT_GAINREDUCTION:
@@ -135,6 +136,10 @@ class GateMainWindow : public Gtk::EventBox
 	  case PORT_INVU:
 	    m_InputVu->setValue(0,data);
 	  break;
+	  
+	  case PORT_KNEE:
+	    m_Knee->set_value(data);
+	  break;
 	}       
         
 	#ifdef PRINT_DEBUG_INFO	    
@@ -151,9 +156,10 @@ class GateMainWindow : public Gtk::EventBox
     VUWidget *m_GainReductionVu; 
     KnobWidget *m_InGainFader;
     KnobWidget *m_Attack;
-    KnobWidget *m_Hold;
+    KnobWidget *m_Hold_Makeup;
     KnobWidget *m_Release;
-    KnobWidget *m_Range;
+    KnobWidget *m_Range_Ratio;
+    KnobWidget *m_Knee;
     KnobWidget *m_HPF;
     KnobWidget *m_LPF;
     Gtk::ToggleButton m_KeyButton;
@@ -172,6 +178,7 @@ class GateMainWindow : public Gtk::EventBox
     void onAttackChange();
     void onHoldChange();
     void onReleaseChange();
+    void onKneeChange();
     void onHPFChange();
     void onLPFChange();
     void onRealize();
@@ -180,6 +187,7 @@ class GateMainWindow : public Gtk::EventBox
   private:
     std::string m_pluginUri;
     std::string m_logoPath;  
+    bool m_bIsCompressor;
 };
 
 #endif

@@ -12,5 +12,5 @@ add_library(eqwin  STATIC
 
 target_link_libraries( eqwin ${GTKMM_LIBRARIES})
 
-add_library(gatewin  STATIC vuwidget.cpp  knob.cpp gatewindow.cpp setwidgetcolors.cpp)
-target_link_libraries( gatewin ${GTKMM_LIBRARIES})
+add_library(dynamicwin  STATIC vuwidget.cpp  knob.cpp dynamicswindow.cpp setwidgetcolors.cpp)
+target_link_libraries( dynamicwin ${GTKMM_LIBRARIES})

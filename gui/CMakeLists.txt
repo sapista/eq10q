@@ -19,7 +19,7 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 set( Eq_Gui_Test_Path "\"${PROJECT_SOURCE_DIR}/gui\"" )
 configure_file("${PROJECT_SOURCE_DIR}/gui/guitester.cpp" "${PROJECT_SOURCE_DIR}/gui/guitester_cfg_.cpp")
 ADD_EXECUTABLE(eq10q_gui_tester  main.cpp guitester_cfg_.cpp)
-target_link_libraries( eq10q_gui_tester  eqwin gatewin ${GTKMM_LIBRARIES})
+target_link_libraries( eq10q_gui_tester  eqwin dynamicwin ${GTKMM_LIBRARIES})
 
 #===========================BUILD EQ10Q ALL GUI FILES=============================================
 
@@ -88,11 +88,23 @@ add_library(eq10qs_gui SHARED eq10qs_ui.cpp)
 target_link_libraries( eq10qs_gui  eqwin ${GTKMM_LIBRARIES})
 
 #Build GATE GUI
+set( bIsCompressor "false")
+set( Dyn_Title "\"~GT10Q~\\r\\nNoise Gate\"")
+set( Gui_Dyn_Uri  "\"http://eq10q.sourceforge.net/gate/gui\"")
+configure_file("${PROJECT_SOURCE_DIR}/gui/dyn_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/gate_ui.cpp")
 add_library(gate_gui SHARED gate_ui.cpp)
-target_link_libraries( gate_gui  gatewin ${GTKMM_LIBRARIES})
+target_link_libraries( gate_gui  dynamicwin ${GTKMM_LIBRARIES})
+
+#Build Compressor GUI
+set( bIsCompressor "true")
+set( Dyn_Title "\"~CS10Q~\\r\\nCompressor\"")
+set( Gui_Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor/gui\"")
+configure_file("${PROJECT_SOURCE_DIR}/gui/dyn_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/compressor_ui.cpp")
+add_library(compressor_gui SHARED compressor_ui.cpp)
+target_link_libraries( compressor_gui  dynamicwin ${GTKMM_LIBRARIES})
 
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui PROPERTIES PREFIX "")
+set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui PROPERTIES PREFIX "")
 
 ##CLEAN generated .cpp files on run 'make clean'
 SET(generatedGuiConfigFiles
@@ -104,11 +116,13 @@ SET(generatedGuiConfigFiles
       ${PROJECT_SOURCE_DIR}/gui/eq6qs_ui.cpp
       ${PROJECT_SOURCE_DIR}/gui/eq10qm_ui.cpp
       ${PROJECT_SOURCE_DIR}/gui/eq10qs_ui.cpp
+      ${PROJECT_SOURCE_DIR}/gui/gate_ui.cpp
+      ${PROJECT_SOURCE_DIR}/gui/compressor_ui.cpp
       )
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedGuiConfigFiles}")
 
 ##=================================INSTALLER===================================================================================
-INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui DESTINATION "${LV2_BUNDLE}/gui")
+INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/knobs" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/combopix" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/icons" DESTINATION "${LV2_BUNDLE}/gui")

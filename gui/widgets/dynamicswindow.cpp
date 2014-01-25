@@ -23,7 +23,7 @@
 
 #include <cstring>
 #include <gtkmm/window.h>
-#include "gatewindow.h"
+#include "dynamicswindow.h"
 #include "guiconstants.h"
 #include "colors.h"
 #include "setwidgetcolors.h"
@@ -31,19 +31,32 @@
 #define KNOB_SIZE 65
 #define WIDGET_BORDER 3
 
-GateMainWindow::GateMainWindow(const char *uri, std::string logoPath, std::string title)
+DynMainWindow::DynMainWindow(const char *uri, std::string logoPath, std::string title, bool isCompressor)
   :m_pluginUri(uri),
-  m_logoPath(logoPath)
+  m_logoPath(logoPath),
+  m_bIsCompressor(isCompressor)
 { 
   m_InGainFader = Gtk::manage(new KnobWidget(-20.0, 20.0, "In Gain", "dB"));
   m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0,false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, true));
   m_Attack = Gtk::manage(new KnobWidget(0.1, 500.0, "Attack", "ms"));
   m_Release = Gtk::manage(new KnobWidget(5.0, 4000.0, "Release", "ms"));
-  m_Hold = Gtk::manage(new KnobWidget(5.0, 3000.0, "Hold", "ms"));
-  m_Range = Gtk::manage(new KnobWidget(-90.0, -20.0, "Range", "dB"));
   m_HPF = Gtk::manage(new KnobWidget(20.0, 20000.0, "Key HPF", "Hz", true));
   m_LPF = Gtk::manage(new KnobWidget(20.0, 20000.0, "Key LPF", "Hz", true));
+
+  if(m_bIsCompressor)
+  {
+    //Is Compressor or Expander
+    m_Hold_Makeup = Gtk::manage(new KnobWidget(0.0, 20.0, "Makeup", "dB"));
+    m_Range_Ratio = Gtk::manage(new KnobWidget(1.0, 40.0, "Ratio", "dB"));
+    m_Knee = Gtk::manage(new KnobWidget(0.0, 20.0, "Knee", "dB"));
+  }
+  else
+  {
+    //Is Gate
+    m_Hold_Makeup = Gtk::manage(new KnobWidget(5.0, 3000.0, "Hold", "ms"));
+    m_Range_Ratio = Gtk::manage(new KnobWidget(-90.0, -20.0, "Range", "dB"));
+  }
   
   m_KeyButton.set_label("KeyListen");
   m_KeyButton.set_size_request(-1,25);
@@ -63,14 +76,18 @@ GateMainWindow::GateMainWindow(const char *uri, std::string logoPath, std::strin
   m_TitleFrame.set_label(""); //Must be empty tabler to apply the style
   
   m_InGainFader->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Range->set_size_request(KNOB_SIZE, KNOB_SIZE);
+  m_Range_Ratio->set_size_request(KNOB_SIZE, KNOB_SIZE);
   m_Attack->set_size_request(KNOB_SIZE, KNOB_SIZE);
   m_Release->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Hold->set_size_request(KNOB_SIZE, KNOB_SIZE);
+  m_Hold_Makeup->set_size_request(KNOB_SIZE, KNOB_SIZE);
   m_HPF->set_size_request(KNOB_SIZE, KNOB_SIZE);
   m_LPF->set_size_request(KNOB_SIZE, KNOB_SIZE);
   m_InputVu->set_size_request(50, -1);
   m_GainReductionVu->set_size_request(30,-1);
+  if(m_bIsCompressor)
+  {
+    m_Knee->set_size_request(KNOB_SIZE, KNOB_SIZE);
+  }
   
   m_VuInAlign.add(*m_InputVu);
   m_VuInAlign.set_border_width(1);
@@ -84,10 +101,14 @@ GateMainWindow::GateMainWindow(const char *uri, std::string logoPath, std::strin
   m_GattingBox.set_border_width(WIDGET_BORDER+2);
   m_GattingBox.set_spacing(WIDGET_BORDER);
   m_GattingBox.pack_start(*m_InGainFader, Gtk::PACK_SHRINK);
-  m_GattingBox.pack_start(*m_Range, Gtk::PACK_SHRINK );
+  m_GattingBox.pack_start(*m_Range_Ratio, Gtk::PACK_SHRINK );
+  if(m_bIsCompressor)
+  {
+    m_GattingBox.pack_start(*m_Knee, Gtk::PACK_SHRINK );
+  }
   m_GattingBox.pack_start(*m_Attack, Gtk::PACK_SHRINK );
   m_GattingBox.pack_start(*m_Release, Gtk::PACK_SHRINK);
-  m_GattingBox.pack_start(*m_Hold, Gtk::PACK_SHRINK);
+  m_GattingBox.pack_start(*m_Hold_Makeup, Gtk::PACK_SHRINK);
   m_GattingBox.show_all_children();
   m_GattingFrame.add(m_GattingBox);
   m_GattingFrame.set_label("GateParams");
@@ -131,32 +152,36 @@ GateMainWindow::GateMainWindow(const char *uri, std::string logoPath, std::strin
   m_WidgetColors.setGenericWidgetColors(&m_LTitle);
   
   //Connect signals
-  m_InGainFader->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onGainChange));
-  m_InputVu->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onThresholdChange));
-  m_Range->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onRangeChange));
-  m_Attack->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onAttackChange));
-  m_Hold->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onHoldChange));
-  m_Release->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onReleaseChange));
-  m_LPF->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onLPFChange));
-  m_HPF->signal_changed().connect(sigc::mem_fun(*this, &GateMainWindow::onHPFChange));
-  m_KeyButton.signal_clicked().connect(sigc::mem_fun(*this, &GateMainWindow::onKeyListenChange));
-  signal_realize().connect( sigc::mem_fun(*this, &GateMainWindow::onRealize));
+  m_InGainFader->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onGainChange));
+  m_InputVu->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onThresholdChange));
+  m_Range_Ratio->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onRangeChange));
+  m_Attack->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onAttackChange));
+  m_Hold_Makeup->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onHoldChange));
+  m_Release->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onReleaseChange));
+  m_LPF->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onLPFChange));
+  m_HPF->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onHPFChange));
+  m_KeyButton.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onKeyListenChange));
+  if(m_bIsCompressor)
+  {
+    m_Knee->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onKneeChange));
+  }
+  signal_realize().connect( sigc::mem_fun(*this, &DynMainWindow::onRealize));
 }
 
-GateMainWindow::~GateMainWindow()
+DynMainWindow::~DynMainWindow()
 {
   delete m_InputVu;
   delete m_GainReductionVu;
   delete m_InGainFader;
 }
 
-void GateMainWindow::onRealize()
+void DynMainWindow::onRealize()
 {
   Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
   toplevel->set_resizable(false);
 }
 
-void GateMainWindow::onGainChange()
+void DynMainWindow::onGainChange()
 { 
   //Write to LV2 port
   float aux;
@@ -164,7 +189,7 @@ void GateMainWindow::onGainChange()
   write_function(controller, PORT_GAIN, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onThresholdChange()
+void DynMainWindow::onThresholdChange()
 {
   //Write to LV2 port
   float aux;
@@ -172,15 +197,15 @@ void GateMainWindow::onThresholdChange()
   write_function(controller, PORT_THRESHOLD, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onRangeChange()
+void DynMainWindow::onRangeChange()
 {
   //Write to LV2 port
   float aux;
-  aux = m_Range->get_value();
+  aux = m_Range_Ratio->get_value();
   write_function(controller, PORT_RANGE, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onAttackChange()
+void DynMainWindow::onAttackChange()
 {
   //Write to LV2 port
   float aux;
@@ -188,15 +213,15 @@ void GateMainWindow::onAttackChange()
   write_function(controller, PORT_ATACK, sizeof(float), 0, &aux); 
 }
 
-void GateMainWindow::onHoldChange()
+void DynMainWindow::onHoldChange()
 {
   //Write to LV2 port
   float aux;
-  aux = m_Hold->get_value();
+  aux = m_Hold_Makeup->get_value();
   write_function(controller, PORT_HOLD, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onReleaseChange()
+void DynMainWindow::onReleaseChange()
 {
   //Write to LV2 port
   float aux;
@@ -204,7 +229,15 @@ void GateMainWindow::onReleaseChange()
   write_function(controller, PORT_DECAY, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onHPFChange()
+void DynMainWindow::onKneeChange()
+{
+  //Write to LV2 port
+  float aux;
+  aux = m_Knee->get_value();
+  write_function(controller, PORT_KNEE, sizeof(float), 0, &aux);
+}
+
+void DynMainWindow::onHPFChange()
 {
   //Write to LV2 port
   float aux;
@@ -212,7 +245,7 @@ void GateMainWindow::onHPFChange()
   write_function(controller, PORT_HPFFREQ, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onLPFChange()
+void DynMainWindow::onLPFChange()
 {
   //Write to LV2 port
   float aux;
@@ -220,7 +253,7 @@ void GateMainWindow::onLPFChange()
   write_function(controller, PORT_LPFFREQ, sizeof(float), 0, &aux);
 }
 
-void GateMainWindow::onKeyListenChange()
+void DynMainWindow::onKeyListenChange()
 {
   //Write to LV2 port
   float aux;
