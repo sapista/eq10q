@@ -31,13 +31,13 @@
 #include <cmath>
 #include "../dsp/fastmath.h"
 
-#define TOLERANCE 0.5
+#define TOLERANCE 0.1
 
 #define NUM_OF_TESTS 50
-#define LIN_START 0.1
+#define LIN_START 0.01
 #define LIN_STOP  10.0
-#define DB_START -20.0
-#define DB_STOP 20.0
+#define DB_START -100.0
+#define DB_STOP 10.0
 
 using namespace std;
 
@@ -84,7 +84,6 @@ int main()
     
     in += linStep;
   }
- 
   cout<<endl<<endl;
   
   //dB 2 Lin Tests
@@ -111,6 +110,54 @@ int main()
   }
   cout<<endl<<endl;
   
+  //Log() Tests
+  cout<<"========================== LOG() TESTER =========================="<<endl;
+  //const float linStep = (float)(LIN_STOP - LIN_START)/(float)NUM_OF_TESTS;
+  in = LIN_START;
+  while(in <= LIN_STOP)
+  {
+    real = log(in);
+    test = fastLog((int*)(&in), LutLog);
+    cout<<"Test value is: "<<in<<"\tConverting to dB using log10() is: "<<real<<"\tConverting with Lin2dB() is: "<<test;
+    pResult = CheckResult(real,test);
+    result &=pResult;
+    if(pResult)
+    {
+      cout<<"\tTest OK"<<endl;
+    }
+    else
+    {
+      cout<<"\tTest NOK"<<endl;
+    }
+    
+    in += linStep;
+  }
+  cout<<endl<<endl;
+  
+  //dB 2 Lin Tests
+  cout<<"========================== DB 2 LIN TESTER =========================="<<endl;
+  //const float dBStep = (float)(DB_STOP - DB_START)/(float)NUM_OF_TESTS;
+  in = DB_START;
+  while(in <= DB_STOP)
+  {
+    real = pow(10,in/20);
+    test = Fast_dB2Lin10(in);
+    cout<<"Test value is: "<<in<<"\tConverting to Lin using pow() is: "<<real<<"\tConverting with dB2Lin() is: "<<test;    
+    pResult = CheckResult(real,test);
+    result &=pResult;
+    if(pResult)
+    {
+      cout<<"\tTest OK"<<endl;
+    }
+    else
+    {
+      cout<<"\tTest NOK"<<endl;
+    }
+    
+    in += dBStep;
+  }
+  cout<<endl<<endl;
+  
   cout<<"Global Result is: ";
   if(result)
   {
@@ -119,21 +166,7 @@ int main()
   else
   {
     cout<<"There is some NOK test"<<endl;
-  }
-  
-  /**********************************************************************************************
-  *TODO Aquest codi testeja les funcions de fastMath de EQ10Q en quan a qualitat dels resultats
-  * Queda pendent acabar:
-  *  - validar els dos test que tinc implementats 
-  *  - Afegir tots els test de totes les funcions de fastMAth.h
-  * 	static inline float fastLog10(int *x_bits, float *Log10LUT) (TEST IMPLENTAT)
-  * 	static inline float fastLog(int *x_bits, float *LogLUT) 
-  * 	static inline float Fast_dB2Lin8(float x)  (TEST IMPLENTAT)
-  * 	static inline float Fast_dB2Lin10(float x)
-  * 
-  * Un cop finalitzats els test de qualitat, cal revisar la velocitat de execució en realacio a math.h del GNU
-  * **********************************************************************************************************/
-  
+  } 
   
   //Free LUT Memory
   free(LutLog);

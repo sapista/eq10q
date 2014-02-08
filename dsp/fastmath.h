@@ -46,13 +46,13 @@ static inline float fastLog(int *x_bits, float *LogLUT)
 }
 
 // Conversion of binary mantissa 2 decimal
-float GetBinaryFraction(uint x)
+float GetBinaryFraction(int x)
 {
     float res = 0;
     int i;
     for (i = 22; i >=0; i--)
     {
-	uint b = x >> i;
+	int b = x >> i;
 	b &= 0x01;
 	res += (float)(b) * powf(2.0f, (float)(i) - 23.0f);
     }
@@ -70,7 +70,7 @@ float* GenerateLogLUT()
     
     for (i = 0; i < size; i++)
     {
-	uint M = (uint)i << (23 - LUT_ADDR_LENGTH);
+	int M = (int)i << (23 - LUT_ADDR_LENGTH);
 	matissa = GetBinaryFraction(M) + 1.0f;
 	LogLUT[i] = logf(matissa);
     }
@@ -87,7 +87,7 @@ float* GenerateLog10LUT()
 
     for (i = 0; i < size; i++)
     {
-	uint M = (uint)i << (23 - LUT_ADDR_LENGTH);
+	int M = (int)i << (23 - LUT_ADDR_LENGTH);
 	matissa = GetBinaryFraction(M) + 1.0f;
 	Log10LUT[i] = log10f(matissa);
     }

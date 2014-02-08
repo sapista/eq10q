@@ -12,7 +12,7 @@
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/eq/eq1qs>
-  a lv2:Plugin;
+  a lv2:Plugin, lv2:EQPlugin;
   lv2:binary <eq1qs.so>;
   doap:name "EQ1Q Stereo";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;

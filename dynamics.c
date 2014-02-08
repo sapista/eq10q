@@ -30,6 +30,7 @@ This file implements functionalities for a large numbers of equalizers
 
 #include "lv2.h"
 #include "dsp/db.h"
+#include "dsp/fastmath.h"
 #include "dsp/vu.h"
 #include "dsp/filter.h"
 
@@ -52,7 +53,8 @@ This file implements functionalities for a large numbers of equalizers
 #define FILTER_INPUT_GAIN 10000.0
 #define FILTER_OUTPUT_GAIN 0.0001
 
-#define @Plugin_Is_Gate_Compressor@
+#define @Plugin_Is_Dynamics_Compressor@
+#define USE_EQ10Q_FAST_MATH
 
 static LV2_Descriptor *dynDescriptor = NULL;
 
@@ -83,11 +85,13 @@ typedef struct {
   float noise;
   Filter *LPF_fil, *HPF_fil;
   Buffers LPF_buf, HPF_buf;
-} Gate;
+  float *LutLog10;
+} Dynamics;
 
 static void cleanupDyn(LV2_Handle instance)
 {
-  Gate *plugin = (Gate *)instance;
+  Dynamics *plugin = (Dynamics *)instance;
+  free(plugin->LutLog10);
   VuClean(plugin->InputVu[0]);
   FilterClean(plugin->HPF_fil);
   FilterClean(plugin->LPF_fil);
@@ -96,7 +100,7 @@ static void cleanupDyn(LV2_Handle instance)
 
 static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
 {
-  Gate *plugin = (Gate *)instance;
+  Dynamics *plugin = (Dynamics *)instance;
   switch (port) {
     case PORT_KEY_LISTEN:
 	    plugin->key_listen = (float*)data;
@@ -148,7 +152,8 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
 
 static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate, const char *path, const LV2_Feature *const * features)
 {
-  Gate *plugin_data = (Gate *)malloc(sizeof(Gate));  
+  Dynamics *plugin_data = (Dynamics *)malloc(sizeof(Dynamics));  
+  plugin_data->LutLog10 = GenerateLog10LUT();
   plugin_data->sample_rate = s_rate;
   plugin_data->hold_count = 1000000;
   plugin_data->g = 0.0f;
@@ -164,7 +169,7 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
 #define DENORMAL_TO_ZERO(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38
 static void runDyn(LV2_Handle instance, uint32_t sample_count)
 {
-  Gate *plugin_data = (Gate *)instance;
+  Dynamics *plugin_data = (Dynamics *)instance;
   
   //Read ports (common)
   float * const output = plugin_data->output;
@@ -182,16 +187,14 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   float input_detector;
   const float range = *(plugin_data->range_ratio);
   const float hold = *(plugin_data->hold_makeup);
-  const float threshold = pow(10, *(plugin_data->threshold) * 0.05);
+  const float threshold = Fast_dB2Lin10(*(plugin_data->threshold));
   #endif
   
   //Read ports (compressor/expander)
   #ifdef PLUGIN_IS_COMPRESSOR
   const float threshold = *(plugin_data->threshold);
-  //const float m = 1.0/(*(plugin_data->range_ratio));
-  //const float m = 1.0/6.0; //TODO this is a test  with ratio at 6:1
   const float ratio =  *(plugin_data->range_ratio);
-  const float makeup = pow(10.0f, *(plugin_data->hold_makeup) * 0.05f);  //TODO FAST db2Lin
+  const float makeup = dB2Lin(*(plugin_data->hold_makeup));
   const float knee = *(plugin_data->knee);
   #endif
   
@@ -202,15 +205,12 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
 
   //Processor vars (only for gate)
   #ifdef PLUGIN_IS_GATE
-  const float range_lin = pow(10, range * 0.05); //Range constant  //TODO FAST db2Lin
+  const float range_lin = pow(10, range * 0.05); //Range constant, I can not use Fast_dB2Lin10 because the Taylor aprox starts clipping at -67 dB and range is -90 dB to 0 dB
   const int hold_max = (int)round((attack + hold) * sample_rate * 0.001f);
   #endif
   
   //Processor vars (only COMPRESSOR)
   #ifdef PLUGIN_IS_COMPRESSOR
-  //OLDCODE
-  //const float th_1m = pow(threshold, 1.0 - m);
-  //const float m_1 = m - 1.0;
   float x_dB, y_dB;
   float knee_range;
   #endif
@@ -241,8 +241,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     SetSample(plugin_data->InputVu[0], input_pre);   
 
     //Apply Filters
-    input_filtered = input_pre * FILTER_INPUT_GAIN; 
-    
+    input_filtered = input_pre * FILTER_INPUT_GAIN;     
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
     input_filtered*=FILTER_OUTPUT_GAIN;   
@@ -254,13 +253,13 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     hold_count = input_detector > threshold ? 0 : hold_count;
     if(hold_count < hold_max)
     {
-      //Gate Open
+      //Dynamics Open
       g = 1-(1-g)*ac;
       hold_count++;
     }
     else
     {
-      //Gate Close
+      //Dynamics Close
       g = g*dc;
     }
     DENORMAL_TO_ZERO(g);
@@ -270,11 +269,13 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     
     //=================== COMPRESSOR CODE ============================
     #ifdef PLUGIN_IS_COMPRESSOR   
-    
-    //TODO remove log10() and use fastLog10()
-    
+       
     //Thresholding and gain computer
+#ifdef USE_EQ10Q_FAST_MATH
+    x_dB = 20.0f * fastLog10((int*)(&input_filtered), plugin_data->LutLog10);	
+#else
     x_dB = 20.0f*log10(fabs(input_filtered) + 0.00001f); //Add -100dB constant to avoid zero crozing
+#endif
     knee_range = 2.0f*(x_dB - threshold);
     
     if (knee_range < -knee)
@@ -294,8 +295,11 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     }
 
     //Linear gain computing
-    //TODO Remove pow and use fast dB2Lin()
+#ifdef USE_EQ10Q_FAST_MATH
+    gain_reduction = Fast_dB2Lin8(y_dB - x_dB);
+#else
     gain_reduction = pow(10.0f, 0.05f*(y_dB - x_dB));
+#endif
         
     //Ballistics and peak detector
     if(gain_reduction > g)
