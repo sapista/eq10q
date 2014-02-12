@@ -181,6 +181,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float lpffreq = *(plugin_data->lpffreq);
   const float KeyListen = *(plugin_data->key_listen);
   const float InputGain = dB2Lin(*(plugin_data->ingain));
+  float gr_meter = 1.0f;
   
   //Read ports (gate)
   #ifdef PLUGIN_IS_GATE
@@ -264,6 +265,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     }
     DENORMAL_TO_ZERO(g);
     gain_reduction = range_lin * (1 - g) + g;
+    gr_meter=gain_reduction < gr_meter ? gain_reduction : gr_meter;
     #endif
     //===================== END OF GATE CODE =========================
     
@@ -313,6 +315,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
       gain_reduction = gain_reduction  - (gain_reduction - g)*ac;
     }
     g = gain_reduction;
+    gr_meter = gain_reduction < gr_meter ? gain_reduction : gr_meter;
     gain_reduction *= makeup;    
     #endif
     //=================== END OF COMPRESSOR CODE ======================
@@ -323,7 +326,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   plugin_data->g = g;
   plugin_data->hold_count = hold_count;
   plugin_data->noise *= -1.0;
-  *(plugin_data->gainreduction) = 1.0/gain_reduction + plugin_data->noise; // + ((float)(rand() % 100)/100.0);; //OK esta en lineal
+  *(plugin_data->gainreduction) = 1.0/gr_meter + plugin_data->noise; // + ((float)(rand() % 100)/100.0);; //OK esta en lineal
   *(plugin_data->fVuIn) = ComputeVu(plugin_data->InputVu[0], sample_count);
 }
 
