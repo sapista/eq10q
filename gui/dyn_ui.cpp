@@ -25,6 +25,7 @@ This plugin is inside the Sapista Plugins Bundle
 
 //LV2 UI headers
 #include "lv2_ui.h"
+#include <gtkmm/main.h>
 #include "widgets/dynamicswindow.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
@@ -45,7 +46,8 @@ static LV2UI_Handle instantiateDyn_gui(const _LV2UI_Descriptor *descriptor, cons
   cout<<"instantiateEq10q_gui Entring... ";
   #endif
   
-  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path) + "/icons/logodynamics.png", @Dyn_Title@, @bIsCompressor@);
+  Gtk::Main::init_gtkmm_internals();
+  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path) + "icons/logodynamics.png", @Dyn_Title@, @bIsCompressor@);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();

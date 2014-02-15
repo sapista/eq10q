@@ -63,7 +63,6 @@ DynMainWindow::DynMainWindow(const char *uri, std::string logoPath, std::string 
   m_ButtonAlign.add(m_KeyButton);
  
   //load image logo
-  std::cout<<"logo = "<<m_logoPath<<std::endl;
   image_logo = new Gtk::Image(m_logoPath);
   m_LTitle.set_use_markup(true);
   m_LTitle.set_markup( "<span font_weight=\"bold\" size=\"x-large\" font_family=\"Monospace\">" + title + "</span>");

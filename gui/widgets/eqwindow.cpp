@@ -56,7 +56,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_port_event_Curve_Enable = new bool[m_iNumOfBands];
   
   //load image logo
-  image_logo_center = new Gtk::Image(m_bundlePath + "/" + std::string(IMAGE_LOGO_PATH));
+  image_logo_center = new Gtk::Image(m_bundlePath + std::string(IMAGE_LOGO_PATH));
   //image_logo_center( m_bundlePath + "/" + std::string(IMAGE_LOGO_PATH))
   //image_logo_center("/home/sapista/build/LV2/trunk/gui/icons/logoeq10q.png")
 
