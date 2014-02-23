@@ -27,6 +27,9 @@ This file contains the filter definitions
 
 #include <math.h>
 
+///TODO REMOVE THIS!!!!
+#include <stdio.h>
+
 //Constants definitions
 #define PI 3.1416
 #define  F_NOT_SET 0
@@ -52,10 +55,16 @@ typedef struct
   float fs; //sample rate
   float gain, freq, q, enable;
   int iType; //Filter type
+  
+  //NEW CODE LATTICE APROACH
+  float k1, k2, v0, v1, v2;
+  
 }Filter;
 
 typedef struct
 {
+  ///TODO si lattice funciona em queda un buffer menys!
+  
   float buf_0;
   float buf_1;
   float buf_2;
@@ -75,16 +84,23 @@ void flushBuffers(Buffers *buf);
 
 //Compute filter coeficients
 #define LOWGAIN_TO_ZERO(x) if (fabs(x) < (0.05f)) x = 0.f;
-static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ, int iType, float iEnabled) //p2 = GAIN p3 = Q
+static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ, int iType, float iEnabled, float finter) //p2 = GAIN p3 = Q
 {   
     float Gain = fGain;
     //LOWGAIN_TO_ZERO(Gain);
-    float w0=2*PI*(fFreq/filter->fs);
+    //float w0=2*PI*(fFreq/filter->fs); //TODO remove because will be interpolated
     float alpha, A, b0, b1, b2, a0, a1, a2, b1_0, b1_1, b1_2, a1_0, a1_1, a1_2;
     alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = b1_2 = a1_0 = a1_1 = a1_2 = 1.0;
     filter->filter_order = 0;
     filter->gain = Gain;
-    filter->freq = fFreq;
+    
+    //Freq Interpolation
+    float error;
+    error = fFreq - filter->freq;
+    filter->freq = fabs(error) < 0.1f ? fFreq : finter*(error/fabs(error)) + filter->freq;
+    printf("Freq = %f\r\n",filter->freq);
+    
+    float w0=2*PI*(filter->freq/filter->fs);
     filter->q = fQ;
     filter->enable = iEnabled;
     filter->iType = iType;
@@ -259,6 +275,20 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     filter->b1_2 = (b1_2/a1_0)* iEnabled;
     filter->a1_1 = (a1_1/a1_0)* iEnabled;
     filter->a1_2 = (a1_2/a1_0)* iEnabled;    
+    
+    //NEW CODE LATTICE APROACH
+    filter->k1 = filter->a1*((1-filter->a2)/(1-(filter->a2)*(filter->a2)));
+    filter->k2 = filter->a2;
+    filter->v2 = filter->b2;
+    filter->v1 = filter->b1 - (filter->b2)*(filter->a1);
+    filter->v0 = filter->b0 - (filter->b2)*(filter->a2) - (filter->v1)*(filter->k1);
+    
+    
+    ///TODO TEST This is a print Coefs test
+    //printf("Direct FormII Coefs: a1 = %f, a2 = %f, b0 = %f, b1 = %f, b2 = %f\r\n", filter->a1, filter->a2, filter->b0, filter->b1, filter->b2);
+    //printf("Lattice Ladder Coefs: k1 = %f, k2 = %f, v0 = %f, v1 = %f, v2 = %f\r\n", filter->k1, filter->k2, filter->v0, filter->v1, filter->v2);
+    
+    ///TODO recordet dels a1_1 (segons buffers per 1r i 3r ordre, tambe haurien de ser lattice)
 }
 
 
@@ -306,5 +336,21 @@ static inline  void computeFilter(Filter *filter, Buffers *buf, float *inputSamp
       buf->buf_e2 = buf->buf_e1;
       buf->buf_e1 = buf->buf_e0;
   }
+}
+
+//Compute filter
+static inline  void computeFilterLattice(Filter *filter, Buffers *buf, float *inputSample)
+{
+  //Process 1, 2 orders
+  float F1 = (*inputSample) - filter->k2*buf->buf_1;
+  DENORMAL_TO_ZERO(F1);
+  float F0 = F1 - filter->k1*buf->buf_0;
+  DENORMAL_TO_ZERO(F0);
+  float G1 = buf->buf_0 + filter->k1*F0;
+  DENORMAL_TO_ZERO(G1);
+  *inputSample = filter->v0*F0 + filter->v1*G1 + filter->v2*(buf->buf_1 + filter->k2*F1);
+  
+  buf->buf_0 = F0;
+  buf->buf_1 = G1;
 }
 #endif

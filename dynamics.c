@@ -225,11 +225,11 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   //Compute filter coeficients
   if(hpffreq != plugin_data->HPF_fil->freq)
   {
-    calcCoefs(plugin_data->HPF_fil, 0.0, hpffreq, 0.75, F_HPF_ORDER_2, 1.0);
+    calcCoefs(plugin_data->HPF_fil, 0.0, hpffreq, 0.75, F_HPF_ORDER_2, 1.0, 1.0f); //TODO use here interpolation
   }
   if(lpffreq != plugin_data->LPF_fil->freq)
   {
-    calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0);
+    calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0, 1.0f);  //TODO use here interpolation
   }
 
   float input_filtered, input_pre;

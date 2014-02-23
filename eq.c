@@ -24,7 +24,9 @@ This plugin is inside the Sapista Plugins Bundle
 This file implements functionalities for a large numbers of equalizers
 ****************************************************************************/
 
-//#include <stdio.h>
+//TODO Comment out stdio.h
+#include <stdio.h>
+
 #include <stdlib.h>
 
 #include "lv2.h"
@@ -40,6 +42,9 @@ This file implements functionalities for a large numbers of equalizers
 
 #define EQ_INPUT_GAIN 10000.0
 #define EQ_OUTPUT_GAIN 0.0001
+
+//Interpolation params
+#define FREQ_MAX_VARIATION 10000.0f //In Hz/s
 
 static LV2_Descriptor *eqDescriptor = NULL;
 
@@ -63,6 +68,10 @@ typedef struct {
   Buffers buf[NUM_BANDS][NUM_CHANNELS];
   Vu *InputVu[NUM_CHANNELS];
   Vu *OutputVu[NUM_CHANNELS];
+  
+  //Interpolation Params
+  float freqInter;
+  
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -163,6 +172,8 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
 {
   int i,ch;
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));  
+  
+  plugin_data->freqInter = FREQ_MAX_VARIATION/(float)s_rate;
 
   for(i=0; i<NUM_BANDS; i++)
   {
@@ -196,7 +207,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   #if NUM_CHANNELS == 2
   float sampleR; //Current processing sample right signal
   #endif
-  
+   
   //Read EQ Ports
   for(bd = 0; bd<NUM_BANDS; bd++)
   {
@@ -211,10 +222,12 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 		  *plugin_data->fBandFreq[bd],
 		  *plugin_data->fBandParam[bd],
 		  (int)(*plugin_data->fBandType[bd]),
-		  *plugin_data->fBandEnabled[bd]);
+		  *plugin_data->fBandEnabled[bd],
+		  (plugin_data->freqInter)*(float)sample_count
+ 		);
     }
   }
-   
+    
   //Compute the filter
   for (pos = 0; pos < sample_count; pos++) 
   {    
@@ -244,7 +257,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       //Update VU input sample
       SetSample(plugin_data->InputVu[0], sampleL);
       //Apply gain to the sample to move it to de-normalized state
-      sampleL *= EQ_INPUT_GAIN;
+      //sampleL *= EQ_INPUT_GAIN;///TODO Testing lattice
       
       #if NUM_CHANNELS == 2
       //The input amplifier
@@ -252,28 +265,77 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       //Update VU input sample
       SetSample(plugin_data->InputVu[1], sampleR);
       //Apply gain to the sample to move it to de-normalized state
-      sampleR *= EQ_INPUT_GAIN;
+      //sampleR *= EQ_INPUT_GAIN;///TODO Testing lattice
       #endif
       
       //EQ PROCESSOR
-      for(bd = 0; bd<NUM_BANDS; bd++)
-      {
-	computeFilter(plugin_data->filter[bd], &plugin_data->buf[bd][0],&sampleL);
-	#if NUM_CHANNELS == 2
-	computeFilter(plugin_data->filter[bd], &plugin_data->buf[bd][1],&sampleR);
+      //for(bd = 0; bd<NUM_BANDS; bd++)
+      //{
+	///TODO Testing lattice
+	computeFilterLattice(plugin_data->filter[0], &plugin_data->buf[0][0],&sampleL);
+	
+	#if NUM_BANDS >= 4
+	computeFilterLattice(plugin_data->filter[1], &plugin_data->buf[1][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[2], &plugin_data->buf[2][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[3], &plugin_data->buf[3][0],&sampleL);
 	#endif
-      }
+	
+	#if NUM_BANDS >= 6
+	computeFilterLattice(plugin_data->filter[4], &plugin_data->buf[4][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[5], &plugin_data->buf[5][0],&sampleL);
+	#endif
+	
+	#if NUM_BANDS ==10
+	computeFilterLattice(plugin_data->filter[6], &plugin_data->buf[6][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[7], &plugin_data->buf[7][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[8], &plugin_data->buf[8][0],&sampleL);
+	computeFilterLattice(plugin_data->filter[9], &plugin_data->buf[9][0],&sampleL);
+	#endif
+	
+	#if NUM_CHANNELS == 2
+	for(bd = 0; bd<NUM_BANDS; bd++)
+	{
+	  computeFilter(plugin_data->filter[bd], &plugin_data->buf[bd][1],&sampleR);
+	}
+	
+	#endif
+	
+	/*
+	#if NUM_CHANNELS == 2
+	  computeFilterLattice(plugin_data->filter[0], &plugin_data->buf[0][1],&sampleR);
+	  
+	  #if NUM_BANDS >= 4
+	  computeFilterLattice(plugin_data->filter[1], &plugin_data->buf[1][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[2], &plugin_data->buf[2][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[3], &plugin_data->buf[3][1],&sampleR);
+	  #endif
+	  
+	  #if NUM_BANDS >= 6
+	  computeFilterLattice(plugin_data->filter[4], &plugin_data->buf[4][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[5], &plugin_data->buf[5][1],&sampleR);
+	  #endif
+	  
+	  #if NUM_BANDS ==10
+	  computeFilterLattice(plugin_data->filter[6], &plugin_data->buf[6][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[7], &plugin_data->buf[7][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[8], &plugin_data->buf[8][1],&sampleR);
+	  computeFilterLattice(plugin_data->filter[9], &plugin_data->buf[9][1],&sampleR);
+	  #endif
+	
+	#endif
+	*/
+      ///}
            
       //Apply gain to the sample to move it to de-normalized state
-      sampleL *= EQ_OUTPUT_GAIN;
+      //sampleL *= EQ_OUTPUT_GAIN; ///TODO Testing lattice
       //The output amplifier
-      sampleL *= fOutGain;
+      sampleL *= fOutGain; 
       //Update VU output sample
       SetSample(plugin_data->OutputVu[0], sampleL);
       
       #if NUM_CHANNELS == 2
       //Apply gain to the sample to move it to de-normalized state
-      sampleR *= EQ_OUTPUT_GAIN;
+      //sampleR *= EQ_OUTPUT_GAIN;///TODO Testing lattice
       //The output amplifier
       sampleR *= fOutGain;
       //Update VU output sample
@@ -295,6 +357,13 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   *(plugin_data->fVuIn[1]) = ComputeVu(plugin_data->InputVu[1], sample_count);
   *(plugin_data->fVuOut[1]) = ComputeVu(plugin_data->OutputVu[1], sample_count);
   #endif
+  
+  ///TEST TODO REMOVE THIS TEST
+  //Monitor Buffers
+  //#if NUM_CHANNELS == 2
+  //printf("DF_BUF: %f\t%f\r\n", plugin_data->buf[0][1].buf_0, plugin_data->buf[0][1].buf_1);
+  //printf("LAT_BUF: %f\t%f\r\n", plugin_data->buf[0][0].buf_0, plugin_data->buf[0][0].buf_1);
+  //#endif
 }
 
 static void init()
