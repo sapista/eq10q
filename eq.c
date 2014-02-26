@@ -43,9 +43,6 @@ This file implements functionalities for a large numbers of equalizers
 #define EQ_INPUT_GAIN 10000.0
 #define EQ_OUTPUT_GAIN 0.0001
 
-//Interpolation params
-#define FREQ_MAX_VARIATION 10000.0f //In Hz/s
-
 static LV2_Descriptor *eqDescriptor = NULL;
 
 typedef struct {
@@ -67,11 +64,7 @@ typedef struct {
   Filter *filter[NUM_BANDS];
   Buffers buf[NUM_BANDS][NUM_CHANNELS];
   Vu *InputVu[NUM_CHANNELS];
-  Vu *OutputVu[NUM_CHANNELS];
-  
-  //Interpolation Params
-  float freqInter;
-  
+  Vu *OutputVu[NUM_CHANNELS];  
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -173,8 +166,6 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   int i,ch;
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));  
   
-  plugin_data->freqInter = FREQ_MAX_VARIATION/(float)s_rate;
-
   for(i=0; i<NUM_BANDS; i++)
   {
     plugin_data->filter[i] = FilterInit(s_rate);
@@ -197,18 +188,23 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
 static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 {
   EQ *plugin_data = (EQ *)instance;
-
+ 
   //Get values of control ports
   const int iBypass = *(plugin_data->fBypass) > 0.0f ? 1 : 0;  
   const float fInGain = dB2Lin(*(plugin_data->fInGain));
   const float fOutGain = dB2Lin(*(plugin_data->fOutGain));
   int bd, pos; //loop index
+  
+  //Interpolation coefs force to recompute
+  int recalcCoefs[NUM_BANDS];
+  int forceRecalcCoefs = 0;
+  
   float  sampleL; //Current processing sample left signal
   #if NUM_CHANNELS == 2
   float sampleR; //Current processing sample right signal
   #endif
    
-  //Read EQ Ports
+  //Read EQ Ports and mark to recompute if changed
   for(bd = 0; bd<NUM_BANDS; bd++)
   {
     if(dB2Lin(*(plugin_data->fBandGain[bd])) != plugin_data->filter[bd]->gain ||
@@ -217,20 +213,18 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 	(int)(*plugin_data->fBandType[bd]) != plugin_data->filter[bd]->iType ||
 	*plugin_data->fBandEnabled[bd] != plugin_data->filter[bd]->enable)
     {
-	calcCoefs(plugin_data->filter[bd],
-		  dB2Lin(*(plugin_data->fBandGain[bd])),
-		  *plugin_data->fBandFreq[bd],
-		  *plugin_data->fBandParam[bd],
-		  (int)(*plugin_data->fBandType[bd]),
-		  *plugin_data->fBandEnabled[bd],
-		  (plugin_data->freqInter)*(float)sample_count
- 		);
+      recalcCoefs[bd] = 1;
+      forceRecalcCoefs = 1;
+    }
+    else
+    {
+      recalcCoefs[bd] = 0;
     }
   }
     
   //Compute the filter
   for (pos = 0; pos < sample_count; pos++) 
-  {    
+  {       
     //Get input
     sampleL = plugin_data->fInput[0][pos];
     DENORMAL_TO_ZERO(sampleL);
@@ -238,7 +232,8 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     #if NUM_CHANNELS == 2
     sampleR = plugin_data->fInput[1][pos];
     DENORMAL_TO_ZERO(sampleR);
-    #endif
+    #endif    
+
 
     //Process every band
     if(iBypass)
@@ -268,63 +263,67 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       //sampleR *= EQ_INPUT_GAIN;///TODO Testing lattice
       #endif
       
+      //Coefs Interpolation
+      if(forceRecalcCoefs)
+      {
+	for(bd = 0; bd<NUM_BANDS; bd++)
+	{
+	  if(recalcCoefs[bd])
+	  {
+	    calcCoefs(plugin_data->filter[bd],
+		    dB2Lin(*(plugin_data->fBandGain[bd])),
+		    *plugin_data->fBandFreq[bd],
+		    *plugin_data->fBandParam[bd],
+		    (int)(*plugin_data->fBandType[bd]),
+		    *plugin_data->fBandEnabled[bd]);
+	    }
+	  }
+	}
+      
+      
       //EQ PROCESSOR
-      //for(bd = 0; bd<NUM_BANDS; bd++)
-      //{
-	///TODO Testing lattice
-	computeFilterLattice(plugin_data->filter[0], &plugin_data->buf[0][0],&sampleL);
+	computeFilter(plugin_data->filter[0], &plugin_data->buf[0][0],&sampleL);
 	
 	#if NUM_BANDS >= 4
-	computeFilterLattice(plugin_data->filter[1], &plugin_data->buf[1][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[2], &plugin_data->buf[2][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[3], &plugin_data->buf[3][0],&sampleL);
+	computeFilter(plugin_data->filter[1], &plugin_data->buf[1][0],&sampleL);
+	computeFilter(plugin_data->filter[2], &plugin_data->buf[2][0],&sampleL);
+	computeFilter(plugin_data->filter[3], &plugin_data->buf[3][0],&sampleL);
 	#endif
 	
 	#if NUM_BANDS >= 6
-	computeFilterLattice(plugin_data->filter[4], &plugin_data->buf[4][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[5], &plugin_data->buf[5][0],&sampleL);
+	computeFilter(plugin_data->filter[4], &plugin_data->buf[4][0],&sampleL);
+	computeFilter(plugin_data->filter[5], &plugin_data->buf[5][0],&sampleL);
 	#endif
 	
 	#if NUM_BANDS ==10
-	computeFilterLattice(plugin_data->filter[6], &plugin_data->buf[6][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[7], &plugin_data->buf[7][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[8], &plugin_data->buf[8][0],&sampleL);
-	computeFilterLattice(plugin_data->filter[9], &plugin_data->buf[9][0],&sampleL);
+	computeFilter(plugin_data->filter[6], &plugin_data->buf[6][0],&sampleL);
+	computeFilter(plugin_data->filter[7], &plugin_data->buf[7][0],&sampleL);
+	computeFilter(plugin_data->filter[8], &plugin_data->buf[8][0],&sampleL);
+	computeFilter(plugin_data->filter[9], &plugin_data->buf[9][0],&sampleL);
 	#endif
 	
 	#if NUM_CHANNELS == 2
-	for(bd = 0; bd<NUM_BANDS; bd++)
-	{
-	  computeFilter(plugin_data->filter[bd], &plugin_data->buf[bd][1],&sampleR);
-	}
-	
-	#endif
-	
-	/*
-	#if NUM_CHANNELS == 2
-	  computeFilterLattice(plugin_data->filter[0], &plugin_data->buf[0][1],&sampleR);
+	  computeFilter(plugin_data->filter[0], &plugin_data->buf[0][1],&sampleR);
 	  
 	  #if NUM_BANDS >= 4
-	  computeFilterLattice(plugin_data->filter[1], &plugin_data->buf[1][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[2], &plugin_data->buf[2][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[3], &plugin_data->buf[3][1],&sampleR);
+	  computeFilter(plugin_data->filter[1], &plugin_data->buf[1][1],&sampleR);
+	  computeFilter(plugin_data->filter[2], &plugin_data->buf[2][1],&sampleR);
+	  computeFilter(plugin_data->filter[3], &plugin_data->buf[3][1],&sampleR);
 	  #endif
 	  
 	  #if NUM_BANDS >= 6
-	  computeFilterLattice(plugin_data->filter[4], &plugin_data->buf[4][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[5], &plugin_data->buf[5][1],&sampleR);
+	  computeFilter(plugin_data->filter[4], &plugin_data->buf[4][1],&sampleR);
+	  computeFilter(plugin_data->filter[5], &plugin_data->buf[5][1],&sampleR);
 	  #endif
 	  
 	  #if NUM_BANDS ==10
-	  computeFilterLattice(plugin_data->filter[6], &plugin_data->buf[6][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[7], &plugin_data->buf[7][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[8], &plugin_data->buf[8][1],&sampleR);
-	  computeFilterLattice(plugin_data->filter[9], &plugin_data->buf[9][1],&sampleR);
+	  computeFilter(plugin_data->filter[6], &plugin_data->buf[6][1],&sampleR);
+	  computeFilter(plugin_data->filter[7], &plugin_data->buf[7][1],&sampleR);
+	  computeFilter(plugin_data->filter[8], &plugin_data->buf[8][1],&sampleR);
+	  computeFilter(plugin_data->filter[9], &plugin_data->buf[9][1],&sampleR);
 	  #endif
 	
 	#endif
-	*/
-      ///}
            
       //Apply gain to the sample to move it to de-normalized state
       //sampleL *= EQ_OUTPUT_GAIN; ///TODO Testing lattice
@@ -364,6 +363,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   //printf("DF_BUF: %f\t%f\r\n", plugin_data->buf[0][1].buf_0, plugin_data->buf[0][1].buf_1);
   //printf("LAT_BUF: %f\t%f\r\n", plugin_data->buf[0][0].buf_0, plugin_data->buf[0][0].buf_1);
   //#endif
+      
 }
 
 static void init()

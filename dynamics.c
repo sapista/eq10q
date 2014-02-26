@@ -221,20 +221,19 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
 
   float gain_reduction = 0.0f;
-  
-  //Compute filter coeficients
-  if(hpffreq != plugin_data->HPF_fil->freq)
-  {
-    calcCoefs(plugin_data->HPF_fil, 0.0, hpffreq, 0.75, F_HPF_ORDER_2, 1.0, 1.0f); //TODO use here interpolation
-  }
-  if(lpffreq != plugin_data->LPF_fil->freq)
-  {
-    calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0, 1.0f);  //TODO use here interpolation
-  }
-
   float input_filtered, input_pre;
   for (uint32_t i = 0; i < sample_count; ++i) 
   {
+    //Compute filter coeficients
+    if(hpffreq != plugin_data->HPF_fil->freq)
+    {
+      calcCoefs(plugin_data->HPF_fil, 0.0, hpffreq, 0.75, F_HPF_ORDER_2, 1.0);
+    }
+    if(lpffreq != plugin_data->LPF_fil->freq)
+    {
+      calcCoefs(plugin_data->LPF_fil, 0.0, lpffreq, 0.75, F_LPF_ORDER_2, 1.0);
+    }
+
     //Input gain
     input_pre = input[i] * InputGain;
 
