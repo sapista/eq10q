@@ -27,6 +27,8 @@ This file contains the filter definitions
 
 #include <math.h>
 
+//#include <stdio.h>
+
 //Constants definitions
 #define PI 3.1416
 #define  F_NOT_SET 0
@@ -112,6 +114,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     switch(iType){
 
       case F_HPF_ORDER_1:
+      {
 	w0 = tanf(w0/2.0f);
 	b0 = 1.0f;
 	b1 = -1.0f;
@@ -119,10 +122,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 = w0+1.0f;
 	a1 = w0-1.0f;
 	a2 = 0.0f;
-	
+      }
       break;
 
       case F_HPF_ORDER_4:
+      {
 	filter->filter_order = 1;
       case F_HPF_ORDER_2: 
 	alpha = sinf(w0)/(2*fQ);
@@ -132,9 +136,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1_0 = a0 = 1 + alpha; //a0
 	a1_1 = a1 = -2*cosf(w0); //a1
 	a1_2 = a2 = 1 - alpha; //a2
+      }
       break;
 
       case F_HPF_ORDER_3:
+      {
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
 	b0 = (1 + cosf(w0))/2; //b0
@@ -150,9 +156,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1_0 = w0+1.0f;
 	a1_1 = w0-1.0f;
 	a1_2 = 0.0f;
+      }
       break;
 
       case F_LPF_ORDER_1: 
+      {
 	w0 = tanf(w0/2.0f);
 	b0 = w0;
 	b1 = w0;
@@ -160,9 +168,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 = w0+1.0f;
 	a1 = w0-1.0f;
 	a2 = 0.0f;
+      }
       break;
  
       case F_LPF_ORDER_4:
+      {
 	filter->filter_order = 1;
       case F_LPF_ORDER_2:
 	alpha = sinf(w0)/(2*fQ);
@@ -172,9 +182,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1_0 = a0 = 1 + alpha; //a0
 	a1_1 = a1 = -2*cosf(w0); //a1
 	a1_2 = a2 = 1 - alpha; //a2
+      }
       break;
 
       case F_LPF_ORDER_3:
+      {
 	filter->filter_order = 1;
 	alpha = sinf(w0)/(2*fQ);
 	b0 = (1 - cosf(w0))/2; //b0
@@ -190,9 +202,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a1_0 = w0+1.0f;
 	a1_1 = w0-1.0f;
 	a1_2 = 0.0f;
+      }
       break;
 
       case F_LOW_SHELF:
+      {
 	A = sqrtf((Gain));
 	alpha =sinf(w0)/2 * (1/fQ);
 	b0 = A*((A+1)-(A-1)*cosf(w0)+2*sqrtf(A)*alpha); //b0
@@ -201,9 +215,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 = (A+1) + (A-1)*cosf(w0) + 2*sqrtf(A)*alpha; //a0
 	a1 = -2*((A-1) + (A+1)*cosf(w0)); //a1
 	a2 = (A+1) + (A-1)*cosf(w0) - 2*sqrtf(A)*alpha; //a2
+      }
       break;
 
       case F_HIGH_SHELF:
+      {
 	A = sqrtf((Gain));
 	alpha =sinf(w0)/2 * (1/fQ);
 	b0 = A*( (A+1) + (A-1)*cosf(w0) + 2*sqrtf(A)*alpha ); //b0
@@ -212,9 +228,11 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 = (A+1) - (A-1)*cosf(w0) + 2*sqrtf(A)*alpha; //a0
 	a1 = 2*( (A-1) - (A+1)*cosf(w0)); //a1
 	a2 = (A+1) - (A-1)*cosf(w0) - 2*sqrtf(A)*alpha; //a2
+      }
       break;
 
       case F_PEAK:
+      {
 	A = sqrtf((Gain));
 	float A2 = A*A;
 	float PI2 = PI*PI;
@@ -228,35 +246,54 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	float GB2 = GB * GB;
 	float G2 = Gain * Gain;
 	float G12 = G1 * G1;
-
+	
 	//Digital filter
-	float F   = fabsf(G2  - GB2);
-	float G00 = fabsf(G2  - 1.0f);
-	float F00 = fabsf(GB2 - 1.0f);
-	float G01 = fabsf(G2  - G1);
-	float G11 = fabsf(G2  - G12);
-	float F01 = fabsf(GB2 - G1);
-	float F11 = fabsf(GB2 - G12);
+	float F   = fabsf(G2  - GB2);// + 0.00000001f; ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0 
+	float G00 = fabsf(G2  - 1.0f);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
+	float F00 = fabsf(GB2 - 1.0f);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
+	float G01 = fabsf(G2  - G1);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
+	float G11 = fabsf(G2  - G12);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
+	float F01 = fabsf(GB2 - G1);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
+	float F11 = fabsf(GB2 - G12);// + 0.00000001f;  ///TODO akest petit num sumat en teoria no hi va pero he detectat div by 0
 	float W2 = sqrtf(G11 / G00) * tanf(w0/2.0f) * tanf(w0/2.0f);
 
 	//Bandwidth condition
 	float Aw = (w0/(A*fQ))*sqrtf((GB2-A2 * A2)/(1.0f - GB2)); //Analog filter bandwidth at GB
 	float DW = (1.0f + sqrtf(F00 / F11) * W2) * tanf(Aw/2.0f); //Prewarped digital bandwidth
 	
+	//printf("G1=%f Aw=%f DW=%f F11=%f GB2=%f G12=%f\r\n",G1,Aw,DW,F11,GB2,G12);
+	
 	//Digital coefs
 	float C = F11 * DW * DW - 2.0f * W2 * (F01 - sqrtf(F00 * F11));
 	float D = 2.0f * W2 * (G01 - sqrtf(G00 * G11));
 	float A = sqrtf((C + D) / F);
 	float B = sqrtf((G2 * C + GB2 * D) / F);
-	b0 = G1 + W2 + B;
-	b1 =  -2.0f*(G1 - W2);
-	b2 = G1 - B + W2;
-	a0 = 1.0f + W2 + A;
-	a1 = -2.0f*(1.0f - W2);
-	a2 = 1.0f + W2 - A;
+	
+	//printf("A=%f B=%f C=%f D=%f W2=%f F=%f G2=%f GB2=%f\r\n", A, B, C, D, W2, F, G2, GB2 );
+	
+	if( Gain > 1.01f || Gain < 0.98 )
+	{
+	  b0 = G1 + W2 + B;
+	  b1 =  -2.0f*(G1 - W2);
+	  b2 = G1 - B + W2;
+	  a0 = 1.0f + W2 + A;
+	  a1 = -2.0f*(1.0f - W2);
+	  a2 = 1.0f + W2 - A;
+	}
+	else
+	{
+	  b0 = 1.0f;
+	  b1 = 0.0f;
+	  b2 = 0.0f;
+	  a0 = 1.0f;
+	  a1 = 0.0f;
+	  a2 = 0.0f;
+	}
+      }
       break;
 
       case F_NOTCH:
+      {
 	alpha = sinf(w0)/(2*fQ);
 
 	b0 =  1; //b0
@@ -265,6 +302,7 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
 	a0 =  1 + alpha; //a0
 	a1 = -2*cosf(w0); //a1
 	a2 =  1 - alpha; //a2
+      }
       break;
   } //End of switch
 
@@ -278,7 +316,10 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     filter->b1_1 = (b1_1/a1_0)* iEnabled;
     filter->b1_2 = (b1_2/a1_0)* iEnabled;
     filter->a1_1 = (a1_1/a1_0)* iEnabled;
-    filter->a1_2 = (a1_2/a1_0)* iEnabled;    
+    filter->a1_2 = (a1_2/a1_0)* iEnabled;   
+    
+    //Print coefs
+    //printf("Coefs b0=%f b1=%f b2=%f a1=%f a2=%f\r\n",filter->b0,filter->b1,filter->b2,filter->a1,filter->a2);
 }
 
 #define DENORMAL_TO_ZERO(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38

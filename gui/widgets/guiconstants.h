@@ -27,27 +27,12 @@
 #define FILTER_TYPE 3
 #define ONOFF_TYPE 4
 
-//TODO: verificar que es pot eliminar, ara es fa amb el fitxer filter.h
-//Define filter types 
-// #define  LPF_ORDER_1 0
-// #define  LPF_ORDER_2 1
-// #define  LPF_ORDER_3 2
-// #define  LPF_ORDER_4 3
-// #define  HPF_ORDER_1 4
-// #define  HPF_ORDER_2 5
-// #define  HPF_ORDER_3 6
-// #define  HPF_ORDER_4 7
-// #define  LOW_SHELF   8
-// #define  HIGH_SHELF  9
-// #define  PEAK        10
-// #define  NOTCH       11
-
-//Filter default values ///TODO: Aixo ha de venir del .ttl
+//Filter default values
 #define GAIN_MIN -20.0
 #define GAIN_MAX 20.0
 #define FREQ_MIN 20.0
 #define FREQ_MAX 20000.0
-#define PEAK_Q_MIN 0.02
+#define PEAK_Q_MIN 0.1
 #define PEAK_Q_MAX 16.0
 #define HPF_LPF_Q_DEFAULT 0.7
 #define NOTCH_Q_DEFAULT 2

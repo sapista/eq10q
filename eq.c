@@ -40,8 +40,9 @@ This file implements functionalities for a large numbers of equalizers
 #define NUM_CHANNELS @Eq_Channels_Count@
 #define EQ_URI @Eq_Uri@
 
-#define EQ_INPUT_GAIN 10000.0
-#define EQ_OUTPUT_GAIN 0.0001
+//TODO I think that can be removed...
+//#define EQ_INPUT_GAIN 10000.0
+//#define EQ_OUTPUT_GAIN 0.0001
 
 static LV2_Descriptor *eqDescriptor = NULL;
 
