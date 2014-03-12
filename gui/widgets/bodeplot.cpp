@@ -23,6 +23,7 @@
 #include "guiconstants.h"
 #include "bodecalc.cpp"
 #include <cmath>
+#include <ctime>
 
 #include <iostream>
 #include <iomanip>
@@ -35,6 +36,7 @@ m_TotalBandsCount(iNumOfBands),
 m_Bypass(false),
 bMotionIsConnected(false),
 bBandFocus(false),
+iRedrawByTimer(-1),
 bIsFirstRun(true)
 {
    //Calc the number of points
@@ -67,7 +69,7 @@ bIsFirstRun(true)
   signal_button_press_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_press_event),true);
   signal_button_release_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_release_event),true);
   signal_scroll_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_scrollwheel_event),true);
-  
+  Glib::signal_timeout().connect( sigc::mem_fun(*this, &PlotEQCurve::on_timeout), AUTO_REFRESH_TIMEOUT_MS );
   signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
   
   //Initialize the base vectors for the first widget size
@@ -383,7 +385,8 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
       m_filters[m_iBandSel]->Gain = 0.0;
     }
     
-    ComputeFilter(m_iBandSel);
+    //ComputeFilter(m_iBandSel);
+    iRedrawByTimer = m_iBandSel;
 
     // emit the signal
     m_BandChangedSignal.emit(m_iBandSel, m_filters[m_iBandSel]->Gain, m_filters[m_iBandSel]->Freq, m_filters[m_iBandSel]->Q);
@@ -422,11 +425,25 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
 	}
       }
     }
+    redraw();
   }
 
-  redraw();  
+    
   return true;
 }
+
+//Timer callback for auto redraw and graph math
+bool PlotEQCurve::on_timeout()
+{
+  if(iRedrawByTimer != -1)
+  {
+    ComputeFilter(iRedrawByTimer);
+    redraw();  
+    iRedrawByTimer = -1;
+  }
+  return true;
+}
+
 
 //Override default signal handler:
 bool PlotEQCurve::on_expose_event(GdkEventExpose* event)

@@ -10,7 +10,7 @@
 
 void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_t buffer_size, uint32_t format, const void* buffer)
 {  
-  float data = *(float*)buffer;
+  //float data = *(float*)buffer;
   std::string sPort;
   const int m_iNumOfChannels = 2;
   const int m_iNumOfBands = 10;
@@ -82,7 +82,7 @@ void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_
 	}       
   
   
-  std::cout<<"LV2 Write function tester: Port = "<< sPort <<" Data = "<<data<<std::endl;
+  //std::cout<<"LV2 Write function tester: Port = "<< sPort <<" Data = "<<data<<std::endl;
 }
 
 HelloWorld::HelloWorld()

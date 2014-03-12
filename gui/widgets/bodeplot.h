@@ -35,6 +35,7 @@
 #define PLOT_HIGHT 200
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
+#define AUTO_REFRESH_TIMEOUT_MS 20
 
 typedef struct
 {
@@ -76,6 +77,7 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual bool on_button_release_event(GdkEventButton* event);
       virtual bool on_scrollwheel_event(GdkEventScroll* event);
       virtual bool on_mouse_motion_event(GdkEventMotion* event);
+      virtual bool on_timeout();
       virtual void redraw();
   
       //Override default signal handler:
@@ -89,6 +91,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     int m_iBandSel;
     bool bMotionIsConnected;
     bool bBandFocus;
+    int iRedrawByTimer;
     bool bIsFirstRun;
     
     //To hadle mouse mouve events
