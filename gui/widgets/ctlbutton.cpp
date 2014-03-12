@@ -76,8 +76,10 @@ bool CtlButton::onButtonDoubleClicked(GdkEventButton* event)
 
 void CtlButton::onButtonPressed()
 { 
-  m_iAntValue = 0;
-  m_iActValue = 0;
+  int x,y;
+  get_pointer(x, y);
+  if(m_bIsXDirection) m_iAntValue = x;
+  else m_iAntValue =( -1)*y; 
   m_MouseSignal = signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
   set_state(Gtk::STATE_ACTIVE);
 }
