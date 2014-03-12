@@ -26,10 +26,10 @@
 #include "filter.h"
 
 #define NUM_POINTS_PER_DECADE 150
-#define MIN_FREQ 20.0
-#define MAX_FREQ 20000.0
+#define MIN_FREQ 18.0
+#define MAX_FREQ 22000.0
 #define GRID_VERTICAL_LINES 28
-#define DB_GRID_RANGE 40.0
+#define DB_GRID_RANGE 50.0
 #define CURVE_MARGIN 2
 #define CURVE_TEXT_OFFSET 18
 #define PLOT_HIGHT 200
@@ -88,6 +88,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     bool m_Bypass;
     int m_iBandSel;
     bool bMotionIsConnected;
+    bool bBandFocus;
     bool bIsFirstRun;
     
     //To hadle mouse mouve events

@@ -34,6 +34,7 @@ height(PLOT_HIGHT),
 m_TotalBandsCount(iNumOfBands), 
 m_Bypass(false),
 bMotionIsConnected(false),
+bBandFocus(false),
 bIsFirstRun(true)
 {
    //Calc the number of points
@@ -66,6 +67,8 @@ bIsFirstRun(true)
   signal_button_press_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_press_event),true);
   signal_button_release_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_release_event),true);
   signal_scroll_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_scrollwheel_event),true);
+  
+  signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
   
   //Initialize the base vectors for the first widget size
   initBaseVectors();
@@ -296,44 +299,28 @@ void PlotEQCurve::setBypass(bool bypass)
 //==========================SIGNAL SLOTS===========================================================
 //Mouse grab signal handlers
 bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
-{
-  //Check if is over some control pointer
-  for(int i = 0; i < m_TotalBandsCount; i++)
+{ 
+  //Check if is a double click or simple
+  if(event->button == 1 && bBandFocus)
   {
-    if( event->x > freq2Pixels(m_filters[i]->Freq) - 8 &&
-	event->x < freq2Pixels(m_filters[i]->Freq) + 8 &&
-	event->y > dB2Pixels(m_filters[i]->Gain) - 8 &&
-	event->y < dB2Pixels(m_filters[i]->Gain) + 8 )
+    if(event->type == GDK_2BUTTON_PRESS) //Double click on the 1st button
     {
-      m_iBandSel = i;
-      
-      //Check if is a double click or simple
-      if(event->button == 1)
-      {
-	if(event->type == GDK_2BUTTON_PRESS) //Double click on the 1st button
-	{
-	  //Emit signal button double click, this is enable or disable band
-	  setBandEnable(m_iBandSel, !m_filters[m_iBandSel]->bIsOn);
-	  m_BandEnabledSignal.emit(m_iBandSel, m_filters[m_iBandSel]->bIsOn);
-	}
-	else if (!bMotionIsConnected && m_filters[i]->bIsOn)
-	{
-	  m_motion_connection = signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
-	  bMotionIsConnected = true;
-	}
-      }
-      break;
+      //Emit signal button double click, this is enable or disable band
+      setBandEnable(m_iBandSel, !m_filters[m_iBandSel]->bIsOn);
+      m_BandEnabledSignal.emit(m_iBandSel, m_filters[m_iBandSel]->bIsOn);
+    }
+    else if (!bMotionIsConnected && m_filters[m_iBandSel]->bIsOn)
+    {
+      bMotionIsConnected = true;
     }
   }
-  
+      
   return true;
 }
 
 bool PlotEQCurve::on_button_release_event(GdkEventButton* event)
 {
-  m_motion_connection.disconnect();
-  bMotionIsConnected = false;
-  
+  bMotionIsConnected = false;  
   return true;
 }
 
@@ -374,31 +361,70 @@ bool PlotEQCurve::on_scrollwheel_event(GdkEventScroll* event)
 
 bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
 {
-  //Recompute curve on current band and redraw
-  m_filters[m_iBandSel]->Freq = Pixels2freq(event->x);
-  m_filters[m_iBandSel]->Freq = m_filters[m_iBandSel]->Freq > FREQ_MAX ? FREQ_MAX : m_filters[m_iBandSel]->Freq;
-  m_filters[m_iBandSel]->Freq = m_filters[m_iBandSel]->Freq < FREQ_MIN ? FREQ_MIN : m_filters[m_iBandSel]->Freq;
-  
-  if (m_filters[m_iBandSel]->fType == PEAK ||
-      m_filters[m_iBandSel]->fType == HIGH_SHELF ||
-      m_filters[m_iBandSel]->fType == LOW_SHELF )
+   
+  if(bMotionIsConnected)
   {
-    m_filters[m_iBandSel]->Gain = Pixels2dB(event->y);
-    m_filters[m_iBandSel]->Gain = m_filters[m_iBandSel]->Gain > GAIN_MAX ? GAIN_MAX : m_filters[m_iBandSel]->Gain;
-    m_filters[m_iBandSel]->Gain = m_filters[m_iBandSel]->Gain < GAIN_MIN ? GAIN_MIN : m_filters[m_iBandSel]->Gain;
+    //Recompute curve on current band and redraw
+    m_filters[m_iBandSel]->Freq = Pixels2freq(event->x);
+    m_filters[m_iBandSel]->Freq = m_filters[m_iBandSel]->Freq > FREQ_MAX ? FREQ_MAX : m_filters[m_iBandSel]->Freq;
+    m_filters[m_iBandSel]->Freq = m_filters[m_iBandSel]->Freq < FREQ_MIN ? FREQ_MIN : m_filters[m_iBandSel]->Freq;
+    
+    if (m_filters[m_iBandSel]->fType == PEAK ||
+	m_filters[m_iBandSel]->fType == HIGH_SHELF ||
+	m_filters[m_iBandSel]->fType == LOW_SHELF )
+    {
+      m_filters[m_iBandSel]->Gain = Pixels2dB(event->y);
+      m_filters[m_iBandSel]->Gain = m_filters[m_iBandSel]->Gain > GAIN_MAX ? GAIN_MAX : m_filters[m_iBandSel]->Gain;
+      m_filters[m_iBandSel]->Gain = m_filters[m_iBandSel]->Gain < GAIN_MIN ? GAIN_MIN : m_filters[m_iBandSel]->Gain;
+    }
+    
+    else
+    {
+      m_filters[m_iBandSel]->Gain = 0.0;
+    }
+    
+    ComputeFilter(m_iBandSel);
+
+    // emit the signal
+    m_BandChangedSignal.emit(m_iBandSel, m_filters[m_iBandSel]->Gain, m_filters[m_iBandSel]->Freq, m_filters[m_iBandSel]->Q);
   }
-  
   else
   {
-    m_filters[m_iBandSel]->Gain = 0.0;
+    //Check if is over some control pointer
+    bBandFocus = false;
+    bool vFocus[m_TotalBandsCount];
+    int focus_hits = 0;
+    for(int i = 0; i < m_TotalBandsCount; i++)
+    {
+      if( event->x > freq2Pixels(m_filters[i]->Freq) - 8 &&
+	  event->x < freq2Pixels(m_filters[i]->Freq) + 8 &&
+	  event->y > dB2Pixels(m_filters[i]->Gain) - 8 &&
+	  event->y < dB2Pixels(m_filters[i]->Gain) + 8 ) 
+      {
+	m_iBandSel = i;
+	bBandFocus = true;
+	vFocus[i]=true;
+	focus_hits++;
+      }
+      else
+      {
+	vFocus[i]=false;
+      }
+    }
+    
+    if(focus_hits > 1)
+    {
+      for(int i = 0; i < m_TotalBandsCount; i++)
+      {
+	if(vFocus[i] && m_filters[i]->bIsOn)
+	{
+	  m_iBandSel = i;
+	}
+      }
+    }
   }
-  
-  ComputeFilter(m_iBandSel);
+
   redraw();  
-
-  // emit the signal
-  m_BandChangedSignal.emit(m_iBandSel, m_filters[m_iBandSel]->Gain, m_filters[m_iBandSel]->Freq, m_filters[m_iBandSel]->Q);
-
   return true;
 }
 
@@ -468,7 +494,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     }
     
     //Hz scale 20 Hz
-    cr->move_to( xPixels_Grid[0] + 5, height - CURVE_MARGIN - CURVE_TEXT_OFFSET + 3.5);
+    cr->move_to( xPixels_Grid[0] - 5, height - CURVE_MARGIN - CURVE_TEXT_OFFSET + 3.5);
     pangoLayout->set_text("20");
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke(); 
@@ -522,7 +548,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     cr->stroke();
 
     //Hz scale 20 KHz
-    cr->move_to( xPixels_Grid[27] - 18, height - CURVE_MARGIN - CURVE_TEXT_OFFSET + 3.5);
+    cr->move_to( xPixels_Grid[27] - 10, height - CURVE_MARGIN - CURVE_TEXT_OFFSET + 3.5);
     pangoLayout->set_text("20k");
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke();
@@ -621,6 +647,33 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
 	  cr->stroke();
 	  cr->restore();
       }
+      
+      //Draw Focused band
+      if(bMotionIsConnected || bBandFocus)
+      {
+	  ball_x = (double)freq2Pixels(m_filters[m_iBandSel]->Freq);
+	  if( m_filters[m_iBandSel]->fType == PEAK || 
+	      m_filters[m_iBandSel]->fType == LOW_SHELF ||
+	      m_filters[m_iBandSel]->fType == HIGH_SHELF )
+	  {
+	    ball_y = (double)dB2Pixels(m_filters[m_iBandSel]->Gain);
+	  }
+	  else
+	  {
+	    ball_y =  (double)dB2Pixels(0.0);
+	    m_filters[m_iBandSel]->Gain = 0.0;
+	  }
+	    
+	  cr->save();
+	  Gdk::Color color("#00FFFF");
+	  cr->set_line_width(1);
+	  cr->set_source_rgb(color.get_red_p(), color.get_green_p(), color.get_blue_p());
+	  cr->arc(ball_x, ball_y, 6.0, 0.0, 6.28318530717958647693);
+	  cr->stroke();
+	  cr->restore();
+
+      }
+      
     }// end Bypass check
     
     //draw de outer grind box
