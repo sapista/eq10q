@@ -6,7 +6,7 @@ PROJECT(eq10q)
 set(CMAKE_C_FLAGS "-Wall -O3 -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse -std=c99")
 set(CMAKE_CXX_FLAGS "-Wall -fPIC")
 
-#ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC) ###USED FOR DEBUG
+##ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC) ###USED FOR DEBUG
 
 #Set Install prefix
 #set (CMAKE_INSTALL_PREFIX  "/usr/local/lib/lv2") #Install prefix
@@ -84,22 +84,40 @@ configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq10qs.c")
 add_library(eq10qs SHARED eq10qs.c)
 target_link_libraries( eq10qs  lib_filter lib_vumeter)
 
-#Build GATE DSP
+#Build GATE DSP Mono
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_GATE")
 set( Dyn_Uri  "\"http://eq10q.sourceforge.net/gate\"")
-configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate.c")
-add_library(gate SHARED gate.c)
+set( Dyn_Channels_Count 1)
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate_mono.c")
+add_library(gate SHARED gate_mono.c)
 target_link_libraries( gate lib_vumeter lib_filter)
 
-#Build Compressor DSP
+#Build Compressor DSP Mono
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_COMPRESSOR")
 set( Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor\"")
-configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor.c")
-add_library(compressor SHARED compressor.c)
+set( Dyn_Channels_Count 1)
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor_mono.c")
+add_library(compressor SHARED compressor_mono.c)
 target_link_libraries( compressor lib_vumeter lib_filter)
 
+#Build GATE DSP Stereo
+set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_GATE")
+set( Dyn_Uri  "\"http://eq10q.sourceforge.net/gate_stereo\"")
+set( Dyn_Channels_Count 2)
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate_stereo.c")
+add_library(gate_stereo SHARED gate_stereo.c)
+target_link_libraries( gate_stereo lib_vumeter lib_filter)
+
+#Build Compressor DSP Stereo
+set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_COMPRESSOR")
+set( Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor_stereo\"")
+set( Dyn_Channels_Count 2)
+configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor_stereo.c")
+add_library(compressor_stereo SHARED compressor_stereo.c)
+target_link_libraries( compressor_stereo lib_vumeter lib_filter)
+
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor PROPERTIES PREFIX "")
+set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo PROPERTIES PREFIX "")
 
 #CLEAN generated .c files on run 'make clean'
 SET(generatedEqConfigFiles 
@@ -107,15 +125,16 @@ SET(generatedEqConfigFiles
       ${PROJECT_SOURCE_DIR}/eq4qm.c;${PROJECT_SOURCE_DIR}/eq4qs.c
       ${PROJECT_SOURCE_DIR}/eq6qm.c;${PROJECT_SOURCE_DIR}/eq6qs.c
       ${PROJECT_SOURCE_DIR}/eq10qm.c;${PROJECT_SOURCE_DIR}/eq10qs.c
-      ${PROJECT_SOURCE_DIR}/gate.c;${PROJECT_SOURCE_DIR}/compressor.c
+      ${PROJECT_SOURCE_DIR}/gate_mono.c;${PROJECT_SOURCE_DIR}/compressor_mono.c
+      ${PROJECT_SOURCE_DIR}/gate_stereo.c;${PROJECT_SOURCE_DIR}/compressor_stereo.c
       )
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedEqConfigFiles}")
 
 
 ##===========================THE LV2 INSTALLER================================================
 #INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/${LV2_BUNDLE}" DESTINATION "${LV2_BUNDLE}")
-INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" DESTINATION "${LV2_BUNDLE}")
-INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor DESTINATION "${LV2_BUNDLE}")
+INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" "gate_stereo.ttl" "compressor_stereo.ttl" DESTINATION "${LV2_BUNDLE}")
+INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo DESTINATION "${LV2_BUNDLE}")
 
 INCLUDE(CPack)
 # cpack -G TGZ

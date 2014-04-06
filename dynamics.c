@@ -19,9 +19,9 @@
  ***************************************************************************/
 
 /***************************************************************************
-This file is the implementation of the EQ plugin
+This file is the implementation of the DYN plugin
 This plugin is inside the Sapista Plugins Bundle
-This file implements functionalities for a large numbers of equalizers
+This file implements functionalities for diferent dynamic plugins
 ****************************************************************************/
 
 #include <stdio.h>
@@ -34,9 +34,14 @@ This file implements functionalities for a large numbers of equalizers
 #include "dsp/vu.h"
 #include "dsp/filter.h"
 
+#define @Plugin_Is_Dynamics_Compressor@
+#define USE_EQ10Q_FAST_MATH
+#define NUM_CHANNELS @Dyn_Channels_Count@
+
+
 #define DYN_URI @Dyn_Uri@
-#define PORT_OUTPUT 0
-#define PORT_INPUT 1
+#define PORT_OUTPUT_L 0
+#define PORT_INPUT_L 1
 #define PORT_KEY_LISTEN 2
 #define PORT_THRESHOLD 3
 #define PORT_ATACK 4
@@ -50,11 +55,13 @@ This file implements functionalities for a large numbers of equalizers
 #define PORT_GAINREDUCTION 12
 #define PORT_KNEE 13
 
-#define FILTER_INPUT_GAIN 10000.0
-#define FILTER_OUTPUT_GAIN 0.0001
-
-#define @Plugin_Is_Dynamics_Compressor@
-#define USE_EQ10Q_FAST_MATH
+#ifdef PLUGIN_IS_COMPRESSOR
+#define PORT_OUTPUT_R 14
+#define PORT_INPUT_R 15
+#else
+#define PORT_OUTPUT_R 13
+#define PORT_INPUT_R 14
+#endif
 
 static LV2_Descriptor *dynDescriptor = NULL;
 
@@ -66,9 +73,9 @@ typedef struct {
   float *hold_makeup; //Hold for gate makeup for compressor/expander
   float *decay;
   float *range_ratio; //range for gate ratio for compressor/expander
-  float *output;
+  float *output[NUM_CHANNELS];
   float *gainreduction; 
-  const float *input;
+  const float *input[NUM_CHANNELS];
   float *hpffreq;
   float *lpffreq;
   float *ingain;
@@ -120,11 +127,11 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     case PORT_RANGE:
 	    plugin->range_ratio = (float*)data;
 	    break;
-    case PORT_INPUT:
-	    plugin->input = (const float*)data;
+    case PORT_INPUT_L:
+	    plugin->input[0] = (const float*)data;
 	    break;
-    case PORT_OUTPUT:
-	    plugin->output = (float*)data;
+    case PORT_OUTPUT_L:
+	    plugin->output[0] = (float*)data;
 	    break;
     case PORT_GAINREDUCTION:
 	    plugin->gainreduction = (float*)data;
@@ -145,6 +152,15 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     #ifdef PLUGIN_IS_COMPRESSOR
     case PORT_KNEE:
 	    plugin->knee = (float*)data;
+	    break;
+    #endif
+	    
+    #if NUM_CHANNELS == 2
+    case PORT_INPUT_R:
+	    plugin->input[1] = (const float*)data;
+	    break;
+    case PORT_OUTPUT_R:
+	    plugin->output[1] = (float*)data;
 	    break;
     #endif
   } 
@@ -170,11 +186,7 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
 static void runDyn(LV2_Handle instance, uint32_t sample_count)
 {
   Dynamics *plugin_data = (Dynamics *)instance;
-  
-  //Read ports (common)
-  float * const output = plugin_data->output;
-  const float * const input = plugin_data->input;
-  
+   
   const float attack = *(plugin_data->attack);
   const float decay = *(plugin_data->decay);
   const float hpffreq = *(plugin_data->hpffreq);
@@ -221,7 +233,11 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
 
   float gain_reduction = 0.0f;
-  float input_filtered, input_pre;
+  float input_filtered = 0.0f;
+  float input_preL;
+  #if NUM_CHANNELS == 2
+  float input_preR;
+  #endif
   for (uint32_t i = 0; i < sample_count; ++i) 
   {
     //Compute filter coeficients
@@ -235,16 +251,19 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     }
 
     //Input gain
-    input_pre = input[i] * InputGain;
-
+    input_preL =  plugin_data->input[0][i] * InputGain;
+    input_filtered = input_preL;
+    #if NUM_CHANNELS == 2
+    input_preR = plugin_data->input[1][i] * InputGain;
+    input_filtered = (input_preL + input_preR)*0.5f;
+    #endif
+    
     //Sample to Input Vumeter
-    SetSample(plugin_data->InputVu[0], input_pre);   
+    SetSample(plugin_data->InputVu[0], input_filtered);   
 
     //Apply Filters
-    input_filtered = input_pre * FILTER_INPUT_GAIN;     
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
-    input_filtered*=FILTER_OUTPUT_GAIN;   
     
     //===================== GATE CODE ================================
     #ifdef PLUGIN_IS_GATE
@@ -319,7 +338,10 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     #endif
     //=================== END OF COMPRESSOR CODE ======================
     
-    output[i] = input_filtered*(KeyListen) + input_pre*gain_reduction*(1-KeyListen);
+    plugin_data->output[0][i] = input_filtered*(KeyListen) + input_preL*gain_reduction*(1-KeyListen);
+    #if NUM_CHANNELS == 2
+    plugin_data->output[1][i] = input_filtered*(KeyListen) + input_preR*gain_reduction*(1-KeyListen);
+    #endif
 
   }
   plugin_data->g = g;

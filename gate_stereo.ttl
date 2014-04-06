@@ -11,10 +11,10 @@
   guiext:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
-<http://eq10q.sourceforge.net/gate>
+<http://eq10q.sourceforge.net/gate_stereo>
   a lv2:Plugin, lv2:GatePlugin ;
-  lv2:binary <gate.so>;
-  doap:name "GT10QM";
+  lv2:binary <gate_stereo.so>;
+  doap:name "GT10QS";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
@@ -173,4 +173,16 @@ doap:maintainer [
 	      lv2:index 12;
 	      lv2:symbol "gateled";
 	      lv2:name "Gain Reduction";
+      ],
+	      [
+	      a lv2:AudioPort, lv2:OutputPort;
+	      lv2:index 13;
+	      lv2:symbol "outputR";
+	      lv2:name "OutputR";
+      ],
+	      [
+	      a lv2:AudioPort, lv2:InputPort;
+	      lv2:index 14;
+	      lv2:symbol "inputR";
+	      lv2:name "InputR";
       ].

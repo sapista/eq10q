@@ -14,7 +14,7 @@
 <http://eq10q.sourceforge.net/compressor>
   a lv2:Plugin, lv2:CompressorPlugin;
   lv2:binary <compressor.so>;
-  doap:name "CS10Q";
+  doap:name "CS10QM";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
