@@ -78,8 +78,8 @@ void CtlButton::onButtonPressed()
 { 
   int x,y;
   get_pointer(x, y);
-  if(m_bIsXDirection) m_iAntValue = x;
-  else m_iAntValue =( -1)*y; 
+  if(m_bIsXDirection) m_iActValue = x;
+  else m_iActValue =( -1)*y;  
   m_MouseSignal = signal_motion_notify_event().connect( sigc::mem_fun(*this, &CtlButton::onMouseMove),false);
   set_state(Gtk::STATE_ACTIVE);
 }
@@ -109,8 +109,7 @@ float CtlButton::computeValue(int x, int y)
   m_iAntValue = m_iActValue;
 
   if(m_bIsXDirection) m_iActValue = x;
-  else m_iActValue =( -1)*y;
-  
+  else m_iActValue =( -1)*y;  
   if(m_iFilterType != FREQ_TYPE)
   { 
     //Gain and Q variation
