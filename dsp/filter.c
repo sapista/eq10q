@@ -26,7 +26,7 @@
 Filter *FilterInit(double rate)
 {
   Filter *filter = (Filter *)malloc(sizeof(Filter));
-  filter->fs=(float)rate;
+  filter->fs= rate;
   filter->gain = 1.0f;
   filter->freq = 100.0f;
   filter->q = 1.0f;

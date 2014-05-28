@@ -200,9 +200,9 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   int recalcCoefs[NUM_BANDS];
   int forceRecalcCoefs = 0;
   
-  float  sampleL; //Current processing sample left signal
+  double  sampleL; //Current processing sample left signal
   #if NUM_CHANNELS == 2
-  float sampleR; //Current processing sample right signal
+  double sampleR; //Current processing sample right signal
   #endif
    
   //Read EQ Ports and mark to recompute if changed
@@ -227,11 +227,11 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   for (pos = 0; pos < sample_count; pos++) 
   {       
     //Get input
-    sampleL = plugin_data->fInput[0][pos];
+    sampleL = (double)plugin_data->fInput[0][pos];
     DENORMAL_TO_ZERO(sampleL);
     
     #if NUM_CHANNELS == 2
-    sampleR = plugin_data->fInput[1][pos];
+    sampleR = (double)plugin_data->fInput[1][pos];
     DENORMAL_TO_ZERO(sampleR);
     #endif    
 
@@ -344,9 +344,9 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     }
 
     //Write on output
-    plugin_data->fOutput[0][pos] = sampleL;
+    plugin_data->fOutput[0][pos] = (float)sampleL;
     #if NUM_CHANNELS == 2
-    plugin_data->fOutput[1][pos] = sampleR;
+    plugin_data->fOutput[1][pos] = (float)sampleR;
     #endif
   }
   
