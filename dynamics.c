@@ -182,7 +182,7 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   return (LV2_Handle)plugin_data;
 }
 
-#define DENORMAL_TO_ZERO(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38
+#define DENORMAL_TO_ZERO_FLOAT(x) if (fabs(x) < (1e-30)) x = 0.f; //Min float is 1.1754943e-38
 static void runDyn(LV2_Handle instance, uint32_t sample_count)
 {
   Dynamics *plugin_data = (Dynamics *)instance;
@@ -281,7 +281,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
       //Dynamics Close
       g = g*dc;
     }
-    DENORMAL_TO_ZERO(g);
+    DENORMAL_TO_ZERO_FLOAT(g);
     gain_reduction = range_lin * (1 - g) + g;
     gr_meter=gain_reduction < gr_meter ? gain_reduction : gr_meter;
     #endif

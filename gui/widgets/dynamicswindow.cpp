@@ -30,32 +30,33 @@
 
 #define KNOB_SIZE 65
 #define WIDGET_BORDER 3
+#define LOGO_PATH "icons/logodynamics.png"
 
-DynMainWindow::DynMainWindow(const char *uri, std::string logoPath, std::string title, bool isCompressor)
+DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor)
   :m_pluginUri(uri),
-  m_logoPath(logoPath),
+  m_bundlePath(bundlePath),
   m_bIsCompressor(isCompressor)
 { 
-  m_InGainFader = Gtk::manage(new KnobWidget(-20.0, 20.0, "In Gain", "dB"));
+  m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", m_bundlePath.c_str()));
   m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0,false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, true));
-  m_Attack = Gtk::manage(new KnobWidget(0.1, 500.0, "Attack", "ms"));
-  m_Release = Gtk::manage(new KnobWidget(5.0, 4000.0, "Release", "ms"));
-  m_HPF = Gtk::manage(new KnobWidget(20.0, 20000.0, "Key HPF", "Hz", true));
-  m_LPF = Gtk::manage(new KnobWidget(20.0, 20000.0, "Key LPF", "Hz", true));
+  m_Attack = Gtk::manage(new KnobWidget2(0.1, 500.0, "Attack", "ms", m_bundlePath.c_str()));
+  m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", m_bundlePath.c_str()));
+  m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  m_bundlePath.c_str(), true));
+  m_LPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key LPF", "Hz",  m_bundlePath.c_str(), true));
 
   if(m_bIsCompressor)
   {
     //Is Compressor or Expander
-    m_Hold_Makeup = Gtk::manage(new KnobWidget(0.0, 20.0, "Makeup", "dB"));
-    m_Range_Ratio = Gtk::manage(new KnobWidget(1.0, 40.0, "Ratio", "dB"));
-    m_Knee = Gtk::manage(new KnobWidget(0.0, 20.0, "Knee", "dB"));
+    m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.0, 20.0, "Makeup", "dB", m_bundlePath.c_str()));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(1.0, 40.0, "Ratio", "dB", m_bundlePath.c_str()));
+    m_Knee = Gtk::manage(new KnobWidget2(0.0, 20.0, "Knee", "dB", m_bundlePath.c_str()));
   }
   else
   {
     //Is Gate
-    m_Hold_Makeup = Gtk::manage(new KnobWidget(5.0, 3000.0, "Hold", "ms"));
-    m_Range_Ratio = Gtk::manage(new KnobWidget(-90.0, -20.0, "Range", "dB"));
+    m_Hold_Makeup = Gtk::manage(new KnobWidget2(5.0, 3000.0, "Hold", "ms", m_bundlePath.c_str()));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, -20.0, "Range", "dB", m_bundlePath.c_str()));
   }
   
   m_KeyButton.set_label("KeyListen");
@@ -63,7 +64,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string logoPath, std::string 
   m_ButtonAlign.add(m_KeyButton);
  
   //load image logo
-  image_logo = new Gtk::Image(m_logoPath);
+  image_logo = new Gtk::Image(m_bundlePath + "/" + LOGO_PATH);
   m_LTitle.set_use_markup(true);
   m_LTitle.set_markup( "<span font_weight=\"bold\" size=\"x-large\" font_family=\"Monospace\">" + title + "</span>");
   m_LTitle.set_angle(90);

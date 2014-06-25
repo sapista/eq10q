@@ -18,52 +18,32 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef KNOB_WIDGET_H
-#define KNOB_WIDGET_H
+#ifndef KNOB_WIDGET2_H
+#define KNOB_WIDGET2_H
 
-#include <cmath>
-#include <string>
-#include <vector>
-#include <gtkmm/drawingarea.h>
+#include "knob.h"
+#include <gdkmm/pixbuf.h>
+#include <glibmm/refptr.h>
+#include <cairomm/surface.h>
 
+#define KNOB_ICON_FILE "knobs/knob2_35px.png"
+#define KNOB_X_CALIBRATION 1
+#define KNOB_Y_CALIBRATION -6
+#define KNOB_R_CALIBRATION 1.6
 
-class KnobWidget : public Gtk::DrawingArea
+class KnobWidget2 : public KnobWidget
 {
   public:
-    KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, bool bIsFreqType = false);
-    ~KnobWidget();
-    void set_value(float fValue);
-    double get_value();
+  KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *bundlePath, bool bIsFreqType = false);
+  
+  protected:
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
     
-    //signal accessor:
-    typedef sigc::signal<void> signal_KnobChanged;
-    signal_KnobChanged signal_changed();
-    
-protected:
-  //Override default signal handler:
-  virtual bool on_expose_event(GdkEventExpose* event);
-  void redraw();
-  
-  //Mouse grab signal handlers
-  virtual bool on_button_press_event(GdkEventButton* event);
-  virtual bool on_button_release_event(GdkEventButton* event);
-  virtual bool on_scrollwheel_event(GdkEventScroll* event);
-  virtual bool on_mouse_motion_event(GdkEventMotion* event);
-  
-  float m_fMin; //Min representable value
-  float m_fMax; //Max representable value
-  bool bMotionIsConnected;
-  float m_Value;
-  std::string m_Label;
-  std::string m_Units;
-  bool m_FreqKnob;
-
-  int width;
-  int height;
-  int mouse_move_ant;
-  sigc::connection m_motion_connection;
-  
-  //Fader change signal
-  signal_KnobChanged m_KnobChangedSignal;
+  private:
+    std::string m_bundlePath;
+    Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
+    Glib::RefPtr<Gdk::Pixbuf> m_image_ptr;
+    Cairo::RefPtr< Cairo::Context> m_image_context_ptr;
 };
 #endif

@@ -39,7 +39,7 @@
 #include "../lv2_ui.h"
 
 #include "vuwidget.h"
-#include "knob.h"
+#include "knob2.h"
 
 #define PORT_OUTPUT 0
 #define PORT_INPUT 1
@@ -64,7 +64,7 @@ using namespace sigc;
 class DynMainWindow : public Gtk::EventBox
 {
   public:
-    DynMainWindow(const char *uri, std::string logoPath, std::string title, bool isCompressor);
+    DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor);
     virtual ~DynMainWindow();   
     
     // Informing GUI about changes in the control ports
@@ -154,14 +154,14 @@ class DynMainWindow : public Gtk::EventBox
   protected:
     VUWidget *m_InputVu;
     VUWidget *m_GainReductionVu; 
-    KnobWidget *m_InGainFader;
-    KnobWidget *m_Attack;
-    KnobWidget *m_Hold_Makeup;
-    KnobWidget *m_Release;
-    KnobWidget *m_Range_Ratio;
-    KnobWidget *m_Knee;
-    KnobWidget *m_HPF;
-    KnobWidget *m_LPF;
+    KnobWidget2 *m_InGainFader;
+    KnobWidget2 *m_Attack;
+    KnobWidget2 *m_Hold_Makeup;
+    KnobWidget2 *m_Release;
+    KnobWidget2 *m_Range_Ratio;
+    KnobWidget2 *m_Knee;
+    KnobWidget2 *m_HPF;
+    KnobWidget2 *m_LPF;
     Gtk::ToggleButton m_KeyButton;
     Gtk::Alignment m_ButtonAlign;
     Gtk::HBox m_VuBox;
@@ -186,7 +186,7 @@ class DynMainWindow : public Gtk::EventBox
     
   private:
     std::string m_pluginUri;
-    std::string m_logoPath;  
+    std::string m_bundlePath;  
     bool m_bIsCompressor;
 };
 

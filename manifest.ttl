@@ -51,3 +51,7 @@
 <http://eq10q.sourceforge.net/compressor_stereo>
   a lv2:Plugin;
   rdfs:seeAlso <compressor_stereo.ttl>.
+  
+<http://eq10q.sourceforge.net/bassup>
+  a lv2:Plugin;
+  rdfs:seeAlso <bassup.ttl>.

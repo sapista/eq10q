@@ -116,8 +116,12 @@ configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compres
 add_library(compressor_stereo SHARED compressor_stereo.c)
 target_link_libraries( compressor_stereo lib_vumeter lib_filter)
 
+#Build BassUp DSP
+add_library(bassup SHARED bassup.c)
+target_link_libraries( bassup lib_filter)
+
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo PROPERTIES PREFIX "")
+set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup PROPERTIES PREFIX "")
 
 #CLEAN generated .c files on run 'make clean'
 SET(generatedEqConfigFiles 
@@ -133,8 +137,8 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedEqC
 
 ##===========================THE LV2 INSTALLER================================================
 #INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/${LV2_BUNDLE}" DESTINATION "${LV2_BUNDLE}")
-INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" "gate_stereo.ttl" "compressor_stereo.ttl" DESTINATION "${LV2_BUNDLE}")
-INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo DESTINATION "${LV2_BUNDLE}")
+INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" "gate_stereo.ttl" "compressor_stereo.ttl" "bassup.ttl" DESTINATION "${LV2_BUNDLE}")
+INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup DESTINATION "${LV2_BUNDLE}")
 
 INCLUDE(CPack)
 # cpack -G TGZ
