@@ -473,7 +473,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     //Draw the grid
     cr->save();
-    cr->set_source_rgb(0, 0.3, 0.4);
+     cr->set_source_rgb(0.3, 0.3, 0.4);
     cr->set_line_width(1);
     for(int i = 0; i < GRID_VERTICAL_LINES; i++)
     {
@@ -493,7 +493,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     //Draw text with pango to grid
     cr->save();
-    cr->set_source_rgb(0, 0.3, 0.4);
+    cr->set_source_rgb(0.6, 0.6, 0.6);
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 7");
     pangoLayout->set_font_description(font_desc);
@@ -695,7 +695,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     //draw de outer grind box
     cr->save();
-    cr->set_source_rgb(0, 0.3, 0.4);
+    cr->set_source_rgb(0.3, 0.3, 0.4);
     cr->set_line_width(1);
     cr->move_to(CURVE_MARGIN + CURVE_TEXT_OFFSET + 0.5, CURVE_MARGIN + 0.5); 
     cr->line_to(width - CURVE_MARGIN + 0.5, CURVE_MARGIN + 0.5);

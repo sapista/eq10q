@@ -168,11 +168,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
   modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
   
-  m_WidgetColors.setGenericWidgetColors(&m_PlotFrame);
+  //m_WidgetColors.setGenericWidgetColors(&m_PlotFrame);
   m_WidgetColors.setGenericWidgetColors(m_PlotFrame.get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_InGain);
+  //m_WidgetColors.setGenericWidgetColors(m_InGain);
   m_WidgetColors.setGenericWidgetColors(m_InGain->get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_OutGain);
+  //m_WidgetColors.setGenericWidgetColors(m_OutGain);
   m_WidgetColors.setGenericWidgetColors(m_OutGain->get_label_widget());
   m_WidgetColors.setButtonColors(&m_AButton);
   m_WidgetColors.setButtonColors(&m_BButton);

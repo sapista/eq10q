@@ -23,19 +23,19 @@
   #define EQ10Q_COLORS_H
   
 //Wdiget background colors 
-#define BACKGROUND_R 0.07
-#define BACKGROUND_G 0.08
-#define BACKGROUND_B 0.15
+#define BACKGROUND_R 0.19 //0.07
+#define BACKGROUND_G 0.19 //0.08
+#define BACKGROUND_B 0.22 //0.15
 
 //Wdiget foreground colors 
-#define FOREGROUND_R 0.0
-#define FOREGROUND_G 0.65
-#define FOREGROUND_B 0.65
+#define FOREGROUND_R 0.8 //0.0 
+#define FOREGROUND_G 0.8 //0.65
+#define FOREGROUND_B 0.8 //0.65
 
 //Text Label Color
-#define TEXT_R 1.0
-#define TEXT_G 1.0
-#define TEXT_B 1.0
+#define TEXT_R 0.9
+#define TEXT_G 0.9
+#define TEXT_B 0.9
 
 //Buttons background colors 
 #define BUTTON_BACKGROUND_R 0.02

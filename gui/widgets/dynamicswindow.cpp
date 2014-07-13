@@ -28,7 +28,8 @@
 #include "colors.h"
 #include "setwidgetcolors.h"
 
-#define KNOB_SIZE 65
+#define KNOB_SIZE_X 75
+#define KNOB_SIZE_Y 72
 #define WIDGET_BORDER 3
 #define LOGO_PATH "icons/logodynamics.png"
 
@@ -75,18 +76,18 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_TitleFrame.add(m_TitleBox);
   m_TitleFrame.set_label(""); //Must be empty tabler to apply the style
   
-  m_InGainFader->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Range_Ratio->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Attack->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Release->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_Hold_Makeup->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_HPF->set_size_request(KNOB_SIZE, KNOB_SIZE);
-  m_LPF->set_size_request(KNOB_SIZE, KNOB_SIZE);
+  m_InGainFader->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_Range_Ratio->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_Attack->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_Release->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_Hold_Makeup->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_HPF->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
+  m_LPF->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
   m_InputVu->set_size_request(50, -1);
   m_GainReductionVu->set_size_request(30,-1);
   if(m_bIsCompressor)
   {
-    m_Knee->set_size_request(KNOB_SIZE, KNOB_SIZE);
+    m_Knee->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
   }
   
   m_VuInAlign.add(*m_InputVu);

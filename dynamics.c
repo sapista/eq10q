@@ -233,7 +233,8 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
 
   float gain_reduction = 0.0f;
-  double input_filtered = 0.0;
+  float input_filtered = 0.0f;
+  double dToFiltersChain = 0.0;
   float input_preL;
   #if NUM_CHANNELS == 2
   float input_preR;
@@ -252,18 +253,19 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
 
     //Input gain
     input_preL =  plugin_data->input[0][i] * InputGain;
-    input_filtered = (double)input_preL;
+    dToFiltersChain = (double)input_preL;
     #if NUM_CHANNELS == 2
     input_preR = plugin_data->input[1][i] * InputGain;
-    input_filtered = (double)(input_preL + input_preR)*0.5f;
+    dToFiltersChain = (double)(input_preL + input_preR)*0.5f;
     #endif
     
     //Sample to Input Vumeter
-    SetSample(plugin_data->InputVu[0], input_filtered);   
+    SetSample(plugin_data->InputVu[0], (float)dToFiltersChain);   
 
     //Apply Filters
-    computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &input_filtered);
-    computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &input_filtered);
+    computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &dToFiltersChain);
+    computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &dToFiltersChain);
+    input_filtered = (float)dToFiltersChain;
     
     //===================== GATE CODE ================================
     #ifdef PLUGIN_IS_GATE

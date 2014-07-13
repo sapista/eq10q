@@ -29,7 +29,7 @@
 #define KNOB_ICON_FILE "knobs/knob2_35px.png"
 #define KNOB_X_CALIBRATION 1
 #define KNOB_Y_CALIBRATION -6
-#define KNOB_R_CALIBRATION 1.6
+#define KNOB_R_CALIBRATION 0.9
 
 class KnobWidget2 : public KnobWidget
 {

@@ -233,7 +233,6 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     {
       redraw_Normal(cr);
     }
-    
      
     //Draw Threshold MicroFader  
     if(m_bDrawThreshold)

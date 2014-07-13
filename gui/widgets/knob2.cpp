@@ -57,9 +57,7 @@ KnobWidget2::KnobWidget2(float fMin, float fMax, std::string sLabel, std::string
   
   // Draw the image on the new Context
   Gdk::Cairo::set_source_pixbuf (m_image_context_ptr, m_image_ptr, 0.0, 0.0);
-  m_image_context_ptr->paint();
-  //set_size_request(2*m_image_surface_ptr->get_width()+4*FADER_MARGIN, FADER_INITAL_HIGHT);
-  
+  m_image_context_ptr->paint();  
 }
 
 //Drawing Knob
@@ -115,19 +113,7 @@ bool KnobWidget2::on_expose_event(GdkEventExpose* event)
     cr->stroke();
     cr->save();
     
-    //Draw circle background white
-    cr->scale(width,height);
-    cr->set_source_rgba(0.2,0.6,0.6,1.0);
-    cr->set_line_width(0.10);
-    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS, 0.74 * PI, 0.26 * PI);
-    cr->stroke();
-    
-    //Draw circle background black
-    cr->set_source_rgba(0.1,0.1,0.2,0.9);
-    cr->set_line_width(0.07);
-    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS, 0.75 * PI, 0.25 * PI); 
-    cr->stroke();
-    
+ 
     //Calc konb angle (pos)
     double pos;
     if(m_FreqKnob)
@@ -143,15 +129,48 @@ bool KnobWidget2::on_expose_event(GdkEventExpose* event)
       pos = m*m_Value + n;  
     }
     
-    //Draw colored circle
-    cr->set_source_rgba(1.0,0.5,0.0,1.0);
+    //Scale to 1
+    cr->scale(width,height);
+    
+    //Draw color circle frame 3d shape
+    cr->set_source_rgba(0.3,0.3,0.5, 1.0);
+    cr->set_line_width(0.025);
+    cr->arc(KNOB_CENTER_X - 0.02, KNOB_CENTER_Y + 0.02, KNOB_RADIUS + 0.03, 0.74 * PI, 0.26 * PI);
+    cr->arc(KNOB_CENTER_X - 0.02, KNOB_CENTER_Y + 0.02, KNOB_RADIUS - 0.03, 0.26 * PI, 0.74 * PI);
+    cr->close_path();
+    cr->stroke();   
+    cr->set_source_rgba(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 1.0);
     cr->set_line_width(0.05);
-    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS, 0.76 * PI, pos); 
+    cr->arc(KNOB_CENTER_X , KNOB_CENTER_Y, KNOB_RADIUS , 0.74 * PI, 0.26 * PI);
+    cr->stroke();  
+    
+    //Draw colored circle
+    Cairo::RefPtr<Cairo::RadialGradient> rad_gradient_ptr = Cairo::RadialGradient::create(
+        KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS - 0.03, KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS + 0.1);
+    
+    rad_gradient_ptr->add_color_stop_rgba (0, 0.0, 0.8, 0.0, 1.0);  
+    rad_gradient_ptr->add_color_stop_rgba (1, 0.0, 0.4, 0.8, 0.0);
+ 
+    cr->set_source(  rad_gradient_ptr);                       
+    cr->set_line_width(0.08);
+    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS /*+ 0.025*/, 0.76 * PI, pos); 
+    cr->stroke();
+        
+    //Draw color circle frame
+    cr->set_source_rgba(0.9,0.9,0.9, 0.9);
+    cr->set_line_width(0.01);
+    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS + 0.03, 0.74 * PI, 0.26 * PI);
+    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS - 0.03, 0.26 * PI, 0.74 * PI);
+    cr->close_path();
     cr->stroke();
     
-    cr->set_source_rgba(0.6,0.3,0.0,1.0);
-    cr->set_line_width(0.03);
-    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS, 0.76 * PI, pos); 
+    cr->set_source_rgba(0.9,0.9,0.9, 0.9);
+    cr->set_line_width(0.04);
+    std::valarray< double > dashes(2);
+    dashes[0] = 0.015;
+    dashes[1] = 0.02;
+    cr->set_dash (dashes, 0.0);
+    cr->arc(KNOB_CENTER_X, KNOB_CENTER_Y, KNOB_RADIUS - 0.05, 0.74 * PI, 0.26 * PI);
     cr->stroke();
     cr->restore();
     
@@ -159,9 +178,6 @@ bool KnobWidget2::on_expose_event(GdkEventExpose* event)
     cr->save();
     cr->translate(width/2 + KNOB_X_CALIBRATION, height/2 + KNOB_Y_CALIBRATION);
     cr->rotate(pos + KNOB_R_CALIBRATION);
-    //cr->rectangle(-0.15, -0.15, 0.3, 0.3);
-    //cr->fill();
-    //cr->restore();
     
     //Draw the knob icon
     cr->set_source (m_image_surface_ptr, -m_image_surface_ptr->get_width()/2, -m_image_surface_ptr->get_height()/2);
