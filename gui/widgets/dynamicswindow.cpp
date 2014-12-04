@@ -28,6 +28,7 @@
 #include "colors.h"
 #include "setwidgetcolors.h"
 
+#define KNOB_ICON_FILE "/knobs/knob2_35px.png"
 #define KNOB_SIZE_X 75
 #define KNOB_SIZE_Y 72
 #define WIDGET_BORDER 3
@@ -38,29 +39,29 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_bundlePath(bundlePath),
   m_bIsCompressor(isCompressor)
 { 
-  m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", m_bundlePath.c_str()));
+  m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0,false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, true));
-  m_Attack = Gtk::manage(new KnobWidget2(0.1, 500.0, "Attack", "ms", m_bundlePath.c_str()));
-  m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", m_bundlePath.c_str()));
-  m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  m_bundlePath.c_str(), true));
-  m_LPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key LPF", "Hz",  m_bundlePath.c_str(), true));
+  m_Attack = Gtk::manage(new KnobWidget2(0.1, 500.0, "Attack", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
+  m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
+  m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
+  m_LPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key LPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
 
   if(m_bIsCompressor)
   {
     //Is Compressor or Expander
-    m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.0, 20.0, "Makeup", "dB", m_bundlePath.c_str()));
-    m_Range_Ratio = Gtk::manage(new KnobWidget2(1.0, 40.0, "Ratio", "dB", m_bundlePath.c_str()));
-    m_Knee = Gtk::manage(new KnobWidget2(0.0, 20.0, "Knee", "dB", m_bundlePath.c_str()));
+    m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.0, 20.0, "Makeup", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(1.0, 40.0, "Ratio", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
+    m_Knee = Gtk::manage(new KnobWidget2(0.0, 20.0, "Knee", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   else
   {
     //Is Gate
-    m_Hold_Makeup = Gtk::manage(new KnobWidget2(5.0, 3000.0, "Hold", "ms", m_bundlePath.c_str()));
-    m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, -20.0, "Range", "dB", m_bundlePath.c_str()));
+    m_Hold_Makeup = Gtk::manage(new KnobWidget2(5.0, 3000.0, "Hold", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, -20.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   
-  m_KeyButton.set_label("KeyListen");
+  m_KeyButton.set_label("Key");
   m_KeyButton.set_size_request(-1,25);
   m_ButtonAlign.add(m_KeyButton);
  
@@ -75,21 +76,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_TitleBox.pack_start(*image_logo, Gtk::PACK_SHRINK);
   m_TitleFrame.add(m_TitleBox);
   m_TitleFrame.set_label(""); //Must be empty tabler to apply the style
-  
-  m_InGainFader->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_Range_Ratio->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_Attack->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_Release->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_Hold_Makeup->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_HPF->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_LPF->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  m_InputVu->set_size_request(50, -1);
-  m_GainReductionVu->set_size_request(30,-1);
-  if(m_bIsCompressor)
-  {
-    m_Knee->set_size_request(KNOB_SIZE_X, KNOB_SIZE_Y);
-  }
-  
+   
   m_VuInAlign.add(*m_InputVu);
   m_VuInAlign.set_border_width(1);
   m_VuInFrame.add(m_VuInAlign);
@@ -112,7 +99,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_GattingBox.pack_start(*m_Hold_Makeup, Gtk::PACK_SHRINK);
   m_GattingBox.show_all_children();
   m_GattingFrame.add(m_GattingBox);
-  m_GattingFrame.set_label("GateParams");
+  m_GattingFrame.set_label("DYN");
   
   m_SideChainBox.set_border_width(WIDGET_BORDER);
   m_SideChainBox.set_spacing(WIDGET_BORDER * 5);
@@ -121,7 +108,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_SideChainBox.pack_start(m_ButtonAlign,Gtk::PACK_SHRINK);
   m_SideChainBox.show_all_children();
   m_SideChainFrame.add(m_SideChainBox);
-  m_SideChainFrame.set_label("SideChain");
+  m_SideChainFrame.set_label("SC");
   
   m_VuBox.pack_start(m_TitleFrame, Gtk::PACK_SHRINK );
   m_VuBox.pack_start(*m_InGainFader, Gtk::PACK_SHRINK );
@@ -174,6 +161,17 @@ DynMainWindow::~DynMainWindow()
   delete m_InputVu;
   delete m_GainReductionVu;
   delete m_InGainFader;
+  delete m_Attack;
+  delete m_Hold_Makeup;
+  delete m_Release;
+  delete m_Range_Ratio;
+  if(m_bIsCompressor)
+  {
+    delete m_Knee;
+  }
+  delete m_HPF;
+  delete m_LPF;
+  delete image_logo;
 }
 
 void DynMainWindow::onRealize()

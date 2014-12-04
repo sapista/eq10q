@@ -26,22 +26,19 @@
 #include <glibmm/refptr.h>
 #include <cairomm/surface.h>
 
-#define KNOB_ICON_FILE "knobs/knob2_35px.png"
-#define KNOB_X_CALIBRATION 1
-#define KNOB_Y_CALIBRATION -6
-#define KNOB_R_CALIBRATION 0.9
+
 
 class KnobWidget2 : public KnobWidget
 {
   public:
-  KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *bundlePath, bool bIsFreqType = false);
+  KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *knobIconPath, int iType = KNOB_TYPE_LIN);
   
   protected:
     //Override default signal handler:
     virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
-    std::string m_bundlePath;
+    std::string m_knobIconPath;
     Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
     Glib::RefPtr<Gdk::Pixbuf> m_image_ptr;
     Cairo::RefPtr< Cairo::Context> m_image_context_ptr;

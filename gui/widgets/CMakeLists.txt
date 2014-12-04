@@ -14,3 +14,6 @@ target_link_libraries( eqwin ${GTKMM_LIBRARIES})
 
 add_library(dynamicwin  STATIC vuwidget.cpp  knob.cpp knob2.cpp dynamicswindow.cpp setwidgetcolors.cpp)
 target_link_libraries( dynamicwin ${GTKMM_LIBRARIES})
+
+add_library(bassupwin STATIC knob.cpp knob2.cpp bassupwindow.cpp)
+target_link_libraries( bassupwin ${GTKMM_LIBRARIES})

@@ -33,13 +33,13 @@
 #define CURSOR_LENGHT 0.25
 #define CURSOR_TRIANGLE_BASE 0.03
 
-KnobWidget::KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, bool bIsFreqType):
+KnobWidget::KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, int iType):
   m_fMin(fMin),
   m_fMax(fMax),
   m_Value(fMin),
   m_Label(sLabel),
   m_Units(sUnits),
-  m_FreqKnob(bIsFreqType),
+  m_TypeKnob(iType),
   mouse_move_ant(0)
 {
   add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK);
@@ -113,14 +113,22 @@ bool KnobWidget::on_button_release_event(GdkEventButton* event)
 bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
   double  increment;
-  if(m_FreqKnob)
+  
+  switch(m_TypeKnob)
   {
-    increment =  MOUSE_EVENT_PERCENT*(m_fMax - m_fMin)*0.0002*m_Value;
+    case  KNOB_TYPE_FREQ:
+      increment =  MOUSE_EVENT_PERCENT*(m_fMax - m_fMin)*0.0002*m_Value;
+      break;
+      
+    case KNOB_TYPE_LIN:
+      increment =  MOUSE_EVENT_PERCENT*(m_fMax - m_fMin);
+      break;
+      
+    case KNOB_TYPE_TIME:
+      increment =  MOUSE_EVENT_PERCENT*5.0*(m_Value + 1.0);
+      break;  
   }
-  else
-  {
-    increment =  MOUSE_EVENT_PERCENT*(m_fMax - m_fMin);
-  }
+
   int yPixels = event->y;
   
   if(yPixels - mouse_move_ant < 0)
@@ -142,13 +150,19 @@ bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
 bool KnobWidget::on_scrollwheel_event(GdkEventScroll* event)
 {
   double  increment;
-  if(m_FreqKnob)
+  switch(m_TypeKnob)
   {
-    increment =  SCROLL_EVENT_PERCENT*(m_fMax - m_fMin)*0.0001*m_Value;
-  }
-  else
-  {
-    increment =  SCROLL_EVENT_PERCENT*(m_fMax - m_fMin);
+    case  KNOB_TYPE_FREQ:
+      increment =  SCROLL_EVENT_PERCENT*(m_fMax - m_fMin)*0.0001*m_Value;
+      break;
+      
+    case KNOB_TYPE_LIN:
+       increment =  SCROLL_EVENT_PERCENT*(m_fMax - m_fMin);
+      break;
+      
+    case KNOB_TYPE_TIME:
+      increment =  SCROLL_EVENT_PERCENT*5.0*(m_Value + 1.0);
+      break;  
   }
   
   if (event->direction == GDK_SCROLL_UP) 
@@ -201,11 +215,15 @@ bool KnobWidget::on_expose_event(GdkEventExpose* event)
     cr->set_source_rgba(0.9, 0.9, 0.9, 1.0);
     pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
     std::stringstream ss;
-    ss.precision(2);
+    ss.precision(1);
     
-    if(m_FreqKnob && m_Value >= 1000.0)
-    {	
+    if(m_TypeKnob == KNOB_TYPE_FREQ && m_Value >= 1000.0)
+    {   
       ss<<std::fixed<<m_Value/1000.0<<" k"<<m_Units;
+    }
+    else if(m_TypeKnob == KNOB_TYPE_TIME && m_Value >= 1000.0)
+    {   
+      ss<<std::fixed<<m_Value/1000.0<<" s";
     }
     else
     {
@@ -233,18 +251,21 @@ bool KnobWidget::on_expose_event(GdkEventExpose* event)
     
 
     //Calc konb angle (pos)
-    double pos;
-    if(m_FreqKnob)
+    double pos, m, n;
+    switch(m_TypeKnob)
     {
-	double m = (1.48*PI)/log10(m_fMax/m_fMin);
-	double n = 0.76*PI;
-	pos = m*log10(m_Value/m_fMin) + n;
-    }
-    else
-    {
-      double m = (1.48*PI)/(m_fMax-m_fMin);
-      double n = 0.76*PI  - m*m_fMin;
-      pos = m*m_Value + n;  
+      case KNOB_TYPE_FREQ:
+      case KNOB_TYPE_TIME:
+        m = (1.48*PI)/log10(m_fMax/m_fMin);
+        n = 0.76*PI;
+        pos = m*log10(m_Value/m_fMin) + n;
+        break;
+        
+      case KNOB_TYPE_LIN:
+        m = (1.48*PI)/(m_fMax-m_fMin);
+        n = 0.76*PI  - m*m_fMin;
+        pos = m*m_Value + n; 
+        break;
     }
     
     //Draw colored circle

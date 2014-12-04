@@ -26,11 +26,14 @@
 #include <vector>
 #include <gtkmm/drawingarea.h>
 
+#define KNOB_TYPE_LIN 0
+#define KNOB_TYPE_FREQ 1
+#define KNOB_TYPE_TIME 2
 
 class KnobWidget : public Gtk::DrawingArea
 {
   public:
-    KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, bool bIsFreqType = false);
+    KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, int iType = KNOB_TYPE_LIN);
     ~KnobWidget();
     void set_value(float fValue);
     double get_value();
@@ -56,7 +59,7 @@ protected:
   float m_Value;
   std::string m_Label;
   std::string m_Units;
-  bool m_FreqKnob;
+  int m_TypeKnob;
 
   int width;
   int height;

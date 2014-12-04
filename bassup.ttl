@@ -4,11 +4,11 @@
 @prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
 
 ##LV2 GUI extension
-#<http://eq10q.sourceforge.net/bassup/gui>
-#  a guiext:GtkUI;
-#  guiext:binary <gui/bassup_gui.so>;
-#  guiext:requiredFeature guiext:makeResident;
-#  guiext:optionalFeature guiext:noUserResize.
+<http://eq10q.sourceforge.net/bassup/gui>
+  a guiext:GtkUI;
+  guiext:binary <gui/bassup_gui.so>;
+  guiext:requiredFeature guiext:makeResident;
+  guiext:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/bassup>
@@ -18,7 +18,7 @@
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRtCapable;
 
-#guiext:ui <http://eq10q.sourceforge.net/bassup/gui>;
+guiext:ui <http://eq10q.sourceforge.net/bassup/gui>;
 
 doap:maintainer [
       foaf:name "Pere Rafols Soler";

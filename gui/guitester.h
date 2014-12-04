@@ -6,6 +6,7 @@
 
 #include "widgets/eqwindow.h"
 #include "widgets/dynamicswindow.h"
+#include "widgets/bassupwindow.h"
 
 class HelloWorld : public Gtk::Window
 {
@@ -17,6 +18,7 @@ public:
 protected:
   EqMainWindow *m_EqWin;
   DynMainWindow *m_GateWin;
+  BassUpMainWindow *m_BassUp;
   Gtk::HBox m_hbox;
   
   //Slots signal handlers
