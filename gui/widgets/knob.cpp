@@ -93,7 +93,7 @@ bool KnobWidget::on_button_press_event(GdkEventButton* event)
       y > 10 &&
       y < height - 10)
   {
-    mouse_move_ant = x;
+    mouse_move_ant = y;
     if (!bMotionIsConnected)
     {
       m_motion_connection = signal_motion_notify_event().connect(sigc::mem_fun(*this, &KnobWidget::on_mouse_motion_event),true);
