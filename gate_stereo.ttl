@@ -48,7 +48,6 @@ doap:maintainer [
 	      lv2:minimum 0;
 	      lv2:maximum 1;
 	      lv2:default 0;
-	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:PortProperty lv2:toggled;
       ],
 
@@ -60,13 +59,6 @@ doap:maintainer [
 	      lv2:minimum -46;
 	      lv2:maximum 4;
 	      lv2:default -10;
-	      lv2:portProperty pprops:hasStrictBounds;
-	      units:unit units:db;
-	      units:conversion [
-		      units:to units:s;
-		      units:factor 0.001;
-	      ];
-
       ],
 
       [
@@ -77,12 +69,6 @@ doap:maintainer [
 	      lv2:minimum 0.1;
 	      lv2:maximum 500;
 	      lv2:default 30;
-	      lv2:portProperty pprops:hasStrictBounds;
-	      units:unit units:ms;
-	      units:conversion [
-		      units:to units:s;
-		      units:factor 0.001;
-	      ];
       ],
 
       [
@@ -93,12 +79,6 @@ doap:maintainer [
 	      lv2:minimum 5;
 	      lv2:maximum 3000;
 	      lv2:default 500;
-	      lv2:portProperty pprops:hasStrictBounds;
-	      units:unit units:ms;
-	      units:conversion [
-		      units:to units:s;
-		      units:factor 0.001;
-	      ];
       ],
 
       [
@@ -109,12 +89,6 @@ doap:maintainer [
 	      lv2:minimum 5;
 	      lv2:maximum 4000;
 	      lv2:default 1000;
-	      lv2:portProperty pprops:hasStrictBounds;
-	      units:unit units:ms;
-	      units:conversion [
-		      units:to units:s;
-		      units:factor 0.001;
-	      ];
       ],
 
 	      [
@@ -122,11 +96,9 @@ doap:maintainer [
 	      lv2:index 7;
 	      lv2:symbol "gaterange";
 	      lv2:name "Range (dB)";
-	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:minimum -90;
 	      lv2:maximum -20;
 	      lv2:default -90;
-	      units:unit units:db;
       ],
       
 	      [
@@ -134,7 +106,6 @@ doap:maintainer [
 	      lv2:index 8;
 	      lv2:symbol "hpf";
 	      lv2:name "HPF Key Filter (Hz)";
-	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:minimum 20;
 	      lv2:maximum 20000;
 	      lv2:default 20;
@@ -145,7 +116,6 @@ doap:maintainer [
 	      lv2:index 9;
 	      lv2:symbol "lpf";
 	      lv2:name "LPF Key Filter (Hz)";
-	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:minimum 20;
 	      lv2:maximum 20000;
 	      lv2:default 20000;
@@ -155,11 +125,9 @@ doap:maintainer [
 	      lv2:index 10;
 	      lv2:symbol "ingain";
 	      lv2:name "Gain (dB)";
-	      lv2:portProperty pprops:hasStrictBounds;
 	      lv2:minimum -20;
 	      lv2:maximum 20;
 	      lv2:default 0;
-	      units:unit units:db;
       ],
 	      [
 	      a lv2:ControlPort, lv2:OutputPort;

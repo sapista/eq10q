@@ -37,8 +37,6 @@ using namespace std;
 
 #define BASSUP_GUI_URI "http://eq10q.sourceforge.net/bassup/gui"
 
-static LV2UI_Descriptor *bassup_guiDescriptor = NULL;
-
 
 static LV2UI_Handle instantiateBassUp_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
@@ -89,40 +87,27 @@ static void portEventBassUp_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t b
   #endif
 }
 
+static const LV2UI_Descriptor bassup_guiDescriptor = {
+  BASSUP_GUI_URI,
+  instantiateBassUp_gui,
+  cleanupBassUp_gui,
+  portEventBassUp_gui,
+  NULL
+};
 
-static void init_gui()
-{
-  #ifdef TESTING_EQ10Q
-  cout<<"init_gui Entring... ";
-  #endif
-  
-  bassup_guiDescriptor = (LV2UI_Descriptor *)malloc(sizeof(LV2UI_Descriptor));
-  bassup_guiDescriptor->URI = BASSUP_GUI_URI;
-  bassup_guiDescriptor->instantiate = instantiateBassUp_gui;
-  bassup_guiDescriptor->cleanup = cleanupBassUp_gui;
-  bassup_guiDescriptor->port_event = portEventBassUp_gui;
-  bassup_guiDescriptor->extension_data = NULL;
-  
-  #ifdef TESTING_EQ10Q
-  cout<<" Done"<<endl;
-  #endif
-}
-
-//LV2_SYMBOL_EXPORT
+LV2_SYMBOL_EXPORT
 const LV2UI_Descriptor *lv2ui_descriptor(uint32_t index)
 {
   #ifdef TESTING_EQ10Q
   cout<<"lv2ui_descriptor Entring... ";
   #endif
   
-    if (!bassup_guiDescriptor) { init_gui(); }
-
     switch (index) {
             case 0:
                     #ifdef TESTING_EQ10Q
                     cout<<" Done with OK result (return LV2UI_Descriptor)"<<endl;
                     #endif
-                    return bassup_guiDescriptor;
+                    return &bassup_guiDescriptor;
             default:
                     #ifdef TESTING_EQ10Q
                     cout<<" Done with NOK result (return NULL)"<<endl;

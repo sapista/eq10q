@@ -44,8 +44,6 @@ This file implements functionalities for a large numbers of equalizers
 //#define EQ_INPUT_GAIN 10000.0
 //#define EQ_OUTPUT_GAIN 0.0001
 
-static LV2_Descriptor *eqDescriptor = NULL;
-
 typedef struct {
   //Plugin ports
   float *fBypass;
@@ -367,28 +365,23 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       
 }
 
-static void init()
-{
-  eqDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
-
-  eqDescriptor->URI = EQ_URI;
-  eqDescriptor->activate = NULL;
-  eqDescriptor->cleanup = cleanupEQ;
-  eqDescriptor->connect_port = connectPortEQ;
-  eqDescriptor->deactivate = NULL;
-  eqDescriptor->instantiate = instantiateEQ;
-  eqDescriptor->run = runEQ_v2;
-  eqDescriptor->extension_data = NULL;
-}
+static const LV2_Descriptor eqDescriptor = {
+  EQ_URI,
+  instantiateEQ,
+  connectPortEQ,
+  NULL,
+  runEQ_v2,
+  NULL,
+  cleanupEQ,
+  NULL
+};
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *lv2_descriptor(uint32_t index)
 {
-  if (!eqDescriptor) init();
-
   switch (index) {
   case 0:
-    return eqDescriptor;
+    return &eqDescriptor;
   default:
     return NULL;
   }

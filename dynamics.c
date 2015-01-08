@@ -63,8 +63,6 @@ This file implements functionalities for diferent dynamic plugins
 #define PORT_INPUT_R 14
 #endif
 
-static LV2_Descriptor *dynDescriptor = NULL;
-
 typedef struct {
   //Plugin ports
   float *key_listen;
@@ -219,7 +217,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   //Processor vars (only for gate)
   #ifdef PLUGIN_IS_GATE
   const float range_lin = pow(10, range * 0.05); //Range constant, I can not use Fast_dB2Lin10 because the Taylor aprox starts clipping at -67 dB and range is -90 dB to 0 dB
-  const int hold_max = (int)round((attack + hold) * sample_rate * 0.001f);
+  const int hold_max = (int)round(hold * sample_rate * 0.001f);
   #endif
   
   //Processor vars (only COMPRESSOR)
@@ -353,28 +351,23 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   *(plugin_data->fVuIn) = ComputeVu(plugin_data->InputVu[0], sample_count);
 }
 
-static void init()
-{
-  dynDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
-
-  dynDescriptor->URI = DYN_URI;
-  dynDescriptor->activate = NULL;
-  dynDescriptor->cleanup = cleanupDyn;
-  dynDescriptor->connect_port = connectPortDyn;
-  dynDescriptor->deactivate = NULL;
-  dynDescriptor->instantiate = instantiateDyn;
-  dynDescriptor->run = runDyn;
-  dynDescriptor->extension_data = NULL;
-}
+static const LV2_Descriptor dynDescriptor = {
+  DYN_URI,
+  instantiateDyn,
+  connectPortDyn,
+  NULL,
+  runDyn,
+  NULL,
+  cleanupDyn,
+  NULL
+};
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *lv2_descriptor(uint32_t index)
 {
-  if (!dynDescriptor) init();
-
   switch (index) {
   case 0:
-    return dynDescriptor;
+    return &dynDescriptor;
   default:
     return NULL;
   }

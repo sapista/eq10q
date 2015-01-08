@@ -26,7 +26,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq1qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq1qm.c")
 add_library(eq1qm SHARED eq1qm.c)
-target_link_libraries( eq1qm  lib_filter lib_vumeter)
+target_link_libraries( eq1qm  lib_filter lib_vumeter m)
 
 #Build EQ1QS DSP
 set( Eq_Bands_Count 1)
@@ -34,7 +34,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq1qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq1qs.c")
 add_library(eq1qs SHARED eq1qs.c)
-target_link_libraries( eq1qs  lib_filter lib_vumeter)
+target_link_libraries( eq1qs  lib_filter lib_vumeter m)
 
 #Build EQ4QM DSP
 set( Eq_Bands_Count 4)
@@ -42,7 +42,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq4qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq4qm.c")
 add_library(eq4qm SHARED eq4qm.c)
-target_link_libraries( eq4qm  lib_filter lib_vumeter)
+target_link_libraries( eq4qm  lib_filter lib_vumeter m)
 
 #Build EQ4QS DSP
 set( Eq_Bands_Count 4)
@@ -50,7 +50,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq4qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq4qs.c")
 add_library(eq4qs SHARED eq4qs.c)
-target_link_libraries( eq4qs  lib_filter lib_vumeter)
+target_link_libraries( eq4qs  lib_filter lib_vumeter m)
 
 #Build EQ6QM DSP
 set( Eq_Bands_Count 6)
@@ -58,7 +58,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq6qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq6qm.c")
 add_library(eq6qm SHARED eq6qm.c)
-target_link_libraries( eq6qm  lib_filter lib_vumeter)
+target_link_libraries( eq6qm  lib_filter lib_vumeter m)
 
 #Build EQ6QS DSP
 set( Eq_Bands_Count 6)
@@ -66,7 +66,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq6qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq6qs.c")
 add_library(eq6qs SHARED eq6qs.c)
-target_link_libraries( eq6qs  lib_filter lib_vumeter)
+target_link_libraries( eq6qs  lib_filter lib_vumeter m)
 
 #Build EQ10QM DSP
 set( Eq_Bands_Count 10)
@@ -74,7 +74,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq10qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq10qm.c")
 add_library(eq10qm SHARED eq10qm.c)
-target_link_libraries( eq10qm  lib_filter lib_vumeter)
+target_link_libraries( eq10qm  lib_filter lib_vumeter m)
 
 #Build EQ10QS DSP
 set( Eq_Bands_Count 10)
@@ -82,7 +82,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq10qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq10qs.c")
 add_library(eq10qs SHARED eq10qs.c)
-target_link_libraries( eq10qs  lib_filter lib_vumeter)
+target_link_libraries( eq10qs  lib_filter lib_vumeter m)
 
 #Build GATE DSP Mono
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_GATE")
@@ -90,7 +90,7 @@ set( Dyn_Uri  "\"http://eq10q.sourceforge.net/gate\"")
 set( Dyn_Channels_Count 1)
 configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate_mono.c")
 add_library(gate SHARED gate_mono.c)
-target_link_libraries( gate lib_vumeter lib_filter)
+target_link_libraries( gate lib_vumeter lib_filter m)
 
 #Build Compressor DSP Mono
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_COMPRESSOR")
@@ -98,7 +98,7 @@ set( Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor\"")
 set( Dyn_Channels_Count 1)
 configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor_mono.c")
 add_library(compressor SHARED compressor_mono.c)
-target_link_libraries( compressor lib_vumeter lib_filter)
+target_link_libraries( compressor lib_vumeter lib_filter m)
 
 #Build GATE DSP Stereo
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_GATE")
@@ -106,7 +106,7 @@ set( Dyn_Uri  "\"http://eq10q.sourceforge.net/gate_stereo\"")
 set( Dyn_Channels_Count 2)
 configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/gate_stereo.c")
 add_library(gate_stereo SHARED gate_stereo.c)
-target_link_libraries( gate_stereo lib_vumeter lib_filter)
+target_link_libraries( gate_stereo lib_vumeter lib_filter m)
 
 #Build Compressor DSP Stereo
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_COMPRESSOR")
@@ -114,11 +114,11 @@ set( Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor_stereo\"")
 set( Dyn_Channels_Count 2)
 configure_file("${PROJECT_SOURCE_DIR}/dynamics.c" "${PROJECT_SOURCE_DIR}/compressor_stereo.c")
 add_library(compressor_stereo SHARED compressor_stereo.c)
-target_link_libraries( compressor_stereo lib_vumeter lib_filter)
+target_link_libraries( compressor_stereo lib_vumeter lib_filter m)
 
 #Build BassUp DSP
 add_library(bassup SHARED bassup.c)
-target_link_libraries( bassup lib_filter)
+target_link_libraries( bassup lib_filter m)
 
 #remove the lib prefix to all generated .so files
 set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup PROPERTIES PREFIX "")

@@ -39,8 +39,6 @@ This plugin is inside the Sapista Plugins Bundle
 #define HPF_FREQ 50.0f
 #define LPF_FREQ 200.0f
 
-static LV2_Descriptor *bassupDescriptor = NULL;
-
 typedef struct {
   //Plugin ports
   float *amount;
@@ -123,28 +121,23 @@ static void runBassUp(LV2_Handle instance, uint32_t sample_count)
   }
 }
 
-static void init()
-{
-  bassupDescriptor = (LV2_Descriptor *)malloc(sizeof(LV2_Descriptor));
-
-  bassupDescriptor->URI = BASSUP_URI;
-  bassupDescriptor->activate = NULL;
-  bassupDescriptor->cleanup = cleanupBassUp;
-  bassupDescriptor->connect_port = connectPortBassUp;
-  bassupDescriptor->deactivate = NULL;
-  bassupDescriptor->instantiate = instantiateBassUp;
-  bassupDescriptor->run = runBassUp;
-  bassupDescriptor->extension_data = NULL;
-}
+static const LV2_Descriptor bassupDescriptor = {
+  BASSUP_URI,
+  instantiateBassUp,
+  connectPortBassUp,
+  NULL,
+  runBassUp,
+  NULL,
+  cleanupBassUp,
+  NULL
+};
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor *lv2_descriptor(uint32_t index)
 {
-  if (!bassupDescriptor) init();
-
   switch (index) {
   case 0:
-    return bassupDescriptor;
+    return &bassupDescriptor;
   default:
     return NULL;
   }

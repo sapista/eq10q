@@ -35,8 +35,6 @@ This plugin is inside the Sapista Plugins Bundle
 using namespace std;
 #endif
 
-static LV2UI_Descriptor *eq10q_guiDescriptor = NULL;
-
 
 static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
@@ -88,39 +86,28 @@ static void portEventEq10q_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t bu
 }
 
 
-static void init_gui()
-{
-  #ifdef TESTING_EQ10Q
-  cout<<"init_gui Entring... ";
-  #endif
-  
-  eq10q_guiDescriptor = (LV2UI_Descriptor *)malloc(sizeof(LV2UI_Descriptor));
-  eq10q_guiDescriptor->URI = @Eq_Uri@;
-  eq10q_guiDescriptor->instantiate = instantiateEq10q_gui;
-  eq10q_guiDescriptor->cleanup = cleanupEq10q_gui;
-  eq10q_guiDescriptor->port_event = portEventEq10q_gui;
-  eq10q_guiDescriptor->extension_data = NULL;
-  
-  #ifdef TESTING_EQ10Q
-  cout<<" Done"<<endl;
-  #endif
-}
+static const LV2UI_Descriptor eq10q_guiDescriptor = {
+  @Eq_Uri@,
+  instantiateEq10q_gui,
+  cleanupEq10q_gui,
+  portEventEq10q_gui,
+  NULL
+};
 
-//LV2_SYMBOL_EXPORT
+
+LV2_SYMBOL_EXPORT
 const LV2UI_Descriptor *lv2ui_descriptor(uint32_t index)
 {
   #ifdef TESTING_EQ10Q
   cout<<"lv2ui_descriptor Entring... ";
   #endif
   
-    if (!eq10q_guiDescriptor) { init_gui(); }
-
     switch (index) {
 	    case 0:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with OK result (return LV2UI_Descriptor)"<<endl;
 		    #endif
-		    return eq10q_guiDescriptor;
+		    return &eq10q_guiDescriptor;
 	    default:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with NOK result (return NULL)"<<endl;

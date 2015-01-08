@@ -37,8 +37,6 @@ using namespace std;
 
 #define DYN_GUI_URI @Gui_Dyn_Uri@
 
-static LV2UI_Descriptor *dyn_guiDescriptor = NULL;
-
 
 static LV2UI_Handle instantiateDyn_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
@@ -89,40 +87,27 @@ static void portEventDyn_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t buff
   #endif
 }
 
+static const LV2UI_Descriptor dyn_guiDescriptor = {
+  DYN_GUI_URI,
+  instantiateDyn_gui,
+  cleanupDyn_gui,
+  portEventDyn_gui,
+  NULL
+};
 
-static void init_gui()
-{
-  #ifdef TESTING_EQ10Q
-  cout<<"init_gui Entring... ";
-  #endif
-  
-  dyn_guiDescriptor = (LV2UI_Descriptor *)malloc(sizeof(LV2UI_Descriptor));
-  dyn_guiDescriptor->URI = DYN_GUI_URI;
-  dyn_guiDescriptor->instantiate = instantiateDyn_gui;
-  dyn_guiDescriptor->cleanup = cleanupDyn_gui;
-  dyn_guiDescriptor->port_event = portEventDyn_gui;
-  dyn_guiDescriptor->extension_data = NULL;
-  
-  #ifdef TESTING_EQ10Q
-  cout<<" Done"<<endl;
-  #endif
-}
-
-//LV2_SYMBOL_EXPORT
+LV2_SYMBOL_EXPORT
 const LV2UI_Descriptor *lv2ui_descriptor(uint32_t index)
 {
   #ifdef TESTING_EQ10Q
   cout<<"lv2ui_descriptor Entring... ";
   #endif
   
-    if (!dyn_guiDescriptor) { init_gui(); }
-
     switch (index) {
 	    case 0:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with OK result (return LV2UI_Descriptor)"<<endl;
 		    #endif
-		    return dyn_guiDescriptor;
+		    return &dyn_guiDescriptor;
 	    default:
 		    #ifdef TESTING_EQ10Q
 		    cout<<" Done with NOK result (return NULL)"<<endl;

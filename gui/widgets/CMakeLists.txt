@@ -10,10 +10,10 @@ add_library(eqwin  STATIC
 		vuwidget.cpp eqwindow.cpp filter.cpp setwidgetcolors.cpp 
 		bodeplot.cpp)
 
-target_link_libraries( eqwin ${GTKMM_LIBRARIES})
+target_link_libraries( eqwin ${GTKMM_LIBRARIES} m)
 
 add_library(dynamicwin  STATIC vuwidget.cpp  knob.cpp knob2.cpp dynamicswindow.cpp setwidgetcolors.cpp)
-target_link_libraries( dynamicwin ${GTKMM_LIBRARIES})
+target_link_libraries( dynamicwin ${GTKMM_LIBRARIES} m)
 
 add_library(bassupwin STATIC knob.cpp knob2.cpp bassupwindow.cpp)
-target_link_libraries( bassupwin ${GTKMM_LIBRARIES})
+target_link_libraries( bassupwin ${GTKMM_LIBRARIES} m)
