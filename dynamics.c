@@ -87,6 +87,7 @@ typedef struct {
   float g;
   int hold_count;
   Vu *InputVu[1];
+  float detector_vu;
   float noise;
   Filter *LPF_fil, *HPF_fil;
   Buffers LPF_buf, HPF_buf;
@@ -172,7 +173,8 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   plugin_data->hold_count = 1000000;
   plugin_data->g = 0.0f;
   plugin_data->InputVu[0] = VuInit(s_rate);
-  plugin_data->noise = 0.01; //the noise to get the GR VU workin in GUI
+  plugin_data->detector_vu = 0.0f;
+  plugin_data->noise = 0.0001; //the noise to get the GR VU workin in GUI
   plugin_data->HPF_fil = FilterInit(s_rate);
   plugin_data->LPF_fil = FilterInit(s_rate);
   flushBuffers(&plugin_data->LPF_buf);
@@ -195,7 +197,6 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   
   //Read ports (gate)
   #ifdef PLUGIN_IS_GATE
-  float input_detector;
   const float range = *(plugin_data->range_ratio);
   const float hold = *(plugin_data->hold_makeup);
   const float threshold = Fast_dB2Lin10(*(plugin_data->threshold));
@@ -210,6 +211,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   #endif
   
   //Plguin data
+  float input_detector;
   float sample_rate = plugin_data->sample_rate;
   float g = plugin_data->g;
   int hold_count = plugin_data->hold_count;
@@ -230,6 +232,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float ac = exp(-6.0f/(attack * sample_rate * 0.001f)); //Attack constant
   const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
 
+  float detector_vu = plugin_data->detector_vu;
   float gain_reduction = 0.0f;
   float input_filtered = 0.0f;
   double dToFiltersChain = 0.0;
@@ -257,17 +260,22 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     dToFiltersChain = (double)(input_preL + input_preR)*0.5f;
     #endif
     
-    //Sample to Input Vumeter
-    SetSample(plugin_data->InputVu[0], (float)dToFiltersChain);   
+
 
     //Apply Filters
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &dToFiltersChain);
     computeFilter(plugin_data->HPF_fil, &plugin_data->HPF_buf, &dToFiltersChain);
     input_filtered = (float)dToFiltersChain;
     
+    //Detector signal used for gate control and Threshold VU-meter in both gate and compressor
+    input_detector = fabs(input_filtered); //This is the detector signal filtered
+    
+    
     //===================== GATE CODE ================================
     #ifdef PLUGIN_IS_GATE
-    input_detector = fabs(input_filtered); //This is the detector signal filtered
+    //Sample to Input Vumeter
+    SetSample(plugin_data->InputVu[0], (float)dToFiltersChain);   
+    
     //Threshold
     hold_count = input_detector > threshold ? 0 : hold_count;
     if(hold_count < hold_max)
@@ -289,6 +297,17 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     
     //=================== COMPRESSOR CODE ============================
     #ifdef PLUGIN_IS_COMPRESSOR   
+    //Sample to Input TH-Vumeter
+    if(input_detector >= detector_vu)
+    {
+      detector_vu = input_detector - (input_detector - detector_vu)*ac;
+    }
+    else
+    {
+      detector_vu = input_detector - (input_detector - detector_vu)*dc;
+    }
+    SetSample(plugin_data->InputVu[0], detector_vu);    
+    
        
     //Thresholding and gain computer
 #ifdef USE_EQ10Q_FAST_MATH
@@ -347,6 +366,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   plugin_data->g = g;
   plugin_data->hold_count = hold_count;
   plugin_data->noise *= -1.0;
+  plugin_data->detector_vu = detector_vu;
   *(plugin_data->gainreduction) = 1.0/gr_meter + plugin_data->noise; // + ((float)(rand() % 100)/100.0);; //OK esta en lineal
   *(plugin_data->fVuIn) = ComputeVu(plugin_data->InputVu[0], sample_count);
 }
