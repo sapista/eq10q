@@ -26,7 +26,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq1qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq1qm.c")
 add_library(eq1qm SHARED eq1qm.c)
-target_link_libraries( eq1qm  lib_filter lib_vumeter m)
+target_link_libraries( eq1qm  lib_filter lib_vumeter m fftw3)
 
 #Build EQ1QS DSP
 set( Eq_Bands_Count 1)
@@ -34,7 +34,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq1qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq1qs.c")
 add_library(eq1qs SHARED eq1qs.c)
-target_link_libraries( eq1qs  lib_filter lib_vumeter m)
+target_link_libraries( eq1qs  lib_filter lib_vumeter m fftw3)
 
 #Build EQ4QM DSP
 set( Eq_Bands_Count 4)
@@ -42,7 +42,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq4qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq4qm.c")
 add_library(eq4qm SHARED eq4qm.c)
-target_link_libraries( eq4qm  lib_filter lib_vumeter m)
+target_link_libraries( eq4qm  lib_filter lib_vumeter m fftw3)
 
 #Build EQ4QS DSP
 set( Eq_Bands_Count 4)
@@ -50,7 +50,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq4qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq4qs.c")
 add_library(eq4qs SHARED eq4qs.c)
-target_link_libraries( eq4qs  lib_filter lib_vumeter m)
+target_link_libraries( eq4qs  lib_filter lib_vumeter m fftw3)
 
 #Build EQ6QM DSP
 set( Eq_Bands_Count 6)
@@ -58,7 +58,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq6qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq6qm.c")
 add_library(eq6qm SHARED eq6qm.c)
-target_link_libraries( eq6qm  lib_filter lib_vumeter m)
+target_link_libraries( eq6qm  lib_filter lib_vumeter m fftw3)
 
 #Build EQ6QS DSP
 set( Eq_Bands_Count 6)
@@ -66,7 +66,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq6qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq6qs.c")
 add_library(eq6qs SHARED eq6qs.c)
-target_link_libraries( eq6qs  lib_filter lib_vumeter m)
+target_link_libraries( eq6qs  lib_filter lib_vumeter m fftw3)
 
 #Build EQ10QM DSP
 set( Eq_Bands_Count 10)
@@ -74,7 +74,7 @@ set( Eq_Channels_Count 1)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq10qm\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq10qm.c")
 add_library(eq10qm SHARED eq10qm.c)
-target_link_libraries( eq10qm  lib_filter lib_vumeter m)
+target_link_libraries( eq10qm  lib_filter lib_vumeter m fftw3)
 
 #Build EQ10QS DSP
 set( Eq_Bands_Count 10)
@@ -82,7 +82,7 @@ set( Eq_Channels_Count 2)
 set( Eq_Uri  "\"http://eq10q.sourceforge.net/eq/eq10qs\"")
 configure_file("${PROJECT_SOURCE_DIR}/eq.c" "${PROJECT_SOURCE_DIR}/eq10qs.c")
 add_library(eq10qs SHARED eq10qs.c)
-target_link_libraries( eq10qs  lib_filter lib_vumeter m)
+target_link_libraries( eq10qs  lib_filter lib_vumeter m fftw3)
 
 #Build GATE DSP Mono
 set( Plugin_Is_Dynamics_Compressor "PLUGIN_IS_GATE")

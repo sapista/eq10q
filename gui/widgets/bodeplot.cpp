@@ -21,13 +21,15 @@
 #include "bodeplot.h"
 #include "colors.h"
 #include "guiconstants.h"
-#include "bodecalc.cpp"
 #include <cmath>
 #include <ctime>
 
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+
+//Use the DSP code to generate digital filter coefs
+#include "../../dsp/filter.h"
 
 PlotEQCurve::PlotEQCurve(int iNumOfBands)
 :width(PLOT_WIDTH),
@@ -37,7 +39,9 @@ m_Bypass(false),
 bMotionIsConnected(false),
 bBandFocus(false),
 iRedrawByTimer(-1),
-bIsFirstRun(true)
+bIsFirstRun(true),
+SampleRate(44.1e3),
+m_FftActive(false)
 {
    //Calc the number of points
    m_NumOfPoints = floor(log10(MAX_FREQ/MIN_FREQ)*NUM_POINTS_PER_DECADE) + 1;
@@ -60,6 +64,24 @@ bIsFirstRun(true)
   {
     band_y[i] = new double[m_NumOfPoints];
   }
+  
+  //Allocate memory for FFT data
+  fft_raw_data = new double[FFT_N/2];
+  fft_raw_freq = new double[FFT_N/2];
+  for(int i = 0; i < (FFT_N/2); i++)
+  {     
+    fft_raw_freq[i] = (SampleRate * (double)i) /  ((double)FFT_N);
+    fft_raw_data[i] = 0.0;
+    //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<<std::endl;
+  }
+  fft_plot = new double[m_NumOfPoints];
+  fft_plot_scaling = new double[m_NumOfPoints];
+  for(int i = 0; i < m_NumOfPoints; i++)
+  {
+    fft_plot[i]=0.0;
+    fft_plot_scaling[i] = 50.0*(0.1 * pow10(((double)i)/((double)m_NumOfPoints)) + 0.9);
+  }
+  
   resetCurve();
 
   set_size_request(width, height);
@@ -97,6 +119,11 @@ PlotEQCurve::~PlotEQCurve()
   }
   delete band_y;
   
+  //Delete FFT plots
+  delete fft_plot;
+  delete fft_raw_data;
+  delete fft_raw_freq;
+  delete fft_plot_scaling;
 }
 
 void PlotEQCurve::initBaseVectors()
@@ -164,59 +191,10 @@ void PlotEQCurve::resetCurve()
 
 void PlotEQCurve::ComputeFilter(int bd_ix)
 { 
-  //Calculem els valors de la banda actualitzada
-  switch(m_filters[bd_ix]->fType){
-    case NOT_SET:
-      //Do Nothing
-    break;
-      
-    case LPF_ORDER_1:
-      CalcBand_lpf_order1(bd_ix);
-    break;
-    
-    case LPF_ORDER_2:
-      CalcBand_lpf_order2(bd_ix);
-    break;
-    
-    case LPF_ORDER_3:
-      CalcBand_lpf_order3(bd_ix);
-    break;
-    
-    case LPF_ORDER_4:
-      CalcBand_lpf_order4(bd_ix);
-    break;
-    
-    case HPF_ORDER_1:
-      CalcBand_hpf_order1(bd_ix);
-    break;
-    
-    case HPF_ORDER_2:
-      CalcBand_hpf_order2(bd_ix);
-    break;
-    
-    case HPF_ORDER_3:
-      CalcBand_hpf_order3(bd_ix);
-    break;
-    
-    case HPF_ORDER_4:
-      CalcBand_hpf_order4(bd_ix);
-    break;
-    
-    case LOW_SHELF:
-      CalcBand_low_shelv(bd_ix);
-    break;
-      
-    case HIGH_SHELF:
-      CalcBand_high_shelv(bd_ix);
-    break;
-    
-    case PEAK:
-      CalcBand_peak(bd_ix);
-    break;
-    
-    case NOTCH:
-      CalcBand_notch(bd_ix);
-    break;
+  
+  if(m_filters[bd_ix]->fType != NOT_SET)
+  {
+    CalcBand_DigitalFilter(bd_ix);
   }
   
   //Reset main_y
@@ -471,6 +449,24 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     cr->paint(); //Fill all with background color
     cr->restore();
     
+    //Draw FFT background
+    if(m_FftActive)
+    {
+      double fft_point;
+      cr->save();
+      for(int i = 0; i < m_NumOfPoints; i++)
+      {
+        fft_point =  fft_max > 1.0 ?  fft_plot[i]/fft_max : fft_plot[i]; //Normalize to MAX in case of exciding max
+        fft_point = fft_point > 0.0 && fft_point < 0.1 ? 0.1 : fft_point;
+        cr->set_line_width(5.0 *  ((double)i)/((double)m_NumOfPoints));
+        cr->set_source_rgba(0.6, 0.8, 0.6,  fft_point > 0.8 ? 0.8 : fft_point);
+        cr->move_to( xPixels[i] + 0.5 , CURVE_MARGIN + (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
+        cr->line_to( xPixels[i] + 0.5 , height - CURVE_MARGIN - CURVE_TEXT_OFFSET - (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
+        cr->stroke();
+      }
+      cr->restore();
+    }
+    
     //Draw the grid
     cr->save();
      cr->set_source_rgb(0.3, 0.3, 0.4);
@@ -614,6 +610,26 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     }
 
+    
+    //Draw the FFT plot Curve to develop only!
+    /*
+    cr->save();
+    cr->set_line_width(1);
+    cr->set_source_rgb(0, 1, 0);
+    cr->set_line_width(1);
+    ydB = fft_plot[0] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : fft_plot[0];
+    ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+    cr->move_to(xPixels[0] + 0.5, dB2Pixels(ydB) + 0.5);
+    for (int i = 1; i < m_NumOfPoints; i++)
+    {
+      ydB = fft_plot[i] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : fft_plot[i];
+      ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+      cr->line_to(xPixels[i] + 0.5, dB2Pixels(ydB) + 0.5);
+    }
+    cr->stroke();
+    cr->restore();
+    */
+    
     if (!m_Bypass)
     {
       //Draw the main curve
@@ -752,3 +768,112 @@ PlotEQCurve::signal_BandEnabled PlotEQCurve::signal_enabled()
   return m_BandEnabledSignal;
 }
 
+void PlotEQCurve::CalcBand_DigitalFilter(int bd_ix)
+{
+  //Init Filter to avoid coef interpolation
+  Filter m_fil;
+  m_fil.gain = pow(10,((m_filters[bd_ix]->Gain)/20));
+  m_fil.freq = m_filters[bd_ix]-> Freq;
+  m_fil.q = m_filters[bd_ix]->Q;
+  m_fil.enable = 1.0f;
+  m_fil.iType = m_filters[bd_ix]->fType;
+  m_fil.fs = SampleRate;
+  m_fil.freqInter = 1000.0f;
+  m_fil.gainInter = 1000.0f;
+  m_fil.QInter = 1000.0f;
+  
+  //Calc coefs
+  calcCoefs(&m_fil, m_fil.gain, m_fil.freq, m_fil.q, m_fil.iType, m_fil.enable);
+  
+  //Digital filter magnitude response
+  double w, A, B, C, D, sinW, cosW;
+  //Precalculables
+  double AK = m_fil.b0 + m_fil.b2;
+  double BK = m_fil.b0 - m_fil.b2;
+  double CK = 1 + m_fil.a2;
+  double DK = 1 - m_fil.a2;
+  
+  for(int i=0; i<m_NumOfPoints; i++)
+  {
+    w=2*PI*f[i] / m_fil.fs; 
+    sinW = sin(w);
+    cosW = cos(w);
+    A = m_fil.b1 + AK*cosW;
+    B = BK*sinW;
+    C = m_fil.a1 + CK*cosW;
+    D = DK*sinW;
+    band_y[bd_ix][i]=(double)20*log10(sqrt(pow(A*C + B*D, 2) + pow(B*C - A*D, 2))/(C*C + D*D));
+  }
+  
+  //Compute 3 and 4 order m_filters
+  if(m_fil.filter_order)
+  {
+    //Precalculables
+    double AK = m_fil.b1_0 + m_fil.b1_2;
+    double BK = m_fil.b1_0 - m_fil.b1_2;
+    double CK = 1 + m_fil.a1_2;
+    double DK = 1 - m_fil.a1_2;
+    
+    for(int i=0; i<m_NumOfPoints; i++)
+    {
+      w=2*PI*f[i] / m_fil.fs; 
+      sinW = sin(w);
+      cosW = cos(w);
+      A = m_fil.b1_1 + AK*cosW;
+      B = BK*sinW;
+      C = m_fil.a1_1 + CK*cosW;
+      D = DK*sinW;
+      band_y[bd_ix][i]+=(double)20*log10(sqrt(pow(A*C + B*D, 2) + pow(B*C - A*D, 2))/(C*C + D*D));
+    }
+  }
+}
+
+void PlotEQCurve::setSampleRate(double samplerate)
+{
+  SampleRate = samplerate;
+  if(bIsFirstRun)
+  {
+    redraw();
+  }
+}
+
+void PlotEQCurve::setFftData()
+{
+  double sum, cnt, aux;
+  int j = 0;
+  fft_max = 0.0;
+  for(int i = 0; i<m_NumOfPoints; i++)
+  {
+    sum = 0.0; 
+    cnt = 0.0; //Averagin counter
+    while(fft_raw_freq[j] <= f[i] && j < (FFT_N/2)) //Binning to f[i]
+    {
+      sum+=fabs(2.0 * fft_raw_data[j] / ((double)FFT_N));
+      cnt += 1.0;
+      j++;
+    }
+    //fft_plot[i] = 20.0*log10(2.0*sum/((double)FFT_N) + 0.03475429);
+    
+    
+    if(cnt < 1.0)
+    {
+      fft_plot[i] = fft_plot[i -1]; //Copy previous value if no data (very cheap interpolation)
+      //std::cout<<"Error cnt < 1.0: "<<cnt<<"\t j = "<<j<<"\t f[i] = "<<f[i]<<"\t fft_raw_freq[j] = "<<fft_raw_freq[j]<<std::endl;
+    }
+    else
+    {
+      aux = (sum/cnt)* fft_plot_scaling[i];
+      fft_plot[i] = aux > fft_plot[i] ? aux : aux  + 0.7*fft_plot[i];
+      fft_max = fft_plot[i] > fft_max ? fft_plot[i] : fft_max;
+    }     
+  }
+  //std::cout<<"Max = "<<fft_max<<std::endl;
+  
+  redraw();
+}
+
+void PlotEQCurve::setFftActive(bool active)
+{
+  m_FftActive = active;
+  redraw();
+}

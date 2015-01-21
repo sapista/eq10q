@@ -24,12 +24,16 @@ This plugin is inside the Sapista Plugins Bundle
 This file implements functionalities for a large numbers of equalizers
 ****************************************************************************/
 
-//TODO Comment out stdio.h
 #include <stdio.h>
-
 #include <stdlib.h>
+#include <fftw3.h>
 
 #include "lv2.h"
+#include "forge.h"
+#include "util.h"
+#include "urid.h"
+#include "uris.h"
+
 #include "gui/eq_defines.h"
 #include "dsp/vu.h"
 #include "dsp/db.h"
@@ -39,10 +43,7 @@ This file implements functionalities for a large numbers of equalizers
 #define NUM_BANDS @Eq_Bands_Count@
 #define NUM_CHANNELS @Eq_Channels_Count@
 #define EQ_URI @Eq_Uri@
-
-//TODO I think that can be removed...
-//#define EQ_INPUT_GAIN 10000.0
-//#define EQ_OUTPUT_GAIN 0.0001
+#define FFT_N 8192//16384 //FFT sample size, must be a power of 2
 
 typedef struct {
   //Plugin ports
@@ -58,12 +59,31 @@ typedef struct {
   float *fOutput[NUM_CHANNELS];
   float *fVuIn[NUM_CHANNELS];
   float *fVuOut[NUM_CHANNELS];
+  LV2_Atom_Sequence *notify_port;
+  const LV2_Atom_Sequence* control_port;
 
+  //Features
+  LV2_URID_Map *map;
+  
+  //Forge for creating atoms
+  LV2_Atom_Forge forge;
+  LV2_Atom_Forge_Frame notify_frame;
+  
+  //Atom URID
+  Eq10qURIs uris;
+  double sampleRate;
+        
   //Plugin DSP
   Filter *filter[NUM_BANDS];
   Buffers buf[NUM_BANDS][NUM_CHANNELS];
   Vu *InputVu[NUM_CHANNELS];
-  Vu *OutputVu[NUM_CHANNELS];  
+  Vu *OutputVu[NUM_CHANNELS];
+
+  //FFT Analysis
+  int fft_ix; //Index to follow buffers
+  double *fft_in, *fft_out;
+  fftw_plan fft_p;
+  int fft_on;
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -80,6 +100,9 @@ static void cleanupEQ(LV2_Handle instance)
     VuClean(plugin->InputVu[i]);
     VuClean(plugin->OutputVu[i]);
   }
+  
+  fftw_destroy_plan(plugin->fft_p);
+  fftw_free(plugin->fft_in); fftw_free(plugin->fft_out);
   free(instance);
 }
 
@@ -156,6 +179,18 @@ static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
       {
         plugin->fVuOut[port - PORT_OFFSET - 2*NUM_CHANNELS - 5*NUM_BANDS - NUM_CHANNELS] = data;
       }
+      
+      //Connect Atom notify_port output port to GUI
+      else if(port == PORT_OFFSET + 2*NUM_CHANNELS + 5*NUM_BANDS + 2*NUM_CHANNELS)
+      {
+        plugin->notify_port = (LV2_Atom_Sequence*)data;
+      }
+      
+      //Connect Atom control_port input port from GUI
+      else
+      {
+        plugin->control_port = (const LV2_Atom_Sequence*)data;
+      }
     break;
   }
 }
@@ -164,6 +199,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
 {
   int i,ch;
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));  
+  plugin_data->sampleRate = s_rate;
   
   for(i=0; i<NUM_BANDS; i++)
   {
@@ -180,12 +216,43 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
     plugin_data->InputVu[ch] = VuInit(s_rate);
     plugin_data->OutputVu[ch] = VuInit(s_rate);
   }
+  
+  
+  // Get host features
+  for (i = 0; features[i]; ++i) 
+  {
+    if (!strcmp(features[i]->URI, LV2_URID__map))
+    {
+        plugin_data->map = (LV2_URID_Map*)features[i]->data;
+    } 
+  }
+  if (!plugin_data->map)
+  {
+    printf("EQ10Q Error: Host does not support urid:map\n");
+    goto fail;
+  }
 
+  // Map URIs and initialise forge
+  map_eq10q_uris(plugin_data->map, &plugin_data->uris);
+  lv2_atom_forge_init(&plugin_data->forge, plugin_data->map);
+  
+  //Initialize FFT objects
+  plugin_data->fft_ix = 0;
+  plugin_data->fft_in = (double*) fftw_malloc(sizeof(double) * FFT_N);
+  plugin_data->fft_out = (double*) fftw_malloc(sizeof(double) * FFT_N);
+  plugin_data->fft_p = fftw_plan_r2r_1d(FFT_N, plugin_data->fft_in, plugin_data->fft_out, FFTW_R2HC, FFTW_ESTIMATE);
+  plugin_data->fft_on = 0; //Initialy no GUI then no need to compute FFT
+  
   return (LV2_Handle)plugin_data;
+  
+  fail:
+    free(plugin_data);
+    return 0;
 }
 
 static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 {
+  
   EQ *plugin_data = (EQ *)instance;
  
   //Get values of control ports
@@ -193,11 +260,20 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   const float fInGain = dB2Lin(*(plugin_data->fInGain));
   const float fOutGain = dB2Lin(*(plugin_data->fOutGain));
   int bd, pos; //loop index
-  
+   
+
+  //Set up forge to write directly to notify output port.
+  const uint32_t notify_capacity = plugin_data->notify_port->atom.size;
+  lv2_atom_forge_set_buffer(&plugin_data->forge, (uint8_t*)plugin_data->notify_port, notify_capacity);
+  lv2_atom_forge_sequence_head(&plugin_data->forge, &plugin_data->notify_frame, 0);
+  //printf("Notify port size %d\n", notify_capacity);
+   
   //Interpolation coefs force to recompute
   int recalcCoefs[NUM_BANDS];
   int forceRecalcCoefs = 0;
   
+  int fft_send = 0; //If 1 LV2::Atom must send fftbuffer
+  double fftInSample; //Sample to push throught the FFT buffer
   double  sampleL; //Current processing sample left signal
   #if NUM_CHANNELS == 2
   double sampleR; //Current processing sample right signal
@@ -218,6 +294,32 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     else
     {
       recalcCoefs[bd] = 0;
+    }
+  }
+  
+  //Read input Atom control port (Data from GUI)
+  if(plugin_data->control_port)
+  {
+    const LV2_Atom_Event* ev = lv2_atom_sequence_begin(&(plugin_data->control_port)->body);
+    // For each incoming message...
+    while (!lv2_atom_sequence_is_end(&plugin_data->control_port->body, plugin_data->control_port->atom.size, ev)) 
+    {
+      // If the event is an atom:Object
+      if (ev->body.type == plugin_data->uris.atom_Object)
+      {
+        const LV2_Atom_Object* obj = (const LV2_Atom_Object*)&ev->body;
+        if (obj->body.otype == plugin_data->uris.atom_fft_on)
+        {
+          plugin_data->fft_on = 1;
+        }
+        else if(obj->body.otype == plugin_data->uris.atom_fft_off)
+        {
+          plugin_data->fft_on = 0;
+          plugin_data->fft_ix = 0;
+        }
+        //printf("FFT ON: %d\n", plugin_data->fft_on);
+      }
+      ev = lv2_atom_sequence_next(ev);
     }
   }
     
@@ -247,20 +349,32 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     else
     {    
       //The input amplifier
-      sampleL *= fInGain;    
+      sampleL *= fInGain;
+      fftInSample = sampleL;
       //Update VU input sample
       SetSample(plugin_data->InputVu[0], sampleL);
-      //Apply gain to the sample to move it to de-normalized state
-      //sampleL *= EQ_INPUT_GAIN;///TODO Testing lattice
       
       #if NUM_CHANNELS == 2
       //The input amplifier
       sampleR *= fInGain;    
+      fftInSample = 0.5*sampleL + 0.5*sampleR;
       //Update VU input sample
       SetSample(plugin_data->InputVu[1], sampleR);
-      //Apply gain to the sample to move it to de-normalized state
-      //sampleR *= EQ_INPUT_GAIN;///TODO Testing lattice
       #endif
+      
+      //FFT of input data after input gain
+      if(plugin_data->fft_on)
+      {
+        plugin_data->fft_in[plugin_data->fft_ix] = fftInSample; //Hanning Windowing * 0.5 * (1.0-cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
+        plugin_data->fft_ix++;     
+        if(plugin_data->fft_ix == FFT_N)
+        {
+          //FFT inout buffer full compute
+          fftw_execute(plugin_data->fft_p);
+          plugin_data->fft_ix = 0;      
+          fft_send = 1;
+        }
+      }
       
       //Coefs Interpolation
       if(forceRecalcCoefs)
@@ -324,16 +438,12 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 	
 	#endif
            
-      //Apply gain to the sample to move it to de-normalized state
-      //sampleL *= EQ_OUTPUT_GAIN; ///TODO Testing lattice
       //The output amplifier
       sampleL *= fOutGain; 
       //Update VU output sample
       SetSample(plugin_data->OutputVu[0], sampleL);
       
       #if NUM_CHANNELS == 2
-      //Apply gain to the sample to move it to de-normalized state
-      //sampleR *= EQ_OUTPUT_GAIN;///TODO Testing lattice
       //The output amplifier
       sampleR *= fOutGain;
       //Update VU output sample
@@ -356,12 +466,19 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   *(plugin_data->fVuOut[1]) = ComputeVu(plugin_data->OutputVu[1], sample_count);
   #endif
   
-  ///TEST TODO REMOVE THIS TEST
-  //Monitor Buffers
-  //#if NUM_CHANNELS == 2
-  //printf("DF_BUF: %f\t%f\r\n", plugin_data->buf[0][1].buf_0, plugin_data->buf[0][1].buf_1);
-  //printf("LAT_BUF: %f\t%f\r\n", plugin_data->buf[0][0].buf_0, plugin_data->buf[0][0].buf_1);
-  //#endif
+  //Send sample Rate and FFT data vector some day in the future...
+  LV2_Atom_Forge_Frame frame;       
+  lv2_atom_forge_frame_time(&plugin_data->forge, 0);
+  lv2_atom_forge_object( &plugin_data->forge, &frame, 0, plugin_data->uris.Dsp_2_Ui_COM); 
+  lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_sample_rate);
+  lv2_atom_forge_double(&plugin_data->forge, plugin_data->sampleRate); 
+  //Send FFT frame
+  lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_fft_data);
+  lv2_atom_forge_vector(&plugin_data->forge, sizeof(double), plugin_data->uris.atom_Double, fft_send * (FFT_N/2), plugin_data->fft_out);
+  lv2_atom_forge_pop(&plugin_data->forge, &frame);
+  
+  // Close off sequence
+  lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
       
 }
 

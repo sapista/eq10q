@@ -38,6 +38,10 @@
 
 //LV2 UI header
 #include "../lv2_ui.h"
+#include "../../forge.h"
+#include "../../util.h"
+#include "../../urid.h"
+#include "../../uris.h"
 
 #include "bandctl.h"
 #include "gainctl.h"
@@ -58,27 +62,84 @@ using namespace sigc;
 class EqMainWindow : public Gtk::EventBox
 {
   public:
-    EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath);
+    EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features);
     virtual ~EqMainWindow();   
     
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
     {
-      float data = * static_cast<const float*>(buffer);
+      //Atom event from DSP
+      if((int)port == (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
+      {
+         
+          const LV2_Atom* atom = (const LV2_Atom*)buffer;               
+          
+          if (format == uris.atom_eventTransfer && atom->type == uris.atom_Object)
+          {           
+            const LV2_Atom_Object* obj = (const LV2_Atom_Object*)atom;
+            if (obj->body.otype == uris.Dsp_2_Ui_COM)
+            {
+              const LV2_Atom* samplerate_val = NULL;        
+              const LV2_Atom* fftdata_val = NULL;      
+              const int n_props  = lv2_atom_object_get(obj, 
+                                                       uris.atom_sample_rate, &samplerate_val, 
+                                                       uris.atom_fft_data, &fftdata_val,
+                                                       NULL);
+
+              if (n_props != 2 || 
+                  samplerate_val->type != uris.atom_Double ||
+                  fftdata_val->type != uris.atom_Vector)
+              {
+                std::cout<<"Atom Object does not have the required properties with correct types"<<std::endl;
+              }
+              else
+              {
+                SampleRate = ((const LV2_Atom_Double*)samplerate_val)->body;
+                m_Bode->setSampleRate(SampleRate);
+                
+                const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*)fftdata_val; 
+                if (vec->body.child_type != uris.atom_Double) 
+                {
+                   std::cout<<"Atom fft Vector has incorrect element type"<<std::endl;
+                }
+                else
+                {
+
+                  // Number of elements = (total size - header size) / element size
+                  const size_t n_elem = ((fftdata_val->size - sizeof(LV2_Atom_Vector_Body))/ sizeof(double));
       
+                  //std::cout<<"N Elem "<<n_elem << std::endl;
+                  
+                  //Copy data to bodeplot
+                  if(n_elem == (FFT_N/2))
+                  {
+                    // Double elements immediately follow the vector body header
+                    double* fftdata = (double*)(&vec->body + 1);
+                    memcpy(m_Bode->fft_raw_data, fftdata, n_elem*sizeof(double));
+                    m_Bode->setFftData();
+                  }                 
+                }
+              }
+            }
+          }
+      }
+      
+      
+      //Standard LV2 ports handling
+      float data = * static_cast<const float*>(buffer);
       
       #ifdef PRINT_DEBUG_INFO
 	std::cout<<"gui_port_event Entring....... "<<std::endl;
       #endif
       
-        // Checking if params are the same as specified in the LV2 documentation
+        // Checking if params are the same as specified in the LV2 documentation for no-atom ports
         if (format != 0) {
 	    #ifdef PRINT_DEBUG_INFO
 	      std::cout<<"\t-- Return Format != 0"<<std::endl;
 	    #endif
             return;
         }
-        if (buffer_size != 4) {
+        if (buffer_size != 4) {  
 	    #ifdef PRINT_DEBUG_INFO
 	      std::cout<<"\t-- Return buffer_size != 4"<<std::endl;
 	    #endif  
@@ -201,8 +262,8 @@ class EqMainWindow : public Gtk::EventBox
 		std::cout<<"\t-- Vu output"<<std::endl;
 	      #endif  
 	    }
-	    
-	    //
+	       
+	    //No more ports here
 	    else
 	    {
 	      #ifdef PRINT_DEBUG_INFO	    
@@ -221,6 +282,9 @@ class EqMainWindow : public Gtk::EventBox
 
     LV2UI_Controller controller;
     LV2UI_Write_Function write_function;
+    Eq10qURIs uris;
+    LV2_URID_Map*  map;
+    LV2_Atom_Forge forge;
 
   protected:
     EqParams *m_AParams, *m_BParams, *m_CurParams;
@@ -228,8 +292,8 @@ class EqMainWindow : public Gtk::EventBox
     GainCtl *m_InGain, *m_OutGain;
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox;
     Gtk::VBox m_CurveBypassBandsBox, m_MainBox;
-    Gtk::ToggleButton m_BypassButton, m_AButton, m_BButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
+    Gtk::ToggleButton m_BypassButton, m_AButton, m_BButton, m_FftButton;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign;
     Gtk::Button m_FlatButton, m_SaveButton, m_LoadButton;
     Gtk::Frame m_PlotFrame;
     Gtk::Alignment m_MainWidgetAlign;
@@ -240,6 +304,7 @@ class EqMainWindow : public Gtk::EventBox
     void changeAB(EqParams *toBeCurrent);
     void saveToFile();
     void loadFromFile();
+    void sendAtomFftOn(bool fft_activated);
     
     //Signal Handlers
     void onButtonA();
@@ -253,15 +318,17 @@ class EqMainWindow : public Gtk::EventBox
     void onCurveChange(int band_ix, float Gain, float Freq, float Q);
     void onCurveBandEnable(int band_ix, bool IsEnabled);
     bool on_timeout();
+    void onButtonFft();
     
   private:
+    double SampleRate;
     float m_bypassValue;   
     const int m_iNumOfChannels;
     const int m_iNumOfBands;
     bool m_bMutex, m_port_event_InGain, m_port_event_OutGain, m_port_event_Bypass, m_port_event_Curve;
     bool *m_port_event_Curve_Gain, *m_port_event_Curve_Freq, *m_port_event_Curve_Q, *m_port_event_Curve_Type, *m_port_event_Curve_Enable;
     std::string m_pluginUri;
-    std::string m_bundlePath;    
+    std::string m_bundlePath;
 };
 
 #endif

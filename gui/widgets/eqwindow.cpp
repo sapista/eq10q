@@ -30,10 +30,11 @@
 #include "setwidgetcolors.h"
 
 //Constructor
-EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath)
+EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
   :m_BypassButton(" Bypass "),
   m_AButton(" A "),
   m_BButton(" B "),
+  m_FftButton("FFT On"),
   m_FlatButton(" Flat "),
   m_SaveButton("Save"),
   m_LoadButton("Load"),  
@@ -47,7 +48,26 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_pluginUri(uri),
   m_bundlePath(bundlePath)
 {
- 
+  
+  //Get LV2_Feature
+  map = NULL;
+  for (int i = 0; features[i]; ++i) 
+  {
+    if (!strcmp(features[i]->URI, LV2_URID_URI "#map"))
+    {
+      map = (LV2_URID_Map*)features[i]->data;
+    }
+  }
+
+  if (!map)
+  {
+    std::cout<<"Eq10q UI: Host does not support urid:map"<<std::endl;
+  }
+  
+  //Map uris and init forge
+  map_eq10q_uris(map, &uris);
+  lv2_atom_forge_init(&forge, map);
+  
   //Prepare curve Events vectors
   m_port_event_Curve_Gain = new bool[m_iNumOfBands];
   m_port_event_Curve_Freq = new bool[m_iNumOfBands];
@@ -77,6 +97,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveAlign.add(m_SaveButton);
   m_LoadAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
+  m_FftAlign.add(m_FftButton);
+  m_FftAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   
   m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
@@ -106,10 +128,12 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_ABFlatBox.pack_start(m_FlatAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_LoadAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_SaveAlign,Gtk::PACK_SHRINK);
+  m_ABFlatBox.pack_start(m_FftAlign, Gtk::PACK_SHRINK);
   m_LoadButton.show();
   m_SaveButton.show();
   m_LoadAlign.show();
   m_SaveAlign.show();
+  m_FftAlign.show();
   
   m_CurveBypassBandsBox.pack_start(m_PlotFrame ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
@@ -137,6 +161,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_OutGain->set_tooltip_text("Adjust the output gain");
   m_LoadButton.set_tooltip_text("Load curve from file");
   m_SaveButton.set_tooltip_text("Save curve to file");
+  m_FftButton.set_tooltip_text("Enable/Disable FFT");
 
   //connect signals
   m_BypassButton.signal_clicked().connect(sigc::mem_fun(*this, &EqMainWindow::onButtonBypass));
@@ -151,6 +176,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &EqMainWindow::on_timeout), TIMER_VALUE_MS);
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
+  m_FftButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -180,6 +206,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setButtonColors(&m_BypassButton);
   m_WidgetColors.setButtonColors(&m_LoadButton);
   m_WidgetColors.setButtonColors(&m_SaveButton);
+  m_WidgetColors.setButtonColors(&m_FftButton);
   
   //Set buttons font type
   m_BypassButton.modify_font(Pango::FontDescription("Monospace 8"));
@@ -192,6 +219,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
 
 EqMainWindow::~EqMainWindow()
 {
+  //Send FFT_OFF to DSP
+  sendAtomFftOn(false);
+  
   delete image_logo_center;
   delete m_AParams;
   delete m_BParams;
@@ -581,4 +611,21 @@ void EqMainWindow::loadFromFile()
   }
   
   delete fileChosser;
+}
+
+void EqMainWindow::onButtonFft()
+{
+  sendAtomFftOn(m_FftButton.get_active());
+  m_Bode->setFftActive(m_FftButton.get_active());
+}
+
+void EqMainWindow::sendAtomFftOn(bool fft_activated)
+{
+  int AtomPortNumber = PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels + 1; 
+  uint8_t obj_buf[64];
+  lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf)); 
+  LV2_Atom_Forge_Frame frame;
+  LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, fft_activated? uris.atom_fft_on : uris.atom_fft_off);
+  lv2_atom_forge_pop(&forge, &frame); 
+  write_function(controller, AtomPortNumber, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
 }

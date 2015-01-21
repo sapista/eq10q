@@ -43,7 +43,7 @@ static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, co
   #endif
   
   Gtk::Main::init_gtkmm_internals();
-  EqMainWindow* gui_data = new EqMainWindow(@Eq_Channels_Count@, @Eq_Bands_Count@, plugin_uri, bundle_path);
+  EqMainWindow* gui_data = new EqMainWindow(@Eq_Channels_Count@, @Eq_Bands_Count@, plugin_uri, bundle_path, features);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();

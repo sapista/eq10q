@@ -36,6 +36,7 @@
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
 #define AUTO_REFRESH_TIMEOUT_MS 20
+#define FFT_N 8192 //16384 //Very important! to have this equalt to eq.c (DSP part)
 
 typedef struct
 {
@@ -61,6 +62,9 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setBandType(int bd_ix, int newType);
     virtual void setBandEnable(int bd_ix, bool bIsEnabled);
     virtual void setBypass(bool bypass);
+    virtual void setSampleRate(double samplerate);
+    virtual void setFftData();
+    virtual void setFftActive(bool active);
     
     //signal accessor:
     //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
@@ -70,6 +74,9 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Slot prototype: void on_band_enabled(int band_ix, bool enabled);
     typedef sigc::signal<void, int, bool> signal_BandEnabled;
     signal_BandEnabled signal_enabled();
+    
+    //Public fft data to allow copying directly by atom
+    double *fft_raw_data;
     
   protected:    
       //Mouse grab signal handlers
@@ -93,6 +100,8 @@ class PlotEQCurve : public Gtk::DrawingArea
     bool bBandFocus;
     int iRedrawByTimer;
     bool bIsFirstRun;
+    double SampleRate;
+    bool m_FftActive;
     
     //To hadle mouse mouve events
     sigc::connection m_motion_connection;
@@ -108,7 +117,13 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Curve vector for Y axes in dB units
     double *main_y; //This pointer is initialized by construcor to an array of total num of points
     double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
-  
+    
+    //FFT vectors
+    double *fft_raw_freq;
+    double *fft_plot;
+    double *fft_plot_scaling;
+    double fft_max;
+    
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;
     signal_BandEnabled m_BandEnabledSignal;
@@ -129,21 +144,10 @@ class PlotEQCurve : public Gtk::DrawingArea
     double Pixels2freq(int pixels);
     
     //Compute a filter points
-    void ComputeFilter(int bd_ix); //this methos implements a switch to call methods on bodecalc.cpp acording filter type
+    void ComputeFilter(int bd_ix); 
     
-    //Curve math functions implemented in bodecalc.cpp
-    void CalcBand_lpf_order1(int bd_ix);
-    void CalcBand_lpf_order2(int bd_ix);
-    void CalcBand_lpf_order3(int bd_ix);
-    void CalcBand_lpf_order4(int bd_ix);
-    void CalcBand_hpf_order1(int bd_ix);
-    void CalcBand_hpf_order2(int bd_ix);
-    void CalcBand_hpf_order3(int bd_ix);
-    void CalcBand_hpf_order4(int bd_ix);
-    void CalcBand_low_shelv(int bd_ix);
-    void CalcBand_high_shelv(int bd_ix);
-    void CalcBand_peak(int bd_ix);
-    void CalcBand_notch(int bd_ix);
+    //Curve math functions   
+    void CalcBand_DigitalFilter(int bd_ix);
     
 };
 #endif

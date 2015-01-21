@@ -25,6 +25,7 @@ Before install EQ10Q you must resolve all required libraries:
   - cmake
   - pkg-config
   - Gtkmm >= 2.4
+  - FFTW3
 
 To install EQ10Q in your system open a terminal, go to EQ10Q top level folder and just type:
  

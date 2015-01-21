@@ -2,12 +2,14 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix doap: <http://usefulinc.com/ns/doap#>.
 @prefix guiext: <http://lv2plug.in/ns/extensions/ui#>.
-
+@prefix atom:  <http://lv2plug.in/ns/ext/atom#> .
+@prefix urid:  <http://lv2plug.in/ns/ext/urid#> .
+@prefix rsz:     <http://lv2plug.in/ns/ext/resize-port#> .
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/eq/eq6qs/gui>
   a guiext:GtkUI;
   guiext:binary <gui/eq6qs_gui.so>;
-  guiext:requiredFeature guiext:makeResident;
+  guiext:requiredFeature guiext:makeResident, urid:map;
   guiext:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
@@ -16,6 +18,7 @@
   lv2:binary <eq6qs.so>;
   doap:name "EQ6Q Stereo";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
+  lv2:requiredFeature urid:map
   lv2:optionalFeature lv2:hardRtCapable;
 
 guiext:ui <http://eq10q.sourceforge.net/eq/eq6qs/gui>;
@@ -429,4 +432,24 @@ doap:maintainer [
     lv2:index 40;
     lv2:symbol "out_2_vu_ctl";
     lv2:name "Out 2 VU CTL";
+  ],
+  
+  [
+    a lv2:OutputPort ,
+            atom:AtomPort ;
+    atom:bufferType atom:Sequence ;
+    lv2:index 41 ;
+    lv2:symbol "notify" ;
+    lv2:name "Notify" ;
+    rsz:minimumSize 73000;
+  ],
+  
+  [
+    a atom:AtomPort ,
+            lv2:InputPort ;
+    atom:bufferType atom:Sequence ;
+    lv2:designation lv2:control ;
+    lv2:index 42 ;
+    lv2:symbol "control" ;
+    lv2:name "Control"
   ].

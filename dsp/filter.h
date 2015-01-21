@@ -30,7 +30,10 @@ This file contains the filter definitions
 //#include <stdio.h>
 
 //Constants definitions
-#define PI 3.1416
+#ifndef PI
+  #define PI 3.1416
+#endif
+
 #define  F_NOT_SET 0
 #define  F_LPF_ORDER_1 1
 #define  F_LPF_ORDER_2 2
