@@ -41,7 +41,8 @@ bBandFocus(false),
 iRedrawByTimer(-1),
 bIsFirstRun(true),
 SampleRate(44.1e3),
-m_FftActive(false)
+m_FftActive(false),
+fft_gain(10.0)
 {
    //Calc the number of points
    m_NumOfPoints = floor(log10(MAX_FREQ/MIN_FREQ)*NUM_POINTS_PER_DECADE) + 1;
@@ -79,7 +80,7 @@ m_FftActive(false)
   for(int i = 0; i < m_NumOfPoints; i++)
   {
     fft_plot[i]=0.0;
-    fft_plot_scaling[i] = 50.0*(0.1 * pow10(((double)i)/((double)m_NumOfPoints)) + 0.9);
+    fft_plot_scaling[i] =0.1 * pow10(((double)i)/((double)m_NumOfPoints)) + 0.9;
   }
   
   resetCurve();
@@ -456,16 +457,15 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       cr->save();
       for(int i = 0; i < m_NumOfPoints; i++)
       {
-        fft_point =  fft_max > 1.0 ?  fft_plot[i]/fft_max : fft_plot[i]; //Normalize to MAX in case of exciding max
-        fft_point = fft_point > 0.0 && fft_point < 0.1 ? 0.1 : fft_point;
-        cr->set_line_width(5.0 *  ((double)i)/((double)m_NumOfPoints));
+        fft_point =   fft_plot[i] > 1.0 ?  1.0 :  fft_plot[i]; //Normalizein case of exciding max
+        cr->set_line_width(1.5);
         cr->set_source_rgba(0.6, 0.8, 0.6,  fft_point > 0.8 ? 0.8 : fft_point);
         cr->move_to( xPixels[i] + 0.5 , CURVE_MARGIN + (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
         cr->line_to( xPixels[i] + 0.5 , height - CURVE_MARGIN - CURVE_TEXT_OFFSET - (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
         cr->stroke();
       }
-      cr->restore();
-    }
+      cr->restore();    
+    }   
     
     //Draw the grid
     cr->save();
@@ -839,36 +839,33 @@ void PlotEQCurve::setSampleRate(double samplerate)
 
 void PlotEQCurve::setFftData()
 {
-  double sum, cnt, aux;
+  double sum;
+  bool found;
   int j = 0;
-  fft_max = 0.0;
   for(int i = 0; i<m_NumOfPoints; i++)
   {
     sum = 0.0; 
-    cnt = 0.0; //Averagin counter
+    found = false;
     while(fft_raw_freq[j] <= f[i] && j < (FFT_N/2)) //Binning to f[i]
     {
-      sum+=fabs(2.0 * fft_raw_data[j] / ((double)FFT_N));
-      cnt += 1.0;
+      //sum+=fabs(2.0 * fft_raw_data[j] / ((double)FFT_N));
+      sum+=sqrt(fft_raw_data[j]);
+      found = true;
       j++;
     }
     //fft_plot[i] = 20.0*log10(2.0*sum/((double)FFT_N) + 0.03475429);
     
-    
-    if(cnt < 1.0)
+    if(found)
     {
-      fft_plot[i] = fft_plot[i -1]; //Copy previous value if no data (very cheap interpolation)
-      //std::cout<<"Error cnt < 1.0: "<<cnt<<"\t j = "<<j<<"\t f[i] = "<<f[i]<<"\t fft_raw_freq[j] = "<<fft_raw_freq[j]<<std::endl;
+      sum *= fft_gain*fft_plot_scaling[i];     
+      fft_plot[i] = sum > fft_plot[i] ? sum : sum  + 0.7*fft_plot[i];     
     }
     else
     {
-      aux = (sum/cnt)* fft_plot_scaling[i];
-      fft_plot[i] = aux > fft_plot[i] ? aux : aux  + 0.7*fft_plot[i];
-      fft_max = fft_plot[i] > fft_max ? fft_plot[i] : fft_max;
-    }     
-  }
-  //std::cout<<"Max = "<<fft_max<<std::endl;
-  
+      fft_plot[i] = 0.5*fft_plot[i -1]; //Copy previous value if no data (very cheap interpolation)
+    }
+    
+  }  
   redraw();
 }
 
@@ -876,4 +873,9 @@ void PlotEQCurve::setFftActive(bool active)
 {
   m_FftActive = active;
   redraw();
+}
+
+void PlotEQCurve::setFftGain(double g)
+{
+  fft_gain = g;
 }

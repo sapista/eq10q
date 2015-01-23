@@ -84,6 +84,7 @@ typedef struct {
   double *fft_in, *fft_out;
   fftw_plan fft_p;
   int fft_on;
+  double fft_normalization;
 } EQ;
 
 static void cleanupEQ(LV2_Handle instance)
@@ -242,6 +243,7 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   plugin_data->fft_out = (double*) fftw_malloc(sizeof(double) * FFT_N);
   plugin_data->fft_p = fftw_plan_r2r_1d(FFT_N, plugin_data->fft_in, plugin_data->fft_out, FFTW_R2HC, FFTW_ESTIMATE);
   plugin_data->fft_on = 0; //Initialy no GUI then no need to compute FFT
+  plugin_data->fft_normalization = pow(2.0/ ((double) FFT_N), 2.0);
   
   return (LV2_Handle)plugin_data;
   
@@ -371,6 +373,24 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
         {
           //FFT inout buffer full compute
           fftw_execute(plugin_data->fft_p);
+          
+          //Compute FFT Normalized Magnitude^2 
+          double real, img;
+          int ffti;
+          for(ffti = 0; ffti<= FFT_N/2; ffti++)
+          {
+            real = plugin_data->fft_out[ffti];
+            if(ffti > 0 && ffti < (FFT_N/2))
+            {
+              img = plugin_data->fft_out[FFT_N -ffti];
+            }
+            else
+            {
+              img = 0.0;
+            }
+            plugin_data->fft_out[ffti] = plugin_data->fft_normalization*(real*real + img*img);
+          }
+          
           plugin_data->fft_ix = 0;      
           fft_send = 1;
         }

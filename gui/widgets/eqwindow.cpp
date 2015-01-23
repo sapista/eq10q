@@ -34,7 +34,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   :m_BypassButton(" Bypass "),
   m_AButton(" A "),
   m_BButton(" B "),
-  m_FftButton("FFT On"),
+  m_FftButton("FFT"),
   m_FlatButton(" Flat "),
   m_SaveButton("Save"),
   m_LoadButton("Load"),  
@@ -63,10 +63,12 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   {
     std::cout<<"Eq10q UI: Host does not support urid:map"<<std::endl;
   }
-  
-  //Map uris and init forge
-  map_eq10q_uris(map, &uris);
-  lv2_atom_forge_init(&forge, map);
+  else
+  {
+    //Map uris and init forge
+    map_eq10q_uris(map, &uris);
+    lv2_atom_forge_init(&forge, map);
+  }
   
   //Prepare curve Events vectors
   m_port_event_Curve_Gain = new bool[m_iNumOfBands];
@@ -103,7 +105,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
-
+  m_FftGainScale.set_range(1.0, 50.0);
+  m_FftGainScale.set_value(10.0);
+  m_FftGainScale.set_inverted(true);
+  m_FftGainScale.set_draw_value(false);
+  
   m_BandBox.set_spacing(0);
   m_BandBox.set_homogeneous(true);
   m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
@@ -116,7 +122,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   }
 
   //Bode plot layout
-  m_PlotFrame.add(*m_Bode);
+  m_PlotBox.pack_start(*m_Bode);
+  m_PlotBox.pack_start(m_FftGainScale);
+  m_PlotFrame.add(m_PlotBox);
   m_PlotFrame.set_label("EQ Curve");
 
   //Box layout
@@ -134,6 +142,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_LoadAlign.show();
   m_SaveAlign.show();
   m_FftAlign.show();
+  m_FftGainScale.show();
   
   m_CurveBypassBandsBox.pack_start(m_PlotFrame ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
@@ -177,6 +186,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
   m_FftButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
+  m_FftGainScale.signal_value_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -200,13 +210,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_WidgetColors.setGenericWidgetColors(m_InGain->get_label_widget());
   //m_WidgetColors.setGenericWidgetColors(m_OutGain);
   m_WidgetColors.setGenericWidgetColors(m_OutGain->get_label_widget());
-  m_WidgetColors.setButtonColors(&m_AButton);
-  m_WidgetColors.setButtonColors(&m_BButton);
-  m_WidgetColors.setButtonColors(&m_FlatButton);
-  m_WidgetColors.setButtonColors(&m_BypassButton);
-  m_WidgetColors.setButtonColors(&m_LoadButton);
-  m_WidgetColors.setButtonColors(&m_SaveButton);
-  m_WidgetColors.setButtonColors(&m_FftButton);
+  
+  //m_WidgetColors.setButtonColors(&m_AButton);  //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_BButton);  //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_FlatButton); //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_BypassButton); //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_LoadButton); //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_SaveButton); //TODO Remove
+  //m_WidgetColors.setButtonColors(&m_FftButton);  //TODO Remove
   
   //Set buttons font type
   m_BypassButton.modify_font(Pango::FontDescription("Monospace 8"));
@@ -628,4 +639,9 @@ void EqMainWindow::sendAtomFftOn(bool fft_activated)
   LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, fft_activated? uris.atom_fft_on : uris.atom_fft_off);
   lv2_atom_forge_pop(&forge, &frame); 
   write_function(controller, AtomPortNumber, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+void EqMainWindow::onFftGainScale()
+{
+  m_Bode->setFftGain(m_FftGainScale.get_value());
 }

@@ -65,6 +65,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setSampleRate(double samplerate);
     virtual void setFftData();
     virtual void setFftActive(bool active);
+    virtual void setFftGain(double g);
     
     //signal accessor:
     //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
@@ -122,7 +123,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     double *fft_raw_freq;
     double *fft_plot;
     double *fft_plot_scaling;
-    double fft_max;
+    double fft_gain;
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;
