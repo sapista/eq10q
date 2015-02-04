@@ -47,8 +47,6 @@ class VUWidget : public Gtk::DrawingArea
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
-  void redraw_Gr(Cairo::RefPtr<Cairo::Context> cr);
-  void redraw_Normal(Cairo::RefPtr<Cairo::Context> cr);
   void clearPeak(int uChannel);
   void redraw();
   
@@ -65,9 +63,7 @@ protected:
   bool bMotionIsConnected;
   float* m_fValues;
   float* m_fPeaks;
-  float m_fBarWidth;
-  float m_fBarStep;
-  float m_fdBPerLed;
+  
   float m_ThFaderValue;
   int m_iThFaderPositon;
   bool m_bDrawThreshold;
@@ -78,19 +74,13 @@ private:
     
     int width;
     int height;
-    float m_Lmargin, m_Rmargin;
-
-    //Compute number of bars for each zone
-    float *fdBValue;
-    float *fdBPeak;
-    float fTextOffset;
-    float fChannelWidth;
-    int m_RedBarsCount, m_YellowBarsCount, m_GreenBarsCount;
-    
+     
     sigc::connection m_motion_connection;
     
     //Fader change signal
     signal_FaderChanged m_FaderChangedSignal;
-
+    
+    //dB to pixels convertion function
+    double dB2Pixels(double dB_in);
 };
 #endif

@@ -44,6 +44,7 @@ SampleRate(44.1e3),
 m_FftActive(false),
 fft_gain(10.0)
 {
+    
    //Calc the number of points
    m_NumOfPoints = floor(log10(MAX_FREQ/MIN_FREQ)*NUM_POINTS_PER_DECADE) + 1;
     
@@ -97,6 +98,9 @@ fft_gain(10.0)
   
   //Initialize the base vectors for the first widget size
   initBaseVectors();
+  
+  //Allow this widget to get keyboard focus
+  set_can_focus(true);
 }
 
 PlotEQCurve::~PlotEQCurve()
@@ -281,6 +285,7 @@ void PlotEQCurve::setBypass(bool bypass)
 //Mouse grab signal handlers
 bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
 { 
+  grab_focus();
   //Check if is a double click or simple
   if(event->button == 1 && bBandFocus)
   {
@@ -404,6 +409,14 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
 	}
       }
     }
+    if(bBandFocus)
+    {
+      m_BandSelectedSignal.emit(m_iBandSel);
+    }
+    else
+    {
+      m_BandUnselectedSignal.emit();
+    }
     redraw();
   }
 
@@ -450,6 +463,28 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     cr->paint(); //Fill all with background color
     cr->restore();
     
+    
+    //Draw an interesting frame
+    cr->save();         
+    double radius = height / 50.0;
+    double degrees = M_PI / 180.0;
+    cr->begin_new_sub_path();
+    cr->arc (width - CURVE_BORDER - radius, CURVE_BORDER + radius, radius, -90 * degrees, 0 * degrees);
+    cr->arc (width - CURVE_BORDER - radius, height - CURVE_BORDER - radius, radius, 0 * degrees, 90 * degrees);
+    cr->arc (CURVE_BORDER + radius, height- CURVE_BORDER - radius, radius, 90 * degrees, 180 * degrees);
+    cr->arc ( CURVE_BORDER + radius, CURVE_BORDER + radius, radius, 180 * degrees, 270 * degrees);
+    cr->close_path();  
+    Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr = Cairo::LinearGradient::create(width/2, CURVE_BORDER, width/2, height - CURVE_BORDER);   
+    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.1, 0.1, 0.6 ); 
+    bkg_gradient_ptr->add_color_stop_rgba (0.5, 0.2, 0.3, 0.3, 0.3 ); 
+    bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.1, 0.1, 0.1, 0.6 ); 
+    cr->set_source(bkg_gradient_ptr);
+    cr->fill_preserve();
+    cr->set_line_width(1.0);
+    cr->set_source_rgb(0.3, 0.3, 0.4);
+    cr->stroke(); 
+    cr->restore();
+    
     //Draw FFT background
     if(m_FftActive)
     {
@@ -469,7 +504,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     //Draw the grid
     cr->save();
-     cr->set_source_rgb(0.3, 0.3, 0.4);
+    cr->set_source_rgb(0.3, 0.3, 0.3);
     cr->set_line_width(1);
     for(int i = 0; i < GRID_VERTICAL_LINES; i++)
     {
@@ -491,7 +526,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     cr->save();
     cr->set_source_rgb(0.6, 0.6, 0.6);
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 7");
+    Pango::FontDescription font_desc("sans 9px");
     pangoLayout->set_font_description(font_desc);
     pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
     
@@ -711,7 +746,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     //draw de outer grind box
     cr->save();
-    cr->set_source_rgb(0.3, 0.3, 0.4);
+    cr->set_source_rgb(0.3, 0.3, 0.3);
     cr->set_line_width(1);
     cr->move_to(CURVE_MARGIN + CURVE_TEXT_OFFSET + 0.5, CURVE_MARGIN + 0.5); 
     cr->line_to(width - CURVE_MARGIN + 0.5, CURVE_MARGIN + 0.5);
@@ -724,6 +759,20 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
   }
   return true;    
 }
+
+void PlotEQCurve::glowBand(int band)
+{
+  m_iBandSel = band;
+  bBandFocus = true;
+  redraw();
+}
+
+void PlotEQCurve::unglowBands()
+{
+  bBandFocus = false;
+  redraw();
+}
+
 
 void PlotEQCurve::redraw()
 {
@@ -767,6 +816,17 @@ PlotEQCurve::signal_BandEnabled PlotEQCurve::signal_enabled()
 {
   return m_BandEnabledSignal;
 }
+
+PlotEQCurve::signal_BandSelected PlotEQCurve::signal_selected()
+{
+  return m_BandSelectedSignal;
+}
+
+PlotEQCurve::signal_BandUnselected PlotEQCurve::signal_unselected()
+{
+  return m_BandUnselectedSignal;
+}
+
 
 void PlotEQCurve::CalcBand_DigitalFilter(int bd_ix)
 {

@@ -22,7 +22,7 @@
   #define EQ10Q_BUTTON_H
 
 #include <gtkmm/drawingarea.h>
-#define OUTER_BORDER 2 
+
 
 class Button : public Gtk::DrawingArea
 {

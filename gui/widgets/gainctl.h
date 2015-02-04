@@ -22,12 +22,11 @@
   #define GAIN_CTL_H
 
 #include <gtkmm/box.h>
-#include <gtkmm/frame.h>
 
 #include "vuwidget.h"
 #include "faderwidget.h"
 
-class  GainCtl : public Gtk::Frame{
+class  GainCtl : public Gtk::HBox{
   public:
     GainCtl(const Glib::ustring sTitle, int iNumOfChannels, double Fader_dBMax, double Fader_dBMin, const char* bundlePath);
     virtual ~GainCtl();
@@ -45,7 +44,6 @@ class  GainCtl : public Gtk::Frame{
   protected:
     FaderWidget *m_GainFader;
     VUWidget *m_VuMeter;
-    Gtk::HBox m_HBox;
     const int m_iNumOfChannels;
     
     //Signal Handler

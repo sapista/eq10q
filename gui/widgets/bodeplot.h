@@ -30,9 +30,10 @@
 #define MAX_FREQ 22000.0
 #define GRID_VERTICAL_LINES 28
 #define DB_GRID_RANGE 50.0
-#define CURVE_MARGIN 2
+#define CURVE_MARGIN 8
+#define CURVE_BORDER 1.5
 #define CURVE_TEXT_OFFSET 18
-#define PLOT_HIGHT 200
+#define PLOT_HIGHT 250
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
 #define AUTO_REFRESH_TIMEOUT_MS 20
@@ -66,6 +67,8 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setFftData();
     virtual void setFftActive(bool active);
     virtual void setFftGain(double g);
+    virtual void glowBand(int band);
+    virtual void unglowBands();
     
     //signal accessor:
     //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
@@ -75,6 +78,14 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Slot prototype: void on_band_enabled(int band_ix, bool enabled);
     typedef sigc::signal<void, int, bool> signal_BandEnabled;
     signal_BandEnabled signal_enabled();
+    
+    //Slot prototype: void on_band_selected(int band_ix, bool enabled);
+    typedef sigc::signal<void, int> signal_BandSelected;
+    signal_BandSelected signal_selected();
+    
+    //Slot prototype: void on_band_selected(int band_ix, bool enabled);
+    typedef sigc::signal<void> signal_BandUnselected;
+    signal_BandUnselected signal_unselected();
     
     //Public fft data to allow copying directly by atom
     double *fft_raw_data;
@@ -128,6 +139,8 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;
     signal_BandEnabled m_BandEnabledSignal;
+    signal_BandSelected m_BandSelectedSignal;
+    signal_BandUnselected m_BandUnselectedSignal;
     
     //Method to initialize base vectors xPixels_Grind, f, xPixels
     void initBaseVectors();

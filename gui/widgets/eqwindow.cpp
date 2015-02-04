@@ -18,9 +18,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <stdlib.h>
 #include <iostream>
-
 #include <cstring>
 #include <gtkmm/rc.h>
 #include <gtkmm/filechooserdialog.h>
@@ -29,12 +27,18 @@
 #include "colors.h"
 #include "setwidgetcolors.h"
 
+//TODO: Millorar buttons (load, save, flat)
+//TODO: Millorar bypass (amb un LED com en la FFT crec que pot quedar xulu)
+//TODO: Millorar botons A/B, crec que necessitu un approach completament nou
+//TODO: Millorar botons de enable de les bandes, crec que un LED com FFT tb podria quedar super xulu
+//TODO: Com sembla a ser que posare LED's a tot arreu... el millor potser seria fer una funcio que el dibuixi passant com a param el cairo context (la funcion podria dibuxar sempre el centre i fer un translate abans de incvoarla)
+//TODO: Si posu un LED a cada banda de quin color l'he de fer pq es vegi sempre molon?
+
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
   :m_BypassButton(" Bypass "),
   m_AButton(" A "),
   m_BButton(" B "),
-  m_FftButton("FFT"),
   m_FlatButton(" Flat "),
   m_SaveButton("Save"),
   m_LoadButton("Load"),  
@@ -99,33 +103,32 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveAlign.add(m_SaveButton);
   m_LoadAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
-  m_FftAlign.add(m_FftButton);
-  m_FftAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   
-  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
-  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str())); ///TODO: Get gain min max from ttl file
+  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
+  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
-  m_FftGainScale.set_range(1.0, 50.0);
-  m_FftGainScale.set_value(10.0);
-  m_FftGainScale.set_inverted(true);
-  m_FftGainScale.set_draw_value(false);
+  m_FftGainScale = Gtk::manage(new FFTWidget(1.0, 50.0));
+  m_FftGainScale->set_value(10.0);
   
   m_BandBox.set_spacing(0);
   m_BandBox.set_homogeneous(true);
-  m_BandCtlArray = (BandCtl**)malloc(sizeof(BandCtl*)*m_iNumOfBands);
+  m_BandCtlArray = new BandCtl*[m_iNumOfBands];
+  
   
   for (int i = 0; i< m_iNumOfBands; i++)
   {
     m_BandCtlArray[i] = Gtk::manage(new BandCtl(i, &m_bMutex, m_bundlePath.c_str()));
     m_BandBox.pack_start(*m_BandCtlArray[i], Gtk::PACK_SHRINK);
     m_BandCtlArray[i] -> signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onBandChange));
+    m_BandCtlArray[i] -> signal_band_selected().connect( sigc::mem_fun(*this, &EqMainWindow::onBandCtlSelectBand));
+    m_BandCtlArray[i] -> signal_band_unselected().connect( sigc::mem_fun(*this, &EqMainWindow::onBandCtlUnselectBand));
+    
   }
 
   //Bode plot layout
+  m_PlotBox.set_spacing(0);
   m_PlotBox.pack_start(*m_Bode);
-  m_PlotBox.pack_start(m_FftGainScale);
-  m_PlotFrame.add(m_PlotBox);
-  m_PlotFrame.set_label("EQ Curve");
+  m_PlotBox.pack_start(*m_FftGainScale,Gtk::PACK_SHRINK);
 
   //Box layout
   m_ABFlatBox.set_homogeneous(false);
@@ -136,15 +139,13 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_ABFlatBox.pack_start(m_FlatAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_LoadAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_SaveAlign,Gtk::PACK_SHRINK);
-  m_ABFlatBox.pack_start(m_FftAlign, Gtk::PACK_SHRINK);
   m_LoadButton.show();
   m_SaveButton.show();
   m_LoadAlign.show();
   m_SaveAlign.show();
-  m_FftAlign.show();
-  m_FftGainScale.show();
+  m_FftGainScale->show();
   
-  m_CurveBypassBandsBox.pack_start(m_PlotFrame ,Gtk::PACK_SHRINK);
+  m_CurveBypassBandsBox.pack_start(m_PlotBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_BandBox ,Gtk::PACK_SHRINK);
 
@@ -170,7 +171,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_OutGain->set_tooltip_text("Adjust the output gain");
   m_LoadButton.set_tooltip_text("Load curve from file");
   m_SaveButton.set_tooltip_text("Save curve to file");
-  m_FftButton.set_tooltip_text("Enable/Disable FFT");
 
   //connect signals
   m_BypassButton.signal_clicked().connect(sigc::mem_fun(*this, &EqMainWindow::onButtonBypass));
@@ -181,12 +181,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
   m_Bode->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveChange));
   m_Bode->signal_enabled().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveBandEnable));
+  m_Bode->signal_selected().connect(sigc::mem_fun(*this, &EqMainWindow::onBodeSelectBand));
+  m_Bode->signal_unselected().connect(sigc::mem_fun(*this, &EqMainWindow::onBodeUnselectBand));
   signal_realize().connect( sigc::mem_fun(*this, &EqMainWindow::onRealize));
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &EqMainWindow::on_timeout), TIMER_VALUE_MS);
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
-  m_FftButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
-  m_FftGainScale.signal_value_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
+  m_FftGainScale->signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
+  m_FftGainScale->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -202,22 +204,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
 
   //Set Main widget Background
   m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
-  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
-  
-  //m_WidgetColors.setGenericWidgetColors(&m_PlotFrame);
-  m_WidgetColors.setGenericWidgetColors(m_PlotFrame.get_label_widget());
-  //m_WidgetColors.setGenericWidgetColors(m_InGain);
-  m_WidgetColors.setGenericWidgetColors(m_InGain->get_label_widget());
-  //m_WidgetColors.setGenericWidgetColors(m_OutGain);
-  m_WidgetColors.setGenericWidgetColors(m_OutGain->get_label_widget());
-  
-  //m_WidgetColors.setButtonColors(&m_AButton);  //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_BButton);  //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_FlatButton); //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_BypassButton); //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_LoadButton); //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_SaveButton); //TODO Remove
-  //m_WidgetColors.setButtonColors(&m_FftButton);  //TODO Remove
+  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor); 
   
   //Set buttons font type
   m_BypassButton.modify_font(Pango::FontDescription("Monospace 8"));
@@ -238,6 +225,8 @@ EqMainWindow::~EqMainWindow()
   delete m_BParams;
   delete m_InGain;
   delete m_OutGain;
+  delete m_Bode;
+  delete m_FftGainScale;
   delete m_port_event_Curve_Gain;
   delete m_port_event_Curve_Freq;
   delete m_port_event_Curve_Q;
@@ -247,7 +236,7 @@ EqMainWindow::~EqMainWindow()
   {
     delete m_BandCtlArray[i];
   }
-  free(m_BandCtlArray);
+  delete m_BandCtlArray;
 }
 
 void EqMainWindow::onRealize()
@@ -300,12 +289,12 @@ bool EqMainWindow::on_timeout()
       if(m_port_event_Curve_Enable[i])
       {
 	m_port_event_Curve_Enable[i] = false;
-	m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i), true);
+	m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));
       }    
       if(m_port_event_Curve_Type[i])
       {
 	m_port_event_Curve_Type[i] = false;
-	m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i), true);
+	m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i));
       }
       
       m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
@@ -530,9 +519,33 @@ void EqMainWindow::onCurveBandEnable(int band_ix, bool IsEnabled)
     fEnable = 0.0;
   }
   
-  m_BandCtlArray[band_ix]->setEnabled(IsEnabled, true);
+  m_BandCtlArray[band_ix]->setEnabled(IsEnabled);
   write_function(controller, band_ix + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &fEnable);
   m_CurParams->setBandEnabled(band_ix, IsEnabled); 
+}
+
+void EqMainWindow::onBodeSelectBand(int band)
+{
+  m_BandCtlArray[band]->glowBand(true);
+}
+
+void EqMainWindow::onBodeUnselectBand()
+{
+  for(int i = 0; i < m_iNumOfBands; i++)
+  {
+     m_BandCtlArray[i]->glowBand(false);
+  }
+}
+
+void EqMainWindow::onBandCtlSelectBand(int band)
+{
+  m_Bode->unglowBands();
+  m_Bode->glowBand(band);
+}
+
+void EqMainWindow::onBandCtlUnselectBand()
+{
+  m_Bode->unglowBands();
 }
 
 void EqMainWindow::loadEqParams()
@@ -626,8 +639,8 @@ void EqMainWindow::loadFromFile()
 
 void EqMainWindow::onButtonFft()
 {
-  sendAtomFftOn(m_FftButton.get_active());
-  m_Bode->setFftActive(m_FftButton.get_active());
+  sendAtomFftOn(m_FftGainScale->get_active());
+  m_Bode->setFftActive(m_FftGainScale->get_active());
 }
 
 void EqMainWindow::sendAtomFftOn(bool fft_activated)
@@ -643,5 +656,39 @@ void EqMainWindow::sendAtomFftOn(bool fft_activated)
 
 void EqMainWindow::onFftGainScale()
 {
-  m_Bode->setFftGain(m_FftGainScale.get_value());
+  m_Bode->setFftGain(m_FftGainScale->get_value());
+}
+
+bool EqMainWindow::on_expose_event(GdkEventExpose* event)
+{
+  Gtk::EventBox::on_expose_event(event); //Call parent redraw()
+  
+  Glib::RefPtr<Gdk::Window> window = get_window();
+  if(window)
+  {
+    Gtk::Allocation allocation = get_allocation();
+    const int width = allocation.get_width();
+    const int height = allocation.get_height();
+    
+    Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
+    
+    //Draw a border to all widgets
+    cr->save();         
+    //cr->rectangle(0.5,0.5, width - 0.5, height - 0.5);
+    cr->move_to(0.5, height-0.5);
+    cr->line_to(0.5, 0.5);
+    cr->line_to(width - 0.5, 0.5);
+    cr->set_source_rgb(0.5, 0.5, 0.6);
+    cr->set_line_width(1.0);
+    cr->stroke(); 
+    cr->move_to(width - 0.5, 0.5);
+    cr->line_to(width - 0.5, height - 0.5);
+    cr->line_to(0.5, height - 0.5);
+    cr->set_source_rgb(0.1, 0.1, 0.2);
+    cr->set_line_width(1.0);
+    cr->stroke(); 
+    cr->restore();
+  }
+
+  return true;
 }

@@ -25,15 +25,10 @@
 #include "colors.h"
 #include "vuwidget.h"
 
-#define BAR_SEPARATION 0.004
-#define TEXT_OFFSET 17
-#define MARGIN 3
-#define BT_VU_MARGIN 0.02
-#define SPACE_BETWEEN_CHANNELS 0.03
+#define TEXT_OFFSET 12
+#define MARGIN 6.5
 #define CHANNEL_WIDTH 8
-#define MICROFADER_WIDTH 20
-#define MICROFADER_HEIGHT 20
-#define NUM_OF_BARS 80
+#define MICROFADER_WIDTH 30
 #define TEXT_DB_SEPARATION 3.0
 #define SCROLL_EVENT_PERCENT 0.02
 #define WIDGET_HEIGHT 150
@@ -52,32 +47,24 @@ VUWidget::VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction, 
   m_start(new timeval[m_iChannels]),
   m_end(new timeval[m_iChannels])
 {
-  m_fdBPerLed = (m_fMax - m_fMin)/((float)(NUM_OF_BARS));
   
   for (int i = 0; i < m_iChannels; i++)
   {
-    m_fValues[i] = 0.0;
-    m_fPeaks[i] = 0.0;
+    m_fValues[i] = -100.0;
+    m_fPeaks[i] = -100.0;
   }
   
   int widget_witdh;
-  m_Lmargin = (float)MARGIN/(float)(TEXT_OFFSET +  CHANNEL_WIDTH* m_iChannels + MICROFADER_WIDTH);
   if(m_bDrawThreshold)
-  {
-    widget_witdh = TEXT_OFFSET +  CHANNEL_WIDTH* m_iChannels + MICROFADER_WIDTH + 2*MARGIN;
-    m_Rmargin = (float)(MICROFADER_WIDTH)/(float)(widget_witdh);
+  {   
+    widget_witdh = MARGIN + TEXT_OFFSET +  (MARGIN + CHANNEL_WIDTH)* m_iChannels + MICROFADER_WIDTH/2 + MARGIN + 2;
   }
   else
   {
-    widget_witdh = TEXT_OFFSET +  CHANNEL_WIDTH* m_iChannels + 2*MARGIN;
-    m_Rmargin = m_Lmargin;
+    widget_witdh = MARGIN + TEXT_OFFSET +  (MARGIN + CHANNEL_WIDTH)* m_iChannels;
   }
   set_size_request(widget_witdh, WIDGET_HEIGHT);
  
-  m_fBarWidth = (1.0 - 2*BT_VU_MARGIN)/(float)(NUM_OF_BARS) - BAR_SEPARATION;
-  m_fBarStep = BAR_SEPARATION + m_fBarWidth;
-  m_RedBarsCount = m_YellowBarsCount = (int)(m_fMax/m_fdBPerLed);
-  m_GreenBarsCount = NUM_OF_BARS - m_RedBarsCount - m_YellowBarsCount;
    
   //Initialize peak time counters
   for (int i = 0; i < m_iChannels; i++)
@@ -99,8 +86,6 @@ VUWidget::~VUWidget()
   delete [] m_fPeaks;
   delete [] m_start;
   delete [] m_end;
-  delete [] fdBValue;
-  delete [] fdBPeak;
 }
   
 void VUWidget::setValue(int iChannel, float fValue)
@@ -111,8 +96,19 @@ void VUWidget::setValue(int iChannel, float fValue)
   seconds  = m_end[iChannel].tv_sec  - m_start[iChannel].tv_sec;
   useconds = m_end[iChannel].tv_usec - m_start[iChannel].tv_usec;
   mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-
-  m_fValues[iChannel] = fValue;
+  
+  if (fValue > 0)
+  {
+     m_fValues[iChannel] = 20.0*log10(fValue);
+  }
+  else
+  {
+     m_fValues[iChannel] = -100.0;
+  }
+  
+  //Clip max
+  m_fValues[iChannel] =  m_fValues[iChannel] > m_fMax ? m_fMax :  m_fValues[iChannel];
+  
   if (m_fValues[iChannel] >= m_fPeaks[iChannel])
   {
     m_fPeaks[iChannel] = m_fValues[iChannel];
@@ -121,7 +117,7 @@ void VUWidget::setValue(int iChannel, float fValue)
   
   else if (mtime > PEAK_CLEAR_TIMEOUT)
   {
-    m_fPeaks[iChannel] = 0.0;
+    m_fPeaks[iChannel] = -100.0;
   }
   redraw();
 }
@@ -141,6 +137,22 @@ void VUWidget::redraw()
   }
 }
 
+double VUWidget::dB2Pixels(double dB_in)
+{
+  double m, n;
+  if(m_bIsGainReduction)
+  {   
+    m = ((double)(height - 3.0*MARGIN))/(m_fMax - m_fMin);
+    n = (double)MARGIN - m_fMin*m;
+  }
+  else
+  {
+    m = ((double)(3.0*MARGIN-height))/(m_fMax - m_fMin);
+    n = (double)(height - 2.0*MARGIN) - m_fMin*m;
+  }
+  return m*dB_in + n;
+}
+
 
 bool VUWidget::on_expose_event(GdkEventExpose* event)
 {
@@ -152,282 +164,185 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     width = allocation.get_width();
     height = allocation.get_height();
 
-    //Compute number of bars for each zone
-    fdBValue = new float[m_iChannels];
-    fdBPeak = new float[m_iChannels];
-    fTextOffset = TEXT_OFFSET/(float)width;
-    
-    fChannelWidth = (1 - fTextOffset - m_Lmargin -m_Rmargin)/(float)m_iChannels;
-  
-    //Translate input to dBu
-    for(int i = 0; i<m_iChannels; i++)
-    {
-      if (m_fValues[i] > 0)
-      {
-	fdBValue[i] = 20*log10(m_fValues[i]);
-      }
-      else
-      {
-	fdBValue[i] = -100;
-      }
-      if (m_fPeaks[i] > 0)
-      {
-	fdBPeak[i] = 20*log10(m_fPeaks[i]);
-      }
-      else
-      {
-	fdBPeak[i] = -100;
-      }
-      fdBPeak[i] = fdBPeak[i] > m_fMax ? m_fMax : fdBPeak[i];
-    }
-    
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
 
-    //Clip inside acording the expose event
-    cr->rectangle(event->area.x, event->area.y, event->area.width, event->area.height);
-    cr->clip();
+    //Paint background
+    cr->save();
     cr->set_source_rgb(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B);
     cr->paint(); //Fill all with background color
+    cr->restore();
+    
     
     //Draw text with pango
     cr->save();
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 7");
+    Pango::FontDescription font_desc("sans 9px");
     pangoLayout->set_font_description(font_desc);
-
-    cr->move_to(0.5,10);
-    cr->set_source_rgba(0.9, 0.9, 1.0, 1.0);
-
-    pangoLayout->update_from_cairo_context(cr);  //gets cairo cursor position
-
+    cr->set_source_rgba(0.9, 0.9, 0.9, 0.5);
     for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + TEXT_DB_SEPARATION)
     {
       std::stringstream ss;
-
       ss<<abs(round(fdb));
-      
-      float py = (fdb - m_fMin) / m_fdBPerLed;
-      if(m_bIsGainReduction)
-      {
-	cr->move_to(3, py*height*m_fBarStep + height*0.005);
-      }
-      else
-      {
-	cr->move_to(3, height - py*height*m_fBarStep - height*0.035);
-      }
+      cr->move_to(MARGIN, dB2Pixels(fdb) - 4);//4 is to get the text centered in VU
       pangoLayout->set_text(ss.str());
-      pangoLayout->set_width(Pango::SCALE * (TEXT_OFFSET - 3));
+      pangoLayout->set_width(Pango::SCALE * (TEXT_OFFSET - MARGIN));
       pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
       pangoLayout->show_in_cairo_context(cr);
       cr->stroke();     
     }
     cr->restore();
-     
-    //Draw LEDs
+    
+    //Draw VU rectangle
+    double radius = height / 100.0;
+    double degrees = M_PI / 180.0;
+    for(int i = 0; i < m_iChannels; i++)
+    {
+      cr->save();         
+      cr->begin_new_sub_path();
+      cr->arc (MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + i*(MARGIN + CHANNEL_WIDTH + 0.5) - radius, MARGIN - 4 + radius, radius, -90 * degrees, 0 * degrees);
+      cr->arc (MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + i*(MARGIN + CHANNEL_WIDTH + 0.5) - radius, height - 1 - MARGIN - radius, radius, 0 * degrees, 90 * degrees);
+      cr->arc (MARGIN + TEXT_OFFSET + i*(MARGIN + CHANNEL_WIDTH + 0.5) + radius, height - 1 - MARGIN - radius, radius, 90 * degrees, 180 * degrees);
+      cr->arc (MARGIN + TEXT_OFFSET + i*(MARGIN + CHANNEL_WIDTH + 0.5) + radius, MARGIN - 4 + radius, radius, 180 * degrees, 270 * degrees);
+      cr->close_path();
+      cr->set_source_rgb(0.15, 0.15, 0.15);
+      cr->fill_preserve();
+      cr->set_line_width(1.0);
+      cr->set_source_rgb(0.5, 0.5, 0.5);
+      cr->stroke();
+      cr->restore();
+    }
+    
+    //New draw value
+    Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr;
+
+    //Draw the VU
+    for(int i = 0; i < m_iChannels; i++)
+    {
+      cr->save();
+      cr->set_line_width(CHANNEL_WIDTH - 4);
+      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+      bkg_gradient_ptr = Cairo::LinearGradient::create(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fMin), MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fMax));   
+      if(m_bIsGainReduction)
+      {
+        bkg_gradient_ptr->add_color_stop_rgba (0.0, 1.0, 0.5, 0.0, 0.0); 
+        bkg_gradient_ptr->add_color_stop_rgba (0.01, 1.0, 0.5, 0.0, 1.0); 
+        bkg_gradient_ptr->add_color_stop_rgba (1.0, 1.0, 0.0, 0.0, 1.0); 
+      }
+      else
+      {
+        bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.0, 1.0, 0.0, 0.0); 
+        bkg_gradient_ptr->add_color_stop_rgba (0.01, 0.0, 1.0, 0.0, 1.0); 
+        bkg_gradient_ptr->add_color_stop_rgba (0.5, 1.0, 1.0, 0.0, 1.0); 
+        bkg_gradient_ptr->add_color_stop_rgba (1.0, 1.0, 0.0, 0.0, 1.0); 
+      }
+      cr->set_source(bkg_gradient_ptr);
+            
+      //The VU
+      if(m_fValues[i] >= m_fMin)
+      {
+        cr->move_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fMin));
+        cr->line_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fValues[i]));
+        cr->stroke();
+      }
+      
+      //The peak
+      if(m_fPeaks[i] >= m_fMin)
+      {
+        cr->move_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fPeaks[i]));
+        cr->line_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH/2.0 + i*(MARGIN + CHANNEL_WIDTH + 0.5), dB2Pixels(m_fPeaks[i]));
+        cr->stroke();
+        cr->restore();
+      }
+    }
+           
+    //Draw some horitzontal lines to show dB scale over Vu
     cr->save();
-    if(m_bIsGainReduction)
+    cr->set_line_width(1.0);
+    cr->set_source_rgba(0.8, 0.8, 0.8, 0.4);
+    for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + TEXT_DB_SEPARATION)
     {
-      redraw_Gr(cr);
+      cr->move_to(MARGIN + TEXT_OFFSET - 2, round(dB2Pixels(fdb)) + 0.5);
+      cr->line_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + (m_iChannels - 1 ) * (CHANNEL_WIDTH + MARGIN ) + 2, round(dB2Pixels(fdb)) + 0.5);
+      cr->stroke();     
     }
-    else
-    {
-      redraw_Normal(cr);
-    }
-     
+    cr->restore();
+    
+    
     //Draw Threshold MicroFader  
     if(m_bDrawThreshold)
     {
-      cr->restore();  
-      
       //Draw vertical line
-      cr->set_source_rgba(0.5, 0.5, 0.6, 1.0);
-      cr->set_line_width(1.0);
-      cr->move_to(width - MICROFADER_WIDTH/2, height - MICROFADER_HEIGHT);      
-      cr->line_to(width - MICROFADER_WIDTH/2, MICROFADER_HEIGHT);
+      cr->save();     
+      cr->move_to(width - MICROFADER_WIDTH/2 + 0.5, dB2Pixels(m_fMin + 2.0));      
+      cr->line_to(width - MICROFADER_WIDTH/2 + 0.5, dB2Pixels(m_fMax - 2.0));
+      
+      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+      cr->set_line_width(3.0);
+      cr->set_source_rgba(0.7, 0.7, 0.7, 0.5);
+      cr->stroke_preserve();
+      cr->set_source_rgba(0.15, 0.15, 0.15, 1.0);
+      cr->set_line_width(1);
+      cr->stroke();
+      
+      
       cr->stroke();
       
       //Draw threshold text with pango
       Glib::RefPtr<Pango::Layout> pangoLayout_th = Pango::Layout::create(cr);
-      Pango::FontDescription font_desc_th("sans bold 7");
+      Pango::FontDescription font_desc_th("sans bold 8px");
       font_desc_th.set_gravity(Pango::GRAVITY_EAST);
       pangoLayout_th->set_font_description(font_desc_th);
       pangoLayout_th->set_alignment(Pango::ALIGN_LEFT);
-      cr->move_to(width - MICROFADER_WIDTH, height - MICROFADER_HEIGHT - 80);
-      cr->set_source_rgba(0.9, 0.9, 0.9, 1.0);
+      cr->move_to(width - MICROFADER_WIDTH/2 - 10, height - MICROFADER_WIDTH/2 - 85);
+      cr->set_source_rgba(0.9, 0.9, 0.9, 0.7);
       pangoLayout_th->update_from_cairo_context(cr);  //gets cairo cursor position
       pangoLayout_th->set_text("d\r\nl\r\no\r\nh\r\ns\r\ne\r\nr\r\nh\r\nT");
       pangoLayout_th->show_in_cairo_context(cr);
       cr->stroke();
-          
+           
       //Calc coords for mini fader
-      double  m = ((double)(-height))/(m_fMax - m_fMin);
-      double n = (double)(height) - m_fMin*m;
-      m_iThFaderPositon = (int)(m*m_ThFaderValue + n);
+      m_iThFaderPositon = (int) dB2Pixels(m_ThFaderValue);
       
-      //Draw a filled triangle
-      cr->set_source_rgba(0.7, 0.7, 0.7, 1.0);
-      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
-      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
-      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
-      cr->line_to(width - 2, m_iThFaderPositon + (MICROFADER_HEIGHT/2));
-      cr->line_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
+      //Draw the fader drop down shadow
+      cr->save();    
+      cr->translate(width - MICROFADER_WIDTH/2 + 2,  m_iThFaderPositon + 4);
+      cr->scale(MICROFADER_WIDTH/2, MICROFADER_WIDTH/4);
+      Cairo::RefPtr<Cairo::RadialGradient> bkg_gradient_rad_ptr = Cairo::RadialGradient::create(0, 0, 0, 0, 0, 1);
+      bkg_gradient_rad_ptr->add_color_stop_rgba (0.3, 0.2, 0.2, 0.2, 1.0); 
+      bkg_gradient_rad_ptr->add_color_stop_rgba (1.0, 0.1, 0.1, 0.2, 0.0); 
+      cr->set_source(bkg_gradient_rad_ptr);  
+      cr->arc(0.0, 0.0, 1.0, 0.0, 2.0*M_PI);
       cr->fill();
+      cr->restore();
       
-      //Draw lines on triangle
-
+      //Draw Threshold fader
+      cr->begin_new_sub_path();
+      cr->arc(width - 2 - MICROFADER_WIDTH/4, m_iThFaderPositon + 0.5, MICROFADER_WIDTH/4,  -90 * degrees, 90 * degrees);
+      cr->line_to( width - 2 - MICROFADER_WIDTH/2, m_iThFaderPositon + MICROFADER_WIDTH/4 + 0.5);
+      cr->line_to( width - 2 - MICROFADER_WIDTH, m_iThFaderPositon + 0.5);
+      cr->line_to( width - 2 - MICROFADER_WIDTH/2, m_iThFaderPositon - MICROFADER_WIDTH/4 + 0.5);
+      cr->close_path();
+      bkg_gradient_ptr = Cairo::LinearGradient::create(width - 2 - MICROFADER_WIDTH/2, m_iThFaderPositon - MICROFADER_WIDTH/4, width - 2 - MICROFADER_WIDTH/2, m_iThFaderPositon + MICROFADER_WIDTH/4);
+      bkg_gradient_ptr->add_color_stop_rgba (0.3, 0.8, 0.8, 0.85, 1.0); 
+      bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.2, 0.2, 0.25, 1.0); 
+      cr->set_source(bkg_gradient_ptr);
+      cr->fill_preserve();   
+      cr->set_source_rgba(0.1, 0.1, 0.1, 0.7);
       cr->set_line_width(1.0);
-      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
-      cr->set_source_rgba(0.2, 0.2, 0.2, 1.0);
-      cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
-      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
-      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
       cr->stroke();
-      cr->set_line_width(1.5);
-      cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
-      cr->set_source_rgba(0.0, 0.0, 0.2, 1.0);
-      cr->move_to(width - MICROFADER_WIDTH - 5, m_iThFaderPositon);
-      cr->line_to(width - 2, m_iThFaderPositon + (MICROFADER_HEIGHT/2));
-      cr->line_to(width - 2, m_iThFaderPositon - (MICROFADER_HEIGHT/2));
+      
+      cr->move_to(width - 2 - 5*MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5);
+      cr->line_to(width - 4 - MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5);
+      cr->move_to(width - 2 - 5*MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5 - 2);
+      cr->line_to(width - 4 - MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5 - 2);
+      cr->move_to(width - 2 - 5*MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5 + 2);
+      cr->line_to(width - 4 - MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5 + 2);
+      cr->set_source_rgba(0.0, 0.0, 0.0, 0.2);
+      cr->set_line_width(1.0);
       cr->stroke();
-
     }     
   }
   return true; 
-}
-
-inline void VUWidget::redraw_Normal(Cairo::RefPtr<Cairo::Context> cr)
-{   
-    cr->scale(width, height);
-    cr->translate(0, 1);
-    cr->set_line_width(m_fBarWidth);
-    cr->set_line_cap(Cairo::LINE_CAP_ROUND);   
- 
-    for(int c = 0; c < m_iChannels; c++)
-    {
-      //draw active VU in green
-      cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
-      for(int i = 0; i< m_GreenBarsCount; i++)
-      {
-	if(fdBValue[c] >= (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2); 
-	}
-      }
-      cr->stroke();
-	  
-      //draw inactive VU in green
-      cr->set_source_rgba(0.0, 0.9, 0.3, 0.4);
-      for(int i = 0; i< m_GreenBarsCount; i++)
-      {
-	if(fdBValue[c] < (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	}
-      }
-      cr->stroke();
-      
-      //draw active VU in yellow
-      cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
-      for(int i = m_GreenBarsCount; i<m_GreenBarsCount + m_YellowBarsCount; i++)
-      { 
-	if(fdBValue[c] >= (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	}
-      }
-      cr->stroke();
-      
-      //draw inactive VU in yellow
-      cr->set_source_rgba(0.9, 0.9, 0.0, 0.4);
-      for(int i = m_GreenBarsCount; i<m_GreenBarsCount + m_YellowBarsCount; i++)
-      { 
-	if(fdBValue[c] < (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	}
-      }
-      cr->stroke();
-      
-      //draw active VU in red
-      cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-      for(int i = m_GreenBarsCount + m_YellowBarsCount; i<m_GreenBarsCount + m_YellowBarsCount + m_RedBarsCount; i++)
-      {
-	if(fdBValue[c] >= (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	}
-      }
-      cr->stroke();
-      
-      //draw inactive VU in red
-      cr->set_source_rgba(0.9, 0.1, 0.0, 0.4);
-      for(int i = m_GreenBarsCount + m_YellowBarsCount; i<m_GreenBarsCount + m_YellowBarsCount + m_RedBarsCount; i++)
-      {
-	if(fdBValue[c] < (float)i*m_fdBPerLed + m_fMin)
-	{
-	  cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	  cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -i*m_fBarStep - m_fBarWidth/2);
-	}
-      }
-      cr->stroke();
-      
-      //draw peak VU
-      if ((fdBPeak[c] - m_fMin)/m_fdBPerLed < m_GreenBarsCount) cr->set_source_rgba(0.0, 0.9, 0.3, 1.0);
-      else if((fdBPeak[c] - m_fMin)/m_fdBPerLed < m_GreenBarsCount + m_YellowBarsCount) cr->set_source_rgba(0.9, 0.9, 0.0, 1.0);
-      else  cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-      cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep - m_fBarWidth/2);
-      cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, -BT_VU_MARGIN -(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep - m_fBarWidth/2);
-      cr->stroke();
-    }   
-}
-
-inline void VUWidget::redraw_Gr(Cairo::RefPtr<Cairo::Context> cr)
-{
-     cr->scale(width, height);
-    cr->translate(0, 0);
-    cr->set_line_width(m_fBarWidth);
-    cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-
-    for(int c = 0; c < m_iChannels; c++)
-    {
-	//draw active VU in red
-	cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-	for(int i = 0; i<NUM_OF_BARS; i++)
-	{
-	  if(fdBValue[c] >= (float)i*m_fdBPerLed + m_fMin)
-	  {
-	    cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, (BT_VU_MARGIN + i*m_fBarStep + m_fBarWidth/2));
-	    cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, (BT_VU_MARGIN + i*m_fBarStep + m_fBarWidth/2));
-	  }
-	}
-	cr->stroke();
-	
-	//draw inactive VU in red
-	cr->set_source_rgba(0.9, 0.1, 0.0, 0.4);
-	for(int i = 0; i<NUM_OF_BARS; i++)
-	{
-	  if(fdBValue[c] < (float)i*m_fdBPerLed + m_fMin)
-	  {
-	    cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, (BT_VU_MARGIN + i*m_fBarStep + m_fBarWidth/2));
-	    cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, (BT_VU_MARGIN + i*m_fBarStep + m_fBarWidth/2));
-	  }
-	}
-	cr->stroke();
-	
-	//draw peak VU
-	cr->set_source_rgba(0.9, 0.1, 0.0, 1.0);
-	cr->move_to(m_Lmargin + fTextOffset + c*fChannelWidth + SPACE_BETWEEN_CHANNELS, BT_VU_MARGIN +(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep + m_fBarWidth/2);
-	cr->line_to(m_Lmargin + fTextOffset + c*fChannelWidth + fChannelWidth - SPACE_BETWEEN_CHANNELS, BT_VU_MARGIN +(int)((fdBPeak[c]-m_fMin)/m_fdBPerLed)*m_fBarStep + m_fBarWidth/2);
-	cr->stroke();      
-    }     
 }
 
 void VUWidget::set_value_th(double value)
@@ -448,8 +363,8 @@ bool  VUWidget::on_button_press_event(GdkEventButton* event)
 {
   int x,y;
   get_pointer(x,y);
-  if( y > m_iThFaderPositon - MICROFADER_HEIGHT &&
-      y < m_iThFaderPositon + MICROFADER_HEIGHT)
+  if( y > m_iThFaderPositon - MICROFADER_WIDTH/2 &&
+      y < m_iThFaderPositon + MICROFADER_WIDTH/2)
   {
 
     if (!bMotionIsConnected)
@@ -490,25 +405,11 @@ bool  VUWidget::on_scrollwheel_event(GdkEventScroll* event)
 
 bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
-    int yPixels;
-    double m, n, fader_pos;
-    Gtk::Allocation allocation = get_allocation();
-    const int height = allocation.get_height();
-
-    yPixels = event->y;
-
-    //Stoppers
-    yPixels = yPixels < MICROFADER_HEIGHT/2 ? MICROFADER_HEIGHT/2 : yPixels;
-    yPixels = yPixels > height - MICROFADER_HEIGHT/2 ? height - MICROFADER_HEIGHT/2 : yPixels;
-
-    m = -(double)height/(m_fMax - m_fMin);
-    n = (double)(height) - m_fMin*m;
-    
-    fader_pos = ((double)yPixels - n)/m;
-
-    set_value_th(fader_pos);
+    double  m = ((double)(3.0*MARGIN-height))/(m_fMax - m_fMin);
+    double n = (double)(height - 2.0*MARGIN) - m_fMin*m;
+    double faderPos = (event->y - n)/m;
+    set_value_th(faderPos);  
     m_FaderChangedSignal.emit();
-      
     return true;
 }
 

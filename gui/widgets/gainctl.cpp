@@ -24,20 +24,15 @@
 GainCtl::GainCtl(const Glib::ustring sTitle, int iNumOfChannel, double Fader_dBMax, double Fader_dBMin, const char* bundlePath):
 m_iNumOfChannels(iNumOfChannel)
 {
-
-  set_label(sTitle);
-  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin, bundlePath));
+  m_GainFader = Gtk::manage(new FaderWidget(Fader_dBMax, Fader_dBMin, bundlePath, sTitle));
   m_VuMeter = Gtk::manage(new VUWidget(iNumOfChannel, -24.0, 6.0));
-  m_HBox.pack_start(*m_GainFader);
-  m_HBox.pack_start(*m_VuMeter);
-  m_HBox.set_spacing(0);
-  m_HBox.set_homogeneous(false);
-  m_HBox.show();
+  pack_start(*m_GainFader);
+  pack_start(*m_VuMeter);
+  set_spacing(0);
+  set_homogeneous(false);
   m_GainFader->show();
   m_VuMeter->show();
-  add(m_HBox);
   show();
-  
   m_GainFader->signal_changed().connect(sigc::mem_fun(*this, &GainCtl::onGainChanged));
 }
 

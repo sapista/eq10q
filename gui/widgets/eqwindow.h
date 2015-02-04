@@ -29,15 +29,11 @@
 #include <gtkmm/box.h>
 #include <gtkmm/alignment.h>
 
-//#include <gtkmm/button.h> //TODO remove Gtk::Button
 #include "button.h"
-//#include <gtkmm/togglebutton.h> //TODO remove
 #include "toggle_button.h"
 
 #include <gtkmm/messagedialog.h>
-#include <gtkmm/frame.h>
 #include <gtkmm/image.h>
-#include <gtkmm/scale.h>
 
 #include <cmath>
 
@@ -52,6 +48,7 @@
 #include "gainctl.h"
 #include "eqparams.h"
 #include "bodeplot.h"
+#include "fftctlwidget.h"
 
 //Include eq definition
 #include "../eq_defines.h"
@@ -297,14 +294,13 @@ class EqMainWindow : public Gtk::EventBox
     GainCtl *m_InGain, *m_OutGain;
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
     Gtk::VBox m_CurveBypassBandsBox, m_MainBox;
-    ToggleButton m_BypassButton, m_AButton, m_BButton, m_FftButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign;
+    ToggleButton m_BypassButton, m_AButton, m_BButton;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
     Button m_FlatButton, m_SaveButton, m_LoadButton;
-    Gtk::Frame m_PlotFrame;
     Gtk::Alignment m_MainWidgetAlign;
     PlotEQCurve *m_Bode;
     Gtk::Image *image_logo_center;
-    Gtk::VScale m_FftGainScale;
+    FFTWidget *m_FftGainScale;
 
     void loadEqParams();
     void changeAB(EqParams *toBeCurrent);
@@ -326,6 +322,13 @@ class EqMainWindow : public Gtk::EventBox
     bool on_timeout();
     void onButtonFft();
     void onFftGainScale();
+    void onBodeSelectBand(int band);
+    void onBodeUnselectBand();
+    void onBandCtlSelectBand(int band);
+    void onBandCtlUnselectBand();
+    
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
     double SampleRate;

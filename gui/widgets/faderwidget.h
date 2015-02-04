@@ -28,13 +28,14 @@
 
 #define FADER_ICON_FILE "knobs/fader_dark.png"
 #define FADER_INITAL_HIGHT 350
-#define FADER_MARGIN 5
+#define FADER_MARGIN 7
 #define SCROLL_EVENT_PERCENT 0.02
+#define TITLE_OFFSET 12
 
 class  FaderWidget : public Gtk::DrawingArea
 {
   public:
-    FaderWidget(double dMax, double dMin, const char *bundlePath);
+    FaderWidget(double dMax, double dMin, const char *bundlePath, Glib::ustring title);
     virtual ~FaderWidget();
     
     //Data accessors
@@ -70,6 +71,7 @@ class  FaderWidget : public Gtk::DrawingArea
       Glib::RefPtr<Gdk::Pixbuf> m_image_ptr;
       Cairo::RefPtr< Cairo::Context> m_image_context_ptr;
       std::string m_bundlePath;
+      Glib::ustring m_title;
       
       //Fader change signal
       signal_FaderChanged m_FaderChangedSignal;

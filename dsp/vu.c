@@ -38,7 +38,7 @@ Vu *VuInit(double rate)
   vu->vu_max = 0.0;
   
   vu->m_min = (1.0 / 256);
-  vu->m_decay = exp(log(vu->m_min) / (1 * rate));
+  vu->m_decay = exp( -1.0 / rate);
   
   return vu;
 }

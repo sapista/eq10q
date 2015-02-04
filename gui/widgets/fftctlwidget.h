@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2015 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,49 +18,52 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef CTL_BUTTON_H
-  #define CTL_BUTTON_H
 
-#include <gtkmm/button.h>
-#include <gtkmm/label.h>
-#include "setwidgetcolors.h"
-#define ACCELERATION 15
+#ifndef FFT_WIDGET_H
+  #define FFT_WIDGET_H
 
-class CtlButton : public Gtk::Button{
+#include <gtkmm/drawingarea.h>
+
+class  FFTWidget : public Gtk::DrawingArea
+{
   public:
-    CtlButton(int iType);
-    virtual ~CtlButton();
-
-    void setButtonNumber(float fNum);
-    float getButtonNumber();
+    FFTWidget(double min, double max);
+    virtual ~FFTWidget();
+    void set_value(double val);
+    double get_value();
+    bool get_active();
     
     //signal accessor:
-    typedef sigc::signal<void> ctlButton_double_clicked;
-    ctlButton_double_clicked signal_double_clicked();
-
-    typedef sigc::signal<void> ctlButton_changed;
-    ctlButton_changed signal_changed();
+    typedef sigc::signal<void> signal_Changed;
+    signal_Changed signal_changed();
+    
+    typedef sigc::signal<void> signal_Changed_btnClicked;
+    signal_Changed_btnClicked signal_clicked();
     
   protected:
-    virtual void onButtonPressed();
-    virtual void onButtonDepressed();
-    virtual bool onMouseMove(GdkEventMotion* event);
-    virtual bool onButtonDoubleClicked(GdkEventButton* event);
-    virtual float computeValue(int x, int y);
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
+    
+    //Mouse grab signal handlers
+    virtual bool on_button_press_event(GdkEventButton* event);
+    virtual bool on_button_release_event(GdkEventButton* event);
+    virtual bool on_scrollwheel_event(GdkEventScroll* event);
+    virtual bool on_mouse_motion_event(GdkEventMotion* event);
+    
+    void redraw();    
   
-  private:  
-    bool m_bIsXDirection;
-    int  m_iActValue, m_iAntValue, m_iFilterType;
-    float  m_fValue;
-    SetWidgetColors m_WidgetColors;
-    Gtk::Label btnLabel;
-    sigc::connection m_MouseSignal;
+  private:
+    double m_value, m_max, m_min;
+    bool m_bEnabled, m_bSlider_Focus, m_bSlider_Press, m_bBtn_Foucs, m_bBtn_Press;
+    int width, height;
+    double Val2Pixels(double val);
+    double Pixels2Val(double px);
     
-    //Double click signal
-    ctlButton_double_clicked m_doubleClickSignal;
+    //Fader change signal
+    signal_Changed m_ChangedSignal;
     
-    //Value Changed signal
-    ctlButton_changed m_ctlButtonChangedSignal;
+    //Button click signal
+    signal_Changed_btnClicked m_ClickSignal;
+  
 };
-
 #endif

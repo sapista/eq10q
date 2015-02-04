@@ -20,17 +20,17 @@
 
 #ifndef BAND_CTL_H
   #define BAND_CTL_H
-#include "eqbutton.h"
-#include "pixmapcombo.h"
+  
+
 #include "filter.h"
+#include <gtkmm/drawingarea.h>
+#include <gdkmm/pixbuf.h>
+#include <glibmm/refptr.h>
+#include <cairomm/surface.h>
+#include <gtkmm/menu.h>
+#include <gtkmm/image.h>
 
-#include <gtkmm/box.h>
-#include <gtkmm/togglebutton.h>
-#include <gtkmm/alignment.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/label.h>
-
-class BandCtl : public Gtk::Frame
+class BandCtl : public Gtk::DrawingArea
 {
   public:
     BandCtl(const int iBandNum,bool *bSemafor, const char* bundlepath);
@@ -45,8 +45,9 @@ class BandCtl : public Gtk::Frame
     void setGain(float fGain);
     void setFreq(float fFreq);
     void setQ(float fQ);
-    void setFilterType(float fType, bool DisableEvent = false);
-    void setEnabled(bool bIsEnabled, bool DisableEvent = false);
+    void setFilterType(float fType);
+    void setEnabled(bool bIsEnabled);
+    void glowBand(bool glow);
     
     //signal accessor: 
 	//Parameters:
@@ -55,35 +56,83 @@ class BandCtl : public Gtk::Frame
 	//Float -> value
     typedef sigc::signal<void, int, int, float> signal_ctlBandChanged;
     signal_ctlBandChanged signal_changed();
+    
+    typedef sigc::signal<void, int> signal_BandSelected;
+    signal_BandSelected signal_band_selected();
+    
+    typedef sigc::signal<void> signal_BandUnSelected;
+    signal_BandUnSelected signal_band_unselected();
         
   protected:
-    Gtk::VBox m_VBox;
-    Gtk::ToggleButton m_OnButton;
-    PixMapCombo *m_FilterSel;
-    Gtk::Alignment m_ButtonAlign, m_ComboAlign;
-    EQButton *m_Gain, *m_Freq, *m_Q;
     
     //Signal Handlers
-    void onThisWidgetRealize();
-    void onButtonClicked();
-    void onComboChanged();
-    void onGainChanged();
-    void onFreqChanged();
-    void onQChanged();
-    void onSpinStateChanged(bool SpinState);
+    virtual void on_menu_lpf();
+    virtual void on_menu_hpf();
+    virtual void on_menu_loshelf();
+    virtual void on_menu_hishelf();
+    virtual void on_menu_peak();
+    virtual void on_menu_notch();
+    virtual void on_menu_hide();
     
+    //Mouse grab signal handlers
+    virtual bool on_button_press_event(GdkEventButton* event);
+    virtual bool on_button_release_event(GdkEventButton* event);
+    virtual bool on_scrollwheel_event(GdkEventScroll* event);
+    virtual bool on_mouse_motion_event(GdkEventMotion* event);
+    virtual bool on_mouse_leave_widget(GdkEventCrossing* event);
+    virtual bool on_key_press_event(GdkEventKey* event);
+    virtual bool on_focus_out_event(GdkEventFocus* event);
+    virtual void redraw();
+
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
+    
+    //Keyboard signal handler
+    sigc::connection  keyPressEvent;
+        
   private:
-    Gtk::Label m_FrameLabel;
-    Gtk::Label btnLabel;
+    
+    //Internal structur representing a button in Gtk::DrawingArea
+    struct Button 
+    {
+      double x0, y0, x1, y1;
+      bool focus;
+      bool pressed;
+      bool text; //Entring text  with keyboard to this widget
+      std::stringstream ss;
+      float value;
+      std::string units;
+      float max, min;
+    };
+    bool m_bBtnInitialized;
+    
+    Button m_EnableBtn, m_TypeBtn, m_GainBtn, m_FreqBtn, m_QBtn;   
+    Gtk::Menu* m_TypePopUp;   
+    Gtk::Image *icon_lpf, *icon_hpf, *icon_loShel, *icon_hiShel, *icon_peak, *icon_notch;
+    Gtk::ImageMenuItem *itm_lpf, *itm_hpf, *itm_loShel, *itm_hiShel, *itm_peak, *itm_notch;
     FilterType m_FilterType;
     int m_iBandNum;
-    bool m_bBandIsEnabled, m_DisableComboEvent, m_DisableButtonEvent;
+    bool m_bBandIsEnabled;
     std::string m_budlepath;
+    Glib::ustring m_BandTitle;
+    int width, height;
+    int m_iAntValueX, m_iAntValueY;
+    Gdk::Color m_Color;
+    int m_HpfLpf_slope;
+    bool m_bGlowBand;
     
-    void configSensitive();
+    Glib::RefPtr<Gdk::Pixbuf> m_img_ptr_lpf, m_img_ptr_hpf, m_img_ptr_loshelf, m_img_ptr_hishelf, m_img_ptr_peak, m_img_ptr_notch;
+    Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;    
+    Cairo::RefPtr< Cairo::Context> m_image_context_ptr;
+    void loadTypeImg();
+    bool parseBtnString(Button *btn);
+    void drawBandButton(Button *btn, Cairo::RefPtr<Cairo::Context> cr);
+    void setFilterTypeLPFHPFAcordSlope();
     
-     //Band change signal
+    //Band change signal
     signal_ctlBandChanged m_bandChangedSignal;
+    signal_BandSelected m_bandSelectedSignal;
+    signal_BandUnSelected m_bandUnSelectedSignal;
 };
 #endif
 

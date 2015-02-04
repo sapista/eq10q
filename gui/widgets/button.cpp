@@ -21,6 +21,8 @@
 #include "button.h"
 #include "colors.h"
 
+#define OUTER_BORDER 2 
+
 Button::Button ( const Glib::ustring& label ):
 m_label(label),
 m_state(Button::RELEASE)
@@ -178,21 +180,27 @@ bool Button::on_expose_event ( GdkEventExpose* event )
     }
     cr->set_line_width(1.8);
     cr->stroke_preserve();
-      
+     
+    Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr = Cairo::LinearGradient::create(width/2, OUTER_BORDER, width/2, height - OUTER_BORDER);   
+    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.7 ); ; 
+    
     switch(m_state)
     {      
       case Button::PRESS:
       case Button::FOCUS_PRESS:   
-        cr->set_source_rgb(0.1, 0.2, 0.3);
+        //cr->set_source_rgb(0.1, 0.2, 0.3);
+        bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.1, 0.2, 0.3, 0.8 ); 
       break;
       
       case Button::RELEASE:
       case Button::FOCUS: 
-        cr->set_source_rgb(0.2, 0.3, 0.3);
+        bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.2, 0.3, 0.3, 0.8 ); 
+        //cr->set_source_rgb(0.2, 0.3, 0.3);
+        
       break;  
     }
-    cr->fill();
-    
+    cr->set_source(bkg_gradient_ptr);
+    cr->fill(); 
     cr->restore();
     
     //Label
@@ -215,19 +223,12 @@ bool Button::on_expose_event ( GdkEventExpose* event )
     }
 
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 8");
+    Pango::FontDescription font_desc("sans 11px");
     pangoLayout->set_font_description(font_desc);
     pangoLayout->set_width(Pango::SCALE * (width - OUTER_BORDER));
     pangoLayout->set_height(Pango::SCALE * (height - OUTER_BORDER));
     pangoLayout->set_alignment(Pango::ALIGN_CENTER);
-    if(m_state == Button::FOCUS_PRESS || m_state == Button::PRESS)
-    {
-      cr->move_to(OUTER_BORDER + 1, OUTER_BORDER + 3);
-    }
-    else
-    {
-      cr->move_to(OUTER_BORDER, OUTER_BORDER + 2);
-    }
+    cr->move_to(OUTER_BORDER, OUTER_BORDER + 2);
     pangoLayout->set_text(m_label.c_str());
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke();  

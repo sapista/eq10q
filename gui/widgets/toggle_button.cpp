@@ -18,7 +18,9 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
  
- #include "toggle_button.h"
+#include "toggle_button.h"
+
+#define OUTER_BORDER 2 
  
 ToggleButton::ToggleButton ( const Glib::ustring& label )
 :Button ( label ),
