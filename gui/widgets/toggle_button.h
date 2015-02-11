@@ -26,16 +26,16 @@
 class ToggleButton : public Button
 {
   public:
-    ToggleButton ( const Glib::ustring& label );
+    ToggleButton ( const Glib::ustring& label = "" );
     virtual ~ToggleButton();
     virtual bool get_active();
     virtual void set_active(bool active);
+    static void drawLedBtn(Cairo::RefPtr<Cairo::Context> cr, bool focus, bool enabled, std::string text, int margin, int radius);
   
   protected:
-      virtual bool on_button_release_event(GdkEventButton* event);
-      virtual bool on_mouse_leave_widget(GdkEventCrossing* event);
-      
-  private:
+    virtual bool on_button_release_event(GdkEventButton* event);
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);      
     bool m_bActive;
 };
 

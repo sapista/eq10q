@@ -32,8 +32,9 @@
 #define TEXT_DB_SEPARATION 3.0
 #define SCROLL_EVENT_PERCENT 0.02
 #define WIDGET_HEIGHT 150
+#define TOP_OFFSET 24
 
-VUWidget::VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction, bool DrawThreshold) 
+VUWidget::VUWidget(int iChannels, float fMin, float fMax, std::string title, bool IsGainReduction, bool DrawThreshold) 
   :m_iChannels(iChannels),
   m_fMin(fMin),
   m_fMax(fMax),
@@ -45,7 +46,8 @@ VUWidget::VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction, 
   m_iThFaderPositon(0),
   m_bDrawThreshold(DrawThreshold),
   m_start(new timeval[m_iChannels]),
-  m_end(new timeval[m_iChannels])
+  m_end(new timeval[m_iChannels]),
+  m_Title(title)
 {
   
   for (int i = 0; i < m_iChannels; i++)
@@ -142,12 +144,12 @@ double VUWidget::dB2Pixels(double dB_in)
   double m, n;
   if(m_bIsGainReduction)
   {   
-    m = ((double)(height - 3.0*MARGIN))/(m_fMax - m_fMin);
-    n = (double)MARGIN - m_fMin*m;
+    m = ((double)(height - 3.0*MARGIN - TOP_OFFSET))/(m_fMax - m_fMin);
+    n = (double)(MARGIN + TOP_OFFSET) - m_fMin*m;
   }
   else
   {
-    m = ((double)(3.0*MARGIN-height))/(m_fMax - m_fMin);
+    m = ((double)(3.0*MARGIN + TOP_OFFSET - height ))/(m_fMax - m_fMin);
     n = (double)(height - 2.0*MARGIN) - m_fMin*m;
   }
   return m*dB_in + n;
@@ -179,6 +181,14 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     Pango::FontDescription font_desc("sans 9px");
     pangoLayout->set_font_description(font_desc);
     cr->set_source_rgba(0.9, 0.9, 0.9, 0.5);
+    
+    cr->move_to(MARGIN + TEXT_OFFSET - 3, TOP_OFFSET/2);//4 is to get the text centered in VU
+    pangoLayout->set_text(m_Title.c_str());
+    pangoLayout->set_width(Pango::SCALE * (CHANNEL_WIDTH * m_iChannels + (m_iChannels - 1)*MARGIN));
+    pangoLayout->set_alignment(Pango::ALIGN_CENTER);
+    pangoLayout->show_in_cairo_context(cr);
+    cr->stroke();  
+    
     for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + TEXT_DB_SEPARATION)
     {
       std::stringstream ss;
@@ -199,10 +209,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     {
       cr->save();         
       cr->begin_new_sub_path();
-      cr->arc (MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + i*(MARGIN + CHANNEL_WIDTH + 0.5) - radius, MARGIN - 4 + radius, radius, -90 * degrees, 0 * degrees);
+      cr->arc (MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + i*(MARGIN + CHANNEL_WIDTH + 0.5) - radius, MARGIN + TOP_OFFSET - 4 + radius, radius, -90 * degrees, 0 * degrees);
       cr->arc (MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + i*(MARGIN + CHANNEL_WIDTH + 0.5) - radius, height - 1 - MARGIN - radius, radius, 0 * degrees, 90 * degrees);
       cr->arc (MARGIN + TEXT_OFFSET + i*(MARGIN + CHANNEL_WIDTH + 0.5) + radius, height - 1 - MARGIN - radius, radius, 90 * degrees, 180 * degrees);
-      cr->arc (MARGIN + TEXT_OFFSET + i*(MARGIN + CHANNEL_WIDTH + 0.5) + radius, MARGIN - 4 + radius, radius, 180 * degrees, 270 * degrees);
+      cr->arc (MARGIN + TEXT_OFFSET + i*(MARGIN + CHANNEL_WIDTH + 0.5) + radius, MARGIN + TOP_OFFSET - 4 + radius, radius, 180 * degrees, 270 * degrees);
       cr->close_path();
       cr->set_source_rgb(0.15, 0.15, 0.15);
       cr->fill_preserve();

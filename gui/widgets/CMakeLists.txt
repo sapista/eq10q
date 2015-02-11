@@ -7,11 +7,11 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 add_library(eqwin  STATIC
 		bandctl.cpp gainctl.cpp eqparams.cpp faderwidget.cpp 
 		vuwidget.cpp eqwindow.cpp filter.cpp setwidgetcolors.cpp 
-		bodeplot.cpp button.cpp toggle_button.cpp fftctlwidget.cpp)
+		bodeplot.cpp button.cpp toggle_button.cpp fftctlwidget.cpp abbutton.cpp)
 
 target_link_libraries( eqwin ${GTKMM_LIBRARIES} m)
 
-add_library(dynamicwin  STATIC vuwidget.cpp  knob.cpp knob2.cpp dynamicswindow.cpp setwidgetcolors.cpp)
+add_library(dynamicwin  STATIC vuwidget.cpp  knob.cpp knob2.cpp dynamicswindow.cpp setwidgetcolors.cpp button.cpp toggle_button.cpp dynplot.cpp sidechainbox.cpp)
 target_link_libraries( dynamicwin ${GTKMM_LIBRARIES} m)
 
 add_library(bassupwin STATIC knob.cpp knob2.cpp bassupwindow.cpp)

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Rafols Soler                               *
+ *   Copyright (C) 2015 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,30 +17,18 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
+ #ifndef SIDECHAIN_BOX_H
+  #define SIDECHAIN_BOX_H
+  
+#include <gtkmm/eventbox.h>
 
-#ifndef KNOB_WIDGET2_H
-#define KNOB_WIDGET2_H
-
-#include "knob.h"
-#include <gdkmm/pixbuf.h>
-#include <glibmm/refptr.h>
-#include <cairomm/surface.h>
-
-
-
-class KnobWidget2 : public KnobWidget
+class SideChainBox : public Gtk::EventBox
 {
   public:
-  KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *knobIconPath, int iType = KNOB_TYPE_LIN, bool snap2ZerodB = false);
-  
+    SideChainBox();
+    virtual ~SideChainBox();
   protected:
-    //Override default signal handler:
     virtual bool on_expose_event(GdkEventExpose* event);
-    
-  private:
-    std::string m_knobIconPath;
-    Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;
-    Glib::RefPtr<Gdk::Pixbuf> m_image_ptr;
-    Cairo::RefPtr< Cairo::Context> m_image_context_ptr;
 };
 #endif

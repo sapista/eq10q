@@ -36,8 +36,8 @@
 #define TEXT_SIZE 22
 #define KNOB_R_CALIBRATION 0.93
 
-KnobWidget2::KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *knobIconPath, int iType)
- :KnobWidget(fMin, fMax, sLabel, sUnits, iType),
+KnobWidget2::KnobWidget2(float fMin, float fMax, std::string sLabel, std::string sUnits, const char *knobIconPath, int iType, bool snap2ZerodB )
+ :KnobWidget(fMin, fMax, sLabel, sUnits, iType, snap2ZerodB ),
  m_knobIconPath(knobIconPath)
 {
    m_image_ptr =  Gdk::Pixbuf::create_from_file(m_knobIconPath);

@@ -45,8 +45,7 @@ class Button : public Gtk::DrawingArea
     void redraw();
     
     Glib::ustring m_label; 
-    enum button_state{ FOCUS, PRESS, RELEASE, FOCUS_PRESS }; 
-    button_state m_state;
+    bool m_bFocus, m_bPress;
     int width, height;
     signal_Click m_sigClick;
 };

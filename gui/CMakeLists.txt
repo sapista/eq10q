@@ -89,7 +89,7 @@ target_link_libraries( eq10qs_gui  eqwin ${GTKMM_LIBRARIES})
 
 #Build GATE GUI
 set( bIsCompressor "false")
-set( Dyn_Title "\"~GT10Q~\\r\\nNoise Gate\"")
+set( Dyn_Title "\"GT10Q ~ Noise Gate\"")
 set( Gui_Dyn_Uri  "\"http://eq10q.sourceforge.net/gate/gui\"")
 configure_file("${PROJECT_SOURCE_DIR}/gui/dyn_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/gate_ui.cpp")
 add_library(gate_gui SHARED gate_ui.cpp)
@@ -97,7 +97,7 @@ target_link_libraries( gate_gui  dynamicwin ${GTKMM_LIBRARIES})
 
 #Build Compressor GUI
 set( bIsCompressor "true")
-set( Dyn_Title "\"~CS10Q~\\r\\nCompressor\"")
+set( Dyn_Title "\"CS10Q ~ Compressor\"")
 set( Gui_Dyn_Uri  "\"http://eq10q.sourceforge.net/compressor/gui\"")
 configure_file("${PROJECT_SOURCE_DIR}/gui/dyn_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/compressor_ui.cpp")
 add_library(compressor_gui SHARED compressor_ui.cpp)

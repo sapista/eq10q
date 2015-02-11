@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Rafols Soler                               *
+ *   Copyright (C) 2015 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,56 +18,35 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#ifndef KNOB_WIDGET_H
-#define KNOB_WIDGET_H
-
-#include <cmath>
-#include <string>
-#include <vector>
+#ifndef PLOT_DYN_CURVE_H
+  #define PLOT_DYN_CURVE_H
+  
 #include <gtkmm/drawingarea.h>
 
-#define KNOB_TYPE_LIN 0
-#define KNOB_TYPE_FREQ 1
-#define KNOB_TYPE_TIME 2
-
-class KnobWidget : public Gtk::DrawingArea
+class PlotDynCurve : public Gtk::DrawingArea
 {
   public:
-    KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, int iType = KNOB_TYPE_LIN, bool snap2ZerodB = false);
-    ~KnobWidget();
-    void set_value(float fValue);
-    double get_value();
+    PlotDynCurve(bool isCompressor);
+    virtual ~PlotDynCurve();
+    void set_ratio(double ratio);
+    void set_range(double range);
+    void set_knee(double knee);
+    void set_threshold(double threshold);
+    void set_makeup(double makeup);
+    void set_gainreduction(double gainreduction);
+    void set_inputvu(double inputvu);
     
-    //signal accessor:
-    typedef sigc::signal<void> signal_KnobChanged;
-    signal_KnobChanged signal_changed();
+  protected:
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
+    virtual void redraw();  
     
-protected:
-  //Override default signal handler:
-  virtual bool on_expose_event(GdkEventExpose* event);
-  void redraw();
-  
-  //Mouse grab signal handlers
-  virtual bool on_button_press_event(GdkEventButton* event);
-  virtual bool on_button_release_event(GdkEventButton* event);
-  virtual bool on_scrollwheel_event(GdkEventScroll* event);
-  virtual bool on_mouse_motion_event(GdkEventMotion* event);
-  
-  float m_fMin; //Min representable value
-  float m_fMax; //Max representable value
-  bool bMotionIsConnected;
-  float m_Value;
-  std::string m_Label;
-  std::string m_Units;
-  int m_TypeKnob;
-
-  int width;
-  int height;
-  int mouse_move_ant;
-  bool m_snap2Zero;
-  sigc::connection m_motion_connection;
-  
-  //Fader change signal
-  signal_KnobChanged m_KnobChangedSignal;
+  private:
+    int width, height; 
+    double m_Ratio, m_Range, m_Knee, m_Threshold, m_Makeup, m_GainReduction, m_InputVu;
+    bool m_bIsCompressor;
+    
+    double dB2PixelsX(double db);
+    double dB2PixelsY(double db);
 };
 #endif

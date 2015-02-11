@@ -34,14 +34,15 @@
 #define WIDGET_BORDER 3
 #define LOGO_PATH "icons/logodynamics.png"
 
+
 DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor)
   :m_pluginUri(uri),
   m_bundlePath(bundlePath),
   m_bIsCompressor(isCompressor)
 { 
-  m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
-  m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0,false, true));
-  m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, true));
+  m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0, "In", false, true));
+  m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, "GR", true));
   m_Attack = Gtk::manage(new KnobWidget2(0.1, 500.0, "Attack", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
@@ -51,7 +52,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   {
     //Is Compressor or Expander
     m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.0, 20.0, "Makeup", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
-    m_Range_Ratio = Gtk::manage(new KnobWidget2(1.0, 40.0, "Ratio", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(1.0, 40.0, "Ratio", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_TIME ));
     m_Knee = Gtk::manage(new KnobWidget2(0.0, 20.0, "Knee", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   else
@@ -61,69 +62,83 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
     m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, -20.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   
-  m_KeyButton.set_label("Key");
-  m_KeyButton.set_size_request(-1,25);
-  m_ButtonAlign.add(m_KeyButton);
- 
+  m_Plot = Gtk::manage(new PlotDynCurve(m_bIsCompressor));
+  
+  m_KeyButton.set_label("Key Listen");
+  m_KeyButton.set_size_request(-1,20);
+  m_KeyButtonAlign.add(m_KeyButton);
+  m_KeyButtonAlign.set_padding(0,0, 10, 10);
+  
+  m_LTitle.set_use_markup(true);
+  m_LTitle.set_markup( "<span font_weight=\"bold\" font=\"12px\" font_family=\"Monospace\">"  + title + "</span>");
+  m_LTitle.set_size_request(-1, 25);
+  m_TitleAlign.add(m_LTitle);
+  m_TitleAlign.set_padding(0,0, 60, 0);
+  
   //load image logo
   image_logo = new Gtk::Image(m_bundlePath + "/" + LOGO_PATH);
-  m_LTitle.set_use_markup(true);
-  m_LTitle.set_markup( "<span font_weight=\"bold\" size=\"x-large\" font_family=\"Monospace\">" + title + "</span>");
-  m_LTitle.set_angle(90);
-  m_TitleAlign.add(m_LTitle);
-  m_TitleAlign.set(0.5,0.8,0,0);
-  m_TitleBox.pack_start(m_TitleAlign, Gtk::PACK_EXPAND_WIDGET);
-  m_TitleBox.pack_start(*image_logo, Gtk::PACK_SHRINK);
-  m_TitleFrame.add(m_TitleBox);
-  m_TitleFrame.set_label(""); //Must be empty tabler to apply the style
    
-  m_VuInAlign.add(*m_InputVu);
-  m_VuInAlign.set_border_width(1);
-  m_VuInFrame.add(m_VuInAlign);
-  m_VuInFrame.set_label("Vu&Th");
-  m_VuGrAlign.add(*m_GainReductionVu);
-  m_VuGrAlign.set_border_width(1);
-  m_VuGrFrame.add(m_VuGrAlign);
-  m_VuGrFrame.set_label("Gr");
-  
-  m_GattingBox.set_border_width(WIDGET_BORDER+2);
-  m_GattingBox.set_spacing(WIDGET_BORDER);
-  m_GattingBox.pack_start(*m_InGainFader, Gtk::PACK_SHRINK);
-  m_GattingBox.pack_start(*m_Range_Ratio, Gtk::PACK_SHRINK );
-  if(m_bIsCompressor)
-  {
-    m_GattingBox.pack_start(*m_Knee, Gtk::PACK_SHRINK );
-  }
-  m_GattingBox.pack_start(*m_Attack, Gtk::PACK_SHRINK );
-  m_GattingBox.pack_start(*m_Release, Gtk::PACK_SHRINK);
-  m_GattingBox.pack_start(*m_Hold_Makeup, Gtk::PACK_SHRINK);
-  m_GattingBox.show_all_children();
-  m_GattingFrame.add(m_GattingBox);
-  m_GattingFrame.set_label("DYN");
+  m_VuBox.pack_start(*m_InputVu, Gtk::PACK_SHRINK);
+  m_VuBox.pack_start(*m_GainReductionVu, Gtk::PACK_SHRINK);
+  m_VuBox.set_border_width(4);
+  m_VuBox.show_all_children();
+
+  m_SideChain2Box.set_border_width(WIDGET_BORDER);
+  m_SideChain2Box.set_spacing(WIDGET_BORDER);
+  m_SideChain2Box.pack_start(*m_LPF, Gtk::PACK_EXPAND_WIDGET);
+  m_SideChain2Box.pack_start(*m_HPF, Gtk::PACK_EXPAND_WIDGET);
   
   m_SideChainBox.set_border_width(WIDGET_BORDER);
-  m_SideChainBox.set_spacing(WIDGET_BORDER * 5);
-  m_SideChainBox.pack_start(*m_LPF, Gtk::PACK_SHRINK );
-  m_SideChainBox.pack_start(*m_HPF, Gtk::PACK_SHRINK );
-  m_SideChainBox.pack_start(m_ButtonAlign,Gtk::PACK_SHRINK);
+  m_SideChainBox.set_spacing(WIDGET_BORDER);
+  m_dummy.set_size_request(-1, 20);
+  m_SideChainBox.pack_start(m_dummy);
+  m_SideChainBox.pack_start(m_KeyButtonAlign,Gtk::PACK_SHRINK);
+  m_SideChainBox.pack_start(m_SideChain2Box,Gtk::PACK_SHRINK);
   m_SideChainBox.show_all_children();
-  m_SideChainFrame.add(m_SideChainBox);
-  m_SideChainFrame.set_label("SC");
   
-  m_VuBox.pack_start(m_TitleFrame, Gtk::PACK_SHRINK );
-  m_VuBox.pack_start(*m_InGainFader, Gtk::PACK_SHRINK );
-  m_VuBox.pack_start(m_GattingFrame, Gtk::PACK_SHRINK );
-  m_VuBox.pack_start(m_VuInFrame, Gtk::PACK_SHRINK );
-  m_VuBox.pack_start(m_VuGrFrame, Gtk::PACK_SHRINK );
-  m_VuBox.pack_start(m_SideChainFrame, Gtk::PACK_SHRINK );
-  m_VuBox.show_all_children();
-  m_VuBox.show();
-   
-  m_MainWidgetAlign.set_padding(3,3,3,3);
-  m_MainWidgetAlign.add(m_VuBox);
-  add(m_MainWidgetAlign);
-  m_MainWidgetAlign.show();
+  m_SCBox.add(m_SideChainBox);
   
+  m_DynBox.set_border_width(WIDGET_BORDER);
+  m_DynBox.set_spacing(WIDGET_BORDER);
+  m_DynBox.pack_start(*m_InGainFader, Gtk::PACK_SHRINK);
+  m_DynBox.pack_start(*m_Range_Ratio, Gtk::PACK_SHRINK);
+  if(m_bIsCompressor)
+  {
+    m_DynBox.pack_start(*m_Knee, Gtk::PACK_SHRINK);
+  }
+  m_DynBox.show_all_children();
+  
+  m_BalBox.set_border_width(WIDGET_BORDER);
+  m_BalBox.set_spacing(WIDGET_BORDER);
+  m_BalBox.pack_start(*m_Attack, Gtk::PACK_SHRINK);
+  m_BalBox.pack_start(*m_Release, Gtk::PACK_SHRINK);
+  m_BalBox.pack_start(*m_Hold_Makeup, Gtk::PACK_SHRINK);
+  m_BalBox.show_all_children();
+  
+  m_PlotBox.pack_start(m_DynBox, Gtk::PACK_SHRINK);
+  m_PlotBox.pack_start(*m_Plot, Gtk::PACK_SHRINK);
+  m_PlotBox.show_all_children();
+  
+  m_PlotLabelBox.pack_start(m_TitleAlign, Gtk::PACK_SHRINK);
+  m_PlotLabelBox.pack_start(m_PlotBox, Gtk::PACK_SHRINK);
+  m_PlotLabelBox.show_all_children();
+  
+  m_TitleBox.pack_start(m_BalBox, Gtk::PACK_SHRINK);
+  m_TitleBox.pack_start(*image_logo, Gtk::PACK_SHRINK);
+  m_TitleBox.show_all_children();
+  
+  m_BotBox.pack_start(m_TitleBox, Gtk::PACK_SHRINK);
+  m_BotBox.pack_start(m_SCBox, Gtk::PACK_EXPAND_PADDING);
+  
+  m_Main2Box.pack_start(m_PlotLabelBox, Gtk::PACK_SHRINK);
+  m_Main2Box.pack_start(m_BotBox, Gtk::PACK_SHRINK);
+  
+  m_MainBox.pack_start(m_Main2Box, Gtk::PACK_SHRINK);
+  m_MainBox.pack_start(m_VuBox, Gtk::PACK_SHRINK);
+  
+  show_all();
+  add(m_MainBox);
+    
   //Set cutom theme color:
   Gdk::Color m_WinBgColor;
   SetWidgetColors m_WidgetColors;
@@ -131,13 +146,8 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   //Set Main widget Background
   m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
   modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
-  m_WidgetColors.setGenericWidgetColors(m_SideChainFrame.get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_GattingFrame.get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_VuGrFrame.get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_VuInFrame.get_label_widget());
-  m_WidgetColors.setGenericWidgetColors(m_TitleFrame.get_label_widget());
-  m_WidgetColors.setButtonColors(&m_KeyButton);
   m_WidgetColors.setGenericWidgetColors(&m_LTitle);
+  
   
   //Connect signals
   m_InGainFader->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onGainChange));
@@ -193,6 +203,7 @@ void DynMainWindow::onThresholdChange()
   //Write to LV2 port
   float aux;
   aux = m_InputVu->get_value_th();
+  m_Plot->set_threshold(aux);
   write_function(controller, PORT_THRESHOLD, sizeof(float), 0, &aux);
 }
 
@@ -201,6 +212,14 @@ void DynMainWindow::onRangeChange()
   //Write to LV2 port
   float aux;
   aux = m_Range_Ratio->get_value();
+  if(m_bIsCompressor)
+  {
+    m_Plot->set_ratio(aux);
+  }
+  else
+  {
+    m_Plot->set_range(aux);
+  }
   write_function(controller, PORT_RANGE, sizeof(float), 0, &aux);
 }
 
@@ -217,6 +236,10 @@ void DynMainWindow::onHoldChange()
   //Write to LV2 port
   float aux;
   aux = m_Hold_Makeup->get_value();
+  if(m_bIsCompressor)
+  {
+    m_Plot->set_makeup(aux);
+  }
   write_function(controller, PORT_HOLD, sizeof(float), 0, &aux);
 }
 
@@ -233,6 +256,7 @@ void DynMainWindow::onKneeChange()
   //Write to LV2 port
   float aux;
   aux = m_Knee->get_value();
+  m_Plot->set_knee(aux);
   write_function(controller, PORT_KNEE, sizeof(float), 0, &aux);
 }
 
@@ -259,3 +283,38 @@ void DynMainWindow::onKeyListenChange()
   aux = m_KeyButton.get_active() ? 1.0 : 0.0;
   write_function(controller, PORT_KEY_LISTEN, sizeof(float), 0, &aux);
 }
+
+bool DynMainWindow::on_expose_event(GdkEventExpose* event)
+{
+  bool ret = Gtk::EventBox::on_expose_event(event); //Call parent redraw()
+  
+  Glib::RefPtr<Gdk::Window> window = get_window();
+  if(window)
+  {
+    Gtk::Allocation allocation = get_allocation();
+    const int width = allocation.get_width();
+    const int height = allocation.get_height();
+    
+    Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
+    
+    //Draw a border to all widgets
+    cr->save();         
+    //cr->rectangle(0.5,0.5, width - 0.5, height - 0.5);
+    cr->move_to(0.5, height-0.5);
+    cr->line_to(0.5, 0.5);
+    cr->line_to(width - 0.5, 0.5);
+    cr->set_source_rgb(0.5, 0.5, 0.6);
+    cr->set_line_width(1.0);
+    cr->stroke(); 
+    cr->move_to(width - 0.5, 0.5);
+    cr->line_to(width - 0.5, height - 0.5);
+    cr->line_to(0.5, height - 0.5);
+    cr->set_source_rgb(0.1, 0.1, 0.2);
+    cr->set_line_width(1.0);
+    cr->stroke(); 
+    cr->restore();
+  }
+
+  return ret;
+}
+

@@ -24,10 +24,9 @@
 #define OUTER_BORDER 2 
 
 Button::Button ( const Glib::ustring& label ):
-m_label(label),
-m_state(Button::RELEASE)
+m_label(label), m_bFocus(false), m_bPress(false)
 {
-  set_size_request( 8 + 8*m_label.length(), 20);
+  set_size_request( 12 + 10*m_label.length(), 20);
   
   //Connect mouse signals
   add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK);
@@ -45,13 +44,12 @@ Button::~Button()
 bool Button::on_button_press_event ( GdkEventButton* event )
 {
   //Check click type
-  if(event->button == 1 && event->type == GDK_BUTTON_PRESS &&
-     event->x > OUTER_BORDER &&
-     event->x < (width - OUTER_BORDER) &&
-     event->y > OUTER_BORDER &&
-     event->y < (height - OUTER_BORDER))
+  if( event->button == 1 && event->type == GDK_BUTTON_PRESS)
   { 
-    m_state = Button::PRESS;
+    m_bPress = event->x > OUTER_BORDER &&
+               event->x < (width - OUTER_BORDER) &&
+               event->y > OUTER_BORDER &&
+               event->y < (height - OUTER_BORDER);
     redraw();
   }
   return true;
@@ -66,50 +64,26 @@ bool Button::on_button_release_event ( GdkEventButton* event )
   {
     m_sigClick.emit();  
   }
- 
-  //Coords captured after the event cause mouse can change position during the event
-  int x, y;
-  get_pointer(x,y);
-  
-  if(x > OUTER_BORDER &&
-     x < (width - OUTER_BORDER) &&
-     y > OUTER_BORDER &&
-     y < (height - OUTER_BORDER))
-  {
-    m_state = Button::FOCUS;
-  }
-  else
-  {
-    m_state = Button::RELEASE;
-  }
 
+  m_bPress = false;
+  m_bFocus = false;
   redraw();
   return true;
 }
 
 bool Button::on_mouse_motion_event ( GdkEventMotion* event )
 {
-  if( event->x > OUTER_BORDER &&
-      event->x < (width - OUTER_BORDER) &&
-      event->y > OUTER_BORDER &&
-      event->y < (height - OUTER_BORDER))
-  {
-    if(m_state == Button::RELEASE)
-    {
-      m_state = Button::FOCUS;
-    }
-    else if(m_state == Button::PRESS)
-    {
-      m_state = Button::FOCUS_PRESS;
-    }
-    redraw();
-  } 
+   m_bFocus = event->x > OUTER_BORDER &&
+              event->x < (width - OUTER_BORDER) &&
+              event->y > OUTER_BORDER &&
+              event->y < (height - OUTER_BORDER);
+  redraw();
   return true;
 }
 
 bool Button::on_mouse_leave_widget ( GdkEventCrossing* event )
 {
-  m_state = Button::RELEASE;
+  m_bFocus = false;
   redraw();
   return true;
 }
@@ -163,64 +137,54 @@ bool Button::on_expose_event ( GdkEventExpose* event )
     cr->arc (OUTER_BORDER + radius, height- OUTER_BORDER - radius, radius, 90 * degrees, 180 * degrees);
     cr->arc ( OUTER_BORDER + radius, OUTER_BORDER + radius, radius, 180 * degrees, 270 * degrees);
     cr->close_path();
-    switch(m_state)
-    {      
-      case Button::PRESS:
-      cr->set_source_rgb(0.5, 0.7, 0.8);
-      break;
-      
-      case Button::RELEASE:
-      cr->set_source_rgb(0.2, 0.4, 0.5);
-      break;
-      
-      case Button::FOCUS:
-      case Button::FOCUS_PRESS:
+
+    if(m_bFocus)
+    {
       cr->set_source_rgb(0.2, 0.6, 0.5);
-      break;
+    } 
+    else if(m_bPress)
+    {
+      cr->set_source_rgb(0.5, 0.7, 0.8);
     }
-    cr->set_line_width(1.8);
+    else
+    {
+      cr->set_source_rgb(0.5, 0.5, 0.5);  
+    }
+
+    cr->set_line_width(1);
     cr->stroke_preserve();
      
     Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr = Cairo::LinearGradient::create(width/2, OUTER_BORDER, width/2, height - OUTER_BORDER);   
-    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.7 ); ; 
+    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.3 ); ; 
     
-    switch(m_state)
-    {      
-      case Button::PRESS:
-      case Button::FOCUS_PRESS:   
-        //cr->set_source_rgb(0.1, 0.2, 0.3);
-        bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.1, 0.2, 0.3, 0.8 ); 
-      break;
-      
-      case Button::RELEASE:
-      case Button::FOCUS: 
-        bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.2, 0.3, 0.3, 0.8 ); 
-        //cr->set_source_rgb(0.2, 0.3, 0.3);
-        
-      break;  
+    if(m_bPress)
+    {
+      bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.1, 0.2, 0.3, 0.8 ); 
     }
+    else
+    {
+      bkg_gradient_ptr->add_color_stop_rgba (0.7, 0.4, 0.4, 0.4, 0.8 ); 
+    }
+
     cr->set_source(bkg_gradient_ptr);
     cr->fill(); 
     cr->restore();
     
     //Label
     cr->save();
-    
-    switch(m_state)
-    {      
-      case Button::PRESS:
-      cr->set_source_rgb(0.7, 0.7, 0.9);
-      break;
-      
-      case Button::RELEASE:
-      cr->set_source_rgb(TEXT_R, TEXT_G, TEXT_B);
-      break;
-      
-      case Button::FOCUS:
-      case Button::FOCUS_PRESS: 
+    if(m_bFocus)
+    {
       cr->set_source_rgb(0.2, 0.6, 0.5);
-      break;
+    } 
+    else if(m_bPress)
+    {
+      cr->set_source_rgb(0.7, 0.7, 0.9);
     }
+    else
+    {
+     cr->set_source_rgb(TEXT_R, TEXT_G, TEXT_B); 
+    }
+
 
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 11px");

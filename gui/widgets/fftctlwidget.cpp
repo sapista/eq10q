@@ -20,6 +20,7 @@
  
 #include "fftctlwidget.h"
 #include "colors.h"
+#include "toggle_button.h" //To draw the LED using a static function
  
 #define MARGIN 12
 #define BUTTON_HEIGHT 10
@@ -281,76 +282,8 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->set_source_rgba(0.2, 0.2, 0.2, 0.9);
     cr->stroke();
     cr->restore();
-    
-    //Draw the FFT enable button
-    cr->save();
-    cr->begin_new_sub_path();
-    cr->arc( MARGIN + FFT_BTN_RADIUS + 0.5, MARGIN + FFT_BTN_RADIUS  + 0.5, FFT_BTN_RADIUS, M_PI, -0.5*M_PI);
-    cr->arc( MARGIN + 3*FFT_BTN_RADIUS  + 0.5, MARGIN + FFT_BTN_RADIUS  + 0.5, FFT_BTN_RADIUS, -0.5*M_PI, 0);
-    cr->arc( MARGIN + 3*FFT_BTN_RADIUS  + 0.5, MARGIN + 3*FFT_BTN_RADIUS  + 0.5, FFT_BTN_RADIUS, 0.0,  0.5*M_PI);
-    cr->arc( MARGIN + FFT_BTN_RADIUS  + 0.5, MARGIN + 3*FFT_BTN_RADIUS  + 0.5, FFT_BTN_RADIUS, 0.5*M_PI, M_PI);
-    cr->close_path();
-    
-    //Daw focus on LED
-    if(m_bBtn_Foucs)
-    {
-      cr->set_line_width(2.5);
-      cr->set_source_rgba(0.0, 1.0, 1.0, 0.5);
-      cr->stroke_preserve();
-      cr->set_source_rgb(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B);
-      cr->fill_preserve();
-    }    
-    
-    bkg_gradient_ptr = Cairo::RadialGradient::create( MARGIN + 2 * FFT_BTN_RADIUS - 2,  MARGIN + 2 * FFT_BTN_RADIUS - 2, 0, MARGIN + 2 * FFT_BTN_RADIUS,  MARGIN + 2 * FFT_BTN_RADIUS, FFT_BTN_RADIUS*3);
-    double alpha = 0.3;
-    if(m_bEnabled)
-    {
-      alpha = 0.8;
-    }
-    bkg_gradient_ptr->add_color_stop_rgba (0.3, 0.8, 0.8, 0.5, alpha); 
-    bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.7, 0.4, 0.0, alpha); 
-    cr->set_source(bkg_gradient_ptr);  
-    cr->fill_preserve();
-        
-    cr->set_line_width(1.0);
-    cr->set_source_rgba(0.1, 0.1, 0.1, 1.0);
-    cr->stroke();
-    cr->restore();
-
-    //Draw extra birgthness on FFT LED
-    if(m_bEnabled)
-    {
-      cr->save();
-      cr->arc( MARGIN + 2 * FFT_BTN_RADIUS + 0.5,  MARGIN + 2 * FFT_BTN_RADIUS + 0.5, 4*FFT_BTN_RADIUS, 0.0, 2.0*M_PI);
-      bkg_gradient_ptr = Cairo::RadialGradient::create( MARGIN + 2 * FFT_BTN_RADIUS,  MARGIN + 2 * FFT_BTN_RADIUS, 0, MARGIN + 2 * FFT_BTN_RADIUS,  MARGIN + 2 * FFT_BTN_RADIUS, FFT_BTN_RADIUS*4);   
-      bkg_gradient_ptr->add_color_stop_rgba (0.0, 1.0, 1.0, 1.0, 0.4); 
-      bkg_gradient_ptr->add_color_stop_rgba (1.0, 1.0, 1.0, 1.0, 0.0); 
-      cr->set_source(bkg_gradient_ptr); 
-      cr->fill();
-      cr->restore();
-    }
-    
-    //Draw Text FFT
-    cr->save();
-    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 12px");
-    pangoLayout->set_font_description(font_desc);
-    pangoLayout->set_text("FFT");
-    //a shadow
-    cr->move_to(5+MARGIN + 4*FFT_BTN_RADIUS + 1, MARGIN + 2*FFT_BTN_RADIUS - 5);
-    cr->set_source_rgba(0.1, 0.1, 0.1, 0.9);
-    pangoLayout->show_in_cairo_context(cr);
-    cr->stroke(); 
-    //and text
-    cr->move_to(5+MARGIN + 4*FFT_BTN_RADIUS, MARGIN + 2*FFT_BTN_RADIUS - 6);
-    cr->set_source_rgba(0.9, 0.9, 0.9, 0.7);
-    pangoLayout->show_in_cairo_context(cr);
-    cr->stroke();  
-    cr->restore();
+   
+    ToggleButton::drawLedBtn(cr, m_bBtn_Foucs, m_bEnabled, "FFT", MARGIN, FFT_BTN_RADIUS);
   }
   return true;
 }
-
-
-
-

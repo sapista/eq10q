@@ -58,7 +58,7 @@
 #define BUTTON_OVER_BG_B 0.09
 
 //Bands colors LUT
-const  Glib::ustring bandColorLUT[] = {"#FF0000","#FFFF00","#535EFB","#19FFAF","#FF01FF","#00FF00","#A52A2A","#FF8C2E","#B2DFEE","#7129EE" };
+const  Glib::ustring bandColorLUT[] = {"#FF0000","#CDC009","#535EFB","#19FFAF","#FF01FF","#00FF00","#A52A2A","#FF8C2E","#B2DFEE","#7129EE" };
 
 //Convert to Gdk::Color macro
 #define GDK_COLOR_MACRO(_color) ((gushort)floor(_color * (double)G_MAXUSHORT))

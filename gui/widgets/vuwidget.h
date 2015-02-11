@@ -32,7 +32,7 @@
 class VUWidget : public Gtk::DrawingArea
 {
   public:
-    VUWidget(int iChannels, float fMin, float fMax, bool IsGainReduction = false, bool DrawThreshold = false);
+    VUWidget(int iChannels, float fMin, float fMax,  std::string title, bool IsGainReduction = false, bool DrawThreshold = false);
     ~VUWidget();
     void setValue(int iChannel, float fValue);
   
@@ -74,7 +74,7 @@ private:
     
     int width;
     int height;
-     
+    std::string m_Title; 
     sigc::connection m_motion_connection;
     
     //Fader change signal

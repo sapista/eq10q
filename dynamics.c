@@ -322,7 +322,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
       //Under Threshold
       y_dB = x_dB; 
     }
-    else if(knee_range > knee )
+    else if(knee_range >= knee )
     {
       //Over Threshold
       y_dB = threshold + (x_dB - threshold)/ratio; 

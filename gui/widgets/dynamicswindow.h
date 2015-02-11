@@ -25,13 +25,10 @@
 #include <string>
 
 #include <gtkmm/eventbox.h>
-#include <gtkmm/alignment.h>
+#include <gtkmm/alignment.h> 
 #include <gtkmm/box.h>
-#include <gtkmm/togglebutton.h>
-#include <gtkmm/button.h>
-#include <gtkmm/frame.h>
 #include <gtkmm/image.h>
-#include <gtkmm/label.h>
+#include <gtkmm/label.h> 
 
 #include <cmath>
 
@@ -40,6 +37,9 @@
 
 #include "vuwidget.h"
 #include "knob2.h"
+#include "toggle_button.h"
+#include "dynplot.h"
+#include "sidechainbox.h"
 
 #define PORT_OUTPUT 0
 #define PORT_INPUT 1
@@ -99,6 +99,7 @@ class DynMainWindow : public Gtk::EventBox
 	  
 	  case PORT_THRESHOLD:
 	    m_InputVu->set_value_th(data);
+            m_Plot->set_threshold(data);
 	  break;
 	  
 	  case PORT_ATACK:
@@ -107,6 +108,10 @@ class DynMainWindow : public Gtk::EventBox
 	  
 	  case PORT_HOLD:
 	    m_Hold_Makeup->set_value(data);
+            if(m_bIsCompressor)
+            {
+              m_Plot->set_makeup(data);
+            }
 	  break;
 	  
 	  case PORT_DECAY:
@@ -115,10 +120,19 @@ class DynMainWindow : public Gtk::EventBox
 	  
 	  case PORT_RANGE:
 	    m_Range_Ratio->set_value(data);
+            if(m_bIsCompressor)
+            {
+              m_Plot->set_ratio(data);
+            }
+            else
+            {
+              m_Plot->set_range(data);
+            }
 	  break;
 	  
 	  case PORT_GAINREDUCTION:
 	    m_GainReductionVu->setValue(0,data);
+            m_Plot->set_gainreduction(data);
 	  break;
 	  
 	  case PORT_HPFFREQ:
@@ -135,10 +149,12 @@ class DynMainWindow : public Gtk::EventBox
 	  
 	  case PORT_INVU:
 	    m_InputVu->setValue(0,data);
+            m_Plot->set_inputvu(data);
 	  break;
 	  
 	  case PORT_KNEE:
 	    m_Knee->set_value(data);
+            m_Plot->set_knee(data);
 	  break;
 	}       
         
@@ -162,14 +178,15 @@ class DynMainWindow : public Gtk::EventBox
     KnobWidget2 *m_Knee;
     KnobWidget2 *m_HPF;
     KnobWidget2 *m_LPF;
-    Gtk::ToggleButton m_KeyButton;
-    Gtk::Alignment m_ButtonAlign;
-    Gtk::HBox m_VuBox;
-    Gtk::VBox m_GattingBox, m_SideChainBox, m_TitleBox;
-    Gtk::Frame m_GattingFrame, m_SideChainFrame, m_VuInFrame, m_VuGrFrame, m_TitleFrame;       
-    Gtk::Alignment m_VuInAlign, m_VuGrAlign, m_MainWidgetAlign, m_TitleAlign;
+    ToggleButton m_KeyButton;
+    PlotDynCurve *m_Plot;
+    SideChainBox m_SCBox;
+    Gtk::Alignment m_KeyButtonAlign, m_TitleAlign;
+    Gtk::HBox m_VuBox, m_PlotBox, m_BalBox, m_MainBox, m_BotBox, m_SideChain2Box;
+    Gtk::VBox m_SideChainBox, m_TitleBox, m_DynBox, m_Main2Box, m_PlotLabelBox;  
     Gtk::Image *image_logo;
-    Gtk::Label m_LTitle;
+    Gtk::Label m_LTitle; 
+    Gtk::Label m_dummy; //A dummy widget to add some space at the top of sidechain box
     
     //Signal Handlers
     void onGainChange();
@@ -183,6 +200,9 @@ class DynMainWindow : public Gtk::EventBox
     void onLPFChange();
     void onRealize();
     void onKeyListenChange();
+    
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
     std::string m_pluginUri;

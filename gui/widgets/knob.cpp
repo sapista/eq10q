@@ -33,14 +33,15 @@
 #define CURSOR_LENGHT 0.25
 #define CURSOR_TRIANGLE_BASE 0.03
 
-KnobWidget::KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, int iType):
+KnobWidget::KnobWidget(float fMin, float fMax, std::string sLabel, std::string sUnits, int iType, bool snap2ZerodB):
   m_fMin(fMin),
   m_fMax(fMax),
   m_Value(fMin),
   m_Label(sLabel),
   m_Units(sUnits),
   m_TypeKnob(iType),
-  mouse_move_ant(0)
+  mouse_move_ant(0),
+  m_snap2Zero(snap2ZerodB)
 {
   add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK);
   signal_button_press_event().connect(sigc::mem_fun(*this, &KnobWidget::on_button_press_event),true);
@@ -130,17 +131,31 @@ bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
   }
 
   int yPixels = event->y;
-  
+  float val;
+  bool ismoving = false;
   if(yPixels - mouse_move_ant < 0)
   {
     //Move up
-    set_value(m_Value + increment*(abs(yPixels - mouse_move_ant)));
+    val = m_Value + increment*(abs(yPixels - mouse_move_ant));
+    ismoving = true;
   }
   
   if(yPixels - mouse_move_ant > 0)
   {
     //Move down
-    set_value(m_Value - increment*(abs(yPixels - mouse_move_ant)));
+    val = m_Value - increment*(abs(yPixels - mouse_move_ant));
+    ismoving = true;
+  }
+  
+  //Snap to 0 dB
+  if(m_snap2Zero && val < 0.5f && val > -0.5f)
+  {
+    val = 0.0f;
+  }
+  
+  if(ismoving)
+  {
+    set_value(val);
   }
   mouse_move_ant = yPixels;
   m_KnobChangedSignal.emit();

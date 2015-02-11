@@ -22,6 +22,7 @@
 #include "colors.h"
 #include "guiconstants.h"
 #include "bandctl.h"
+#include "toggle_button.h" //To draw the LED using a static function
 
 #include <gdkmm.h>
 #include <gdk/gdkkeysyms.h>
@@ -132,13 +133,11 @@ m_bGlowBand(false)
   signal_leave_notify_event().connect(sigc::mem_fun(*this, &BandCtl::on_mouse_leave_widget),true);
   
   Glib::RefPtr<Gtk::Style> sty =  Gtk::Style::create();  
-  sty->set_font(Pango::FontDescription("sans 8"));
+  sty->set_font(Pango::FontDescription("sans 11px"));
   sty->set_bg(Gtk::STATE_NORMAL, Gdk::Color("#3C3940"));
   sty->set_bg(Gtk::STATE_PRELIGHT, Gdk::Color("#408FC0"));
-  //sty->set_bg(Gtk::STATE_SELECTED, Gdk::Color("#0000FF"));
   sty->set_fg(Gtk::STATE_NORMAL, Gdk::Color("#CDCECE"));
   sty->set_fg(Gtk::STATE_PRELIGHT, Gdk::Color("#161B17"));
-  //sty->set_fg(Gtk::STATE_SELECTED, Gdk::Color("#FF0000"));
   
   
   m_TypePopUp->set_style(sty);
@@ -1060,73 +1059,16 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
     cr->fill();
     cr->restore();
     
-    //Draw Enable BUTTON
+    //Draw Enable LED
     cr->save();
-    cr->begin_new_sub_path();
-    cr->arc (m_EnableBtn.x1 - radius, m_EnableBtn.y0 + radius, radius, -90 * degrees, 0 * degrees);
-    cr->arc (m_EnableBtn.x1- radius, m_EnableBtn.y1 - radius, radius, 0 * degrees, 90 * degrees);
-    cr->arc (m_EnableBtn.x0 + radius,m_EnableBtn.y1 - radius, radius, 90 * degrees, 180 * degrees);
-    cr->arc (m_EnableBtn.x0 + radius, m_EnableBtn.y0 + radius, radius, 180 * degrees, 270 * degrees);
-    cr->close_path();
-    
-    cr->set_source_rgba(BACKGROUND_R, BACKGROUND_G, BACKGROUND_B, 0.7);
-    cr->fill_preserve();
-    
-    if(m_EnableBtn.focus)
-    {
-      cr->set_source_rgba(m_Color.get_red_p(), m_Color.get_green_p(), m_Color.get_blue_p(), 0.5);
-      cr->fill_preserve();
-    }
-     
-    if(m_bBandIsEnabled)
-    {
-      cr->set_source_rgba(m_Color.get_red_p() - 0.2, m_Color.get_green_p() - 0.2, m_Color.get_blue_p() - 0.2, 0.3);
-      cr->fill_preserve();
-    }
-    
-    cr->set_line_width(1.0);
-    cr->set_source_rgba(m_Color.get_red_p(), m_Color.get_green_p(), m_Color.get_blue_p(), 0.5);
-    cr->stroke();
+    cr->translate(m_EnableBtn.x0 - 0.5, m_EnableBtn.y0 + 1.5);
+    ToggleButton::drawLedBtn(cr, m_EnableBtn.focus, m_bBandIsEnabled, "On", 0, 3);
     cr->restore();
-  
-    //Draw text on button
-    cr->save();
-    std::stringstream ss;
-    ss<<"sans "<< FONT_SIZE<<"px";  
-    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc(ss.str());
-    pangoLayout->set_font_description(font_desc);
-    pangoLayout->set_alignment(Pango::ALIGN_CENTER);
-    pangoLayout->set_width(Pango::SCALE * (m_EnableBtn.x1 - m_EnableBtn.x0));    
-    cr->move_to(m_EnableBtn.x0,  m_EnableBtn.y0 + 0.5*(m_EnableBtn.y1 - m_EnableBtn.y0) - FONT_SIZE/2 - 2);     
-    if(m_bBandIsEnabled)
-    {
-      if(m_EnableBtn.focus)
-      {
-        cr->set_source_rgb(1.0, 1.0, 1.0);
-      }
-      else
-      {              
-        cr->set_source_rgb(0.95, 0.95, 0.95);
-      }  
-    }
-    else
-    {
-      if(m_EnableBtn.focus)
-      {
-        cr->set_source_rgb(m_Color.get_red_p() + 0.2, m_Color.get_green_p() + 0.2, m_Color.get_blue_p() + 0.2);
-      }
-      else
-      {
-        cr->set_source_rgb(m_Color.get_red_p(), m_Color.get_green_p(), m_Color.get_blue_p());
-      }
-    }
-    ss.str(""); //Clear stringstreamm
-    ss<<m_iBandNum + 1<<"·"<< "On";
-    pangoLayout->set_text(ss.str());
-    pangoLayout->show_in_cairo_context(cr);
-    cr->stroke();  
-    cr->restore();
+        
+    //Draw Gan, Freq, Q Buttons
+    drawBandButton(&m_GainBtn, cr);
+    drawBandButton(&m_FreqBtn, cr);
+    drawBandButton(&m_QBtn, cr);
     
     //Draw ComboBox Filter Type icon 
     cr->save();
@@ -1137,24 +1079,28 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
     cr->restore();
     
     //Draw FilterType Focus ComboBox
-    if(m_TypeBtn.focus && m_bBandIsEnabled)
+    if(m_bBandIsEnabled)
     {
       cr->save();
       cr->begin_new_sub_path();
-      cr->arc (m_TypeBtn.x1 - radius - 1, m_TypeBtn.y0 + radius, radius, -90 * degrees, 0 * degrees);
-      cr->arc (m_TypeBtn.x1- radius -1 , m_TypeBtn.y1 - radius, radius, 0 * degrees, 90 * degrees);
-      cr->arc (m_TypeBtn.x0 + radius,m_TypeBtn.y1 - radius, radius, 90 * degrees, 180 * degrees);
-      cr->arc (m_TypeBtn.x0 + radius, m_TypeBtn.y0 + radius, radius, 180 * degrees, 270 * degrees);
+      cr->arc (m_TypeBtn.x1 - radius - 1 - 0.5, m_TypeBtn.y0 + radius + 0.5, radius, -90 * degrees, 0 * degrees);
+      cr->arc (m_TypeBtn.x1- radius -1 - 0.5, m_TypeBtn.y1 - radius - 0.5, radius, 0 * degrees, 90 * degrees);
+      cr->arc (m_TypeBtn.x0 + radius + 0.5, m_TypeBtn.y1 - radius - 0.5, radius, 90 * degrees, 180 * degrees);
+      cr->arc (m_TypeBtn.x0 + radius + 0.5, m_TypeBtn.y0 + radius + 0.5, radius, 180 * degrees, 270 * degrees);
       cr->close_path();
-      cr->set_source_rgba(0.0, 1.0, 1.0, 0.2);
-      cr->fill();
+      
+      cr->set_source_rgba(0.2, 0.2, 0.2, 0.9);
+      cr->set_line_width(1);
+      cr->stroke_preserve();
+      
+      if(m_TypeBtn.focus)
+      {
+        cr->set_source_rgba(0.0, 1.0, 1.0, 0.7);
+        cr->set_line_width(2);
+        cr->stroke();       
+      }
       cr->restore();
     }
-         
-    //Draw Gan, Freq, Q Buttons
-    drawBandButton(&m_GainBtn, cr);
-    drawBandButton(&m_FreqBtn, cr);
-    drawBandButton(&m_QBtn, cr);
 
   }
  
@@ -1180,7 +1126,7 @@ void BandCtl::drawBandButton(BandCtl::Button* btn, Cairo::RefPtr<Cairo::Context>
   pangoLayout->set_font_description(font_desc);
   pangoLayout->set_alignment(Pango::ALIGN_CENTER);
   pangoLayout->set_width(Pango::SCALE * (btn->x1 - btn->x0));    
-  
+   
   int radius =  (int)round(((double)height) / 20.0);
   double degrees = M_PI / 180.0; 
     
@@ -1224,21 +1170,9 @@ void BandCtl::drawBandButton(BandCtl::Button* btn, Cairo::RefPtr<Cairo::Context>
     cr->restore();
   }
   
-  //Draw Gain Text
+  //Draw Text
   cr->save();
-  if(!m_bBandIsEnabled)
-  {
-    cr->set_source_rgba(m_Color.get_red_p() - 0.25, m_Color.get_green_p() - 0.25, m_Color.get_blue_p() - 0.25, 0.7);
-  }
-  else if(btn->pressed)
-  {
-    cr->set_source_rgb(m_Color.get_red_p() - 0.25, m_Color.get_green_p() - 0.25, m_Color.get_blue_p() - 0.25);
-  }
-  else
-  {
-    cr->set_source_rgb(m_Color.get_red_p(), m_Color.get_green_p(), m_Color.get_blue_p());
-  }
-  
+ 
   ss.str(""); //Clear stringstream
   if(btn->units != "dB/dec")
   {
@@ -1255,9 +1189,33 @@ void BandCtl::drawBandButton(BandCtl::Button* btn, Cairo::RefPtr<Cairo::Context>
     else slope = 80;
     ss<< std::setprecision(0)<< std::fixed << slope << " " << (btn->units);
   }
-  cr->move_to(btn->x0,  btn->y0 + 0.5*(btn->y1 - btn->y0) - FONT_SIZE/2 - 2); 
+  
   pangoLayout->set_text(ss.str());
+  
+  //Shadow
+  cr->move_to(btn->x0 + 1,  btn->y0 + 0.5*(btn->y1 - btn->y0) - FONT_SIZE/2 - 2 + 1); 
+  cr->set_source_rgba(0,0,0,0.5);
+  pangoLayout->show_in_cairo_context(cr);  
+  cr->stroke();
+  
+  //Text
+  cr->move_to(btn->x0,  btn->y0 + 0.5*(btn->y1 - btn->y0) - FONT_SIZE/2 - 2); 
+  if(!m_bBandIsEnabled)
+  {
+    cr->set_source_rgba(1.0, 1.0, 1.0, 0.4);
+  }
+  else if(btn->pressed)
+  {
+    cr->set_source_rgba(1.0, 1.0, 1.0, 1.0);
+  }
+  else
+  {
+    cr->set_source_rgba(1.0, 1.0, 1.0, 0.8);
+  }
   pangoLayout->show_in_cairo_context(cr);
-  cr->stroke();  
+  cr->stroke();
+  
+
+  
   cr->restore();
 }

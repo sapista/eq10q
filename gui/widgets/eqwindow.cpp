@@ -27,19 +27,10 @@
 #include "colors.h"
 #include "setwidgetcolors.h"
 
-//TODO: Millorar buttons (load, save, flat)
-//TODO: Millorar bypass (amb un LED com en la FFT crec que pot quedar xulu)
-//TODO: Millorar botons A/B, crec que necessitu un approach completament nou
-//TODO: Millorar botons de enable de les bandes, crec que un LED com FFT tb podria quedar super xulu
-//TODO: Com sembla a ser que posare LED's a tot arreu... el millor potser seria fer una funcio que el dibuixi passant com a param el cairo context (la funcion podria dibuxar sempre el centre i fer un translate abans de incvoarla)
-//TODO: Si posu un LED a cada banda de quin color l'he de fer pq es vegi sempre molon?
-
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
-  :m_BypassButton(" Bypass "),
-  m_AButton(" A "),
-  m_BButton(" B "),
-  m_FlatButton(" Flat "),
+  :m_BypassButton("Eq On"),
+  m_FlatButton("Flat"),
   m_SaveButton("Save"),
   m_LoadButton("Load"),  
   m_iNumOfChannels(iAudioChannels),
@@ -52,7 +43,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_pluginUri(uri),
   m_bundlePath(bundlePath)
 {
-  
   //Get LV2_Feature
   map = NULL;
   for (int i = 0; features[i]; ++i) 
@@ -89,13 +79,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_MainWidgetAlign.set_padding(3,3,3,3);
   
   m_AButton.set_active(true);
-  m_BButton.set_active(false);
-  
   m_ButtonAAlign.add(m_AButton);
-  m_ButtonBAlign.add(m_BButton);
   m_BypassAlign.add(m_BypassButton);
   m_ButtonAAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
-  m_ButtonBAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
   m_BypassAlign.set(Gtk::ALIGN_LEFT, Gtk::ALIGN_CENTER, 0.0, 0.0);
   m_FlatAlign.add(m_FlatButton);
   m_FlatAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
@@ -103,9 +89,10 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveAlign.add(m_SaveButton);
   m_LoadAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
+  m_BypassAlign.set_size_request(80, -1);
   
-  m_InGain = Gtk::manage(new GainCtl("In Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
-  m_OutGain = Gtk::manage(new GainCtl("Out Gain", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
+  m_InGain = Gtk::manage(new GainCtl("In", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
+  m_OutGain = Gtk::manage(new GainCtl("Out", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
   m_FftGainScale = Gtk::manage(new FFTWidget(1.0, 50.0));
   m_FftGainScale->set_value(10.0);
@@ -134,7 +121,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_ABFlatBox.set_homogeneous(false);
   m_ABFlatBox.pack_start(m_BypassAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_ButtonAAlign,Gtk::PACK_SHRINK);
-  m_ABFlatBox.pack_start(m_ButtonBAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(*image_logo_center);
   m_ABFlatBox.pack_start(m_FlatAlign,Gtk::PACK_SHRINK);
   m_ABFlatBox.pack_start(m_LoadAlign,Gtk::PACK_SHRINK);
@@ -163,9 +149,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_MainWidgetAlign.show();
   
   //Add some tooltips
-  m_AButton.set_tooltip_text("Switch to curve A");
-  m_BButton.set_tooltip_text("Switch to curve B");
-  m_BypassButton.set_tooltip_text("Bypass the equalizer");
+  m_AButton.set_tooltip_text("A/B eq comparation");
+  m_BypassButton.set_tooltip_text("Enable/Disable the equalizer");
   m_FlatButton.set_tooltip_text("Reset all values to default");
   m_InGain->set_tooltip_text("Adjust the input gain");
   m_OutGain->set_tooltip_text("Adjust the output gain");
@@ -175,7 +160,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //connect signals
   m_BypassButton.signal_clicked().connect(sigc::mem_fun(*this, &EqMainWindow::onButtonBypass));
   m_AButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonA));
-  m_BButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonB));
   m_FlatButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFlat));
   m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
   m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
@@ -205,14 +189,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //Set Main widget Background
   m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
   modify_bg(Gtk::STATE_NORMAL, m_WinBgColor); 
-  
-  //Set buttons font type
-  m_BypassButton.modify_font(Pango::FontDescription("Monospace 8"));
-  m_AButton.modify_font(Pango::FontDescription("Monospace 8"));
-  m_BButton.modify_font(Pango::FontDescription("Monospace 8"));
-  m_FlatButton.modify_font(Pango::FontDescription("Monospace 8"));
-  m_LoadButton.modify_font(Pango::FontDescription("Monospace 8"));
-  m_SaveButton.modify_font(Pango::FontDescription("Monospace 8"));
 }
 
 EqMainWindow::~EqMainWindow()
@@ -251,7 +227,7 @@ bool EqMainWindow::on_timeout()
   if(m_port_event_Bypass)
   {
     m_port_event_Bypass = false;
-    m_BypassButton.set_active(m_bypassValue > 0.5f ? true : false);
+    m_BypassButton.set_active(m_bypassValue > 0.5f ? false : true);
   }
 
   if(m_port_event_InGain)
@@ -355,18 +331,11 @@ void EqMainWindow::onButtonA()
   if(m_AButton.get_active())
   {
     changeAB(m_AParams);
-    m_BButton.set_active(false);
   }
-  else m_BButton.set_active(true);
-}
-
-void EqMainWindow::onButtonB()
-{
-  if(m_BButton.get_active()){
-    changeAB(m_BParams);
-    m_AButton.set_active(false);
-    }
-  else m_AButton.set_active(true);
+  else
+  {
+     changeAB(m_BParams);
+  }
 }
 
 void EqMainWindow::onButtonFlat()
@@ -385,14 +354,14 @@ void EqMainWindow::onButtonBypass()
     std::cout<<"onButtonBypass... ";
   #endif
  
-  m_Bode->setBypass(m_BypassButton.get_active());
+  m_Bode->setBypass(!m_BypassButton.get_active());
   if (m_BypassButton.get_active())
   {
-    m_bypassValue = 1.0f;
+    m_bypassValue = 0.0f;
   }
   else
   {
-    m_bypassValue = 0.0f;
+    m_bypassValue = 1.0f;
   }
 
   write_function(controller, EQ_BYPASS, sizeof(float), 0, &m_bypassValue);
@@ -661,7 +630,7 @@ void EqMainWindow::onFftGainScale()
 
 bool EqMainWindow::on_expose_event(GdkEventExpose* event)
 {
-  Gtk::EventBox::on_expose_event(event); //Call parent redraw()
+  bool ret = Gtk::EventBox::on_expose_event(event); //Call parent redraw()
   
   Glib::RefPtr<Gdk::Window> window = get_window();
   if(window)
@@ -690,5 +659,5 @@ bool EqMainWindow::on_expose_event(GdkEventExpose* event)
     cr->restore();
   }
 
-  return true;
+  return ret;
 }

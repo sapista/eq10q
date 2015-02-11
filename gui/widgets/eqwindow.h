@@ -27,11 +27,6 @@
 #include <gtkmm/eventbox.h>
 #include <gtkmm/alignment.h>
 #include <gtkmm/box.h>
-#include <gtkmm/alignment.h>
-
-#include "button.h"
-#include "toggle_button.h"
-
 #include <gtkmm/messagedialog.h>
 #include <gtkmm/image.h>
 
@@ -49,6 +44,9 @@
 #include "eqparams.h"
 #include "bodeplot.h"
 #include "fftctlwidget.h"
+#include "button.h"
+#include "toggle_button.h"
+#include "abbutton.h"
 
 //Include eq definition
 #include "../eq_defines.h"
@@ -294,8 +292,9 @@ class EqMainWindow : public Gtk::EventBox
     GainCtl *m_InGain, *m_OutGain;
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
     Gtk::VBox m_CurveBypassBandsBox, m_MainBox;
-    ToggleButton m_BypassButton, m_AButton, m_BButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_ButtonBAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
+    ToggleButton m_BypassButton;
+    AbButton m_AButton;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
     Button m_FlatButton, m_SaveButton, m_LoadButton;
     Gtk::Alignment m_MainWidgetAlign;
     PlotEQCurve *m_Bode;
@@ -310,7 +309,6 @@ class EqMainWindow : public Gtk::EventBox
     
     //Signal Handlers
     void onButtonA();
-    void onButtonB();
     void onButtonFlat();
     void onButtonBypass();
     void onBandChange(int iBand, int iField, float fValue);

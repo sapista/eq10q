@@ -784,26 +784,26 @@ void PlotEQCurve::redraw()
   }
 }
 
-int PlotEQCurve::dB2Pixels(double db)
+double PlotEQCurve::dB2Pixels(double db)
 {
-  return (int)((((double)height)/2.0) - ((((double)height) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET)/DB_GRID_RANGE)*db - CURVE_TEXT_OFFSET/2);
+  return ((((double)height)/2.0) - ((((double)height) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET)/DB_GRID_RANGE)*db - CURVE_TEXT_OFFSET/2);
 }
 
-int PlotEQCurve::freq2Pixels(double f)
+double PlotEQCurve::freq2Pixels(double f)
 {
   double px_decade = (((double)width) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET)/(log10(MAX_FREQ/MIN_FREQ));
-  return (int)(px_decade*log10(f/MIN_FREQ) + CURVE_MARGIN + CURVE_TEXT_OFFSET);
+  return (px_decade*log10(f/MIN_FREQ) + CURVE_MARGIN + CURVE_TEXT_OFFSET);
 }
 
-double PlotEQCurve::Pixels2dB(int pixels)
+double PlotEQCurve::Pixels2dB(double pixels)
 {
-  return DB_GRID_RANGE*((((double)height)-CURVE_TEXT_OFFSET-2*(double)pixels)/(2*((double)height) - 4*CURVE_MARGIN - 2*CURVE_TEXT_OFFSET));
+  return DB_GRID_RANGE*((((double)height)-CURVE_TEXT_OFFSET-2*pixels)/(2*((double)height) - 4*CURVE_MARGIN - 2*CURVE_TEXT_OFFSET));
 }
 
-double PlotEQCurve::Pixels2freq(int pixels)
+double PlotEQCurve::Pixels2freq(double pixels)
 {
   double px_decade = (((double)width) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET)/(log10(MAX_FREQ/MIN_FREQ));
-  return MIN_FREQ*pow(10, (((double)pixels - CURVE_MARGIN- CURVE_TEXT_OFFSET)/(px_decade))); 
+  return MIN_FREQ*pow(10, ((pixels - CURVE_MARGIN- CURVE_TEXT_OFFSET)/(px_decade))); 
 }
 
 

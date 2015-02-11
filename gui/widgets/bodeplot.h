@@ -146,16 +146,16 @@ class PlotEQCurve : public Gtk::DrawingArea
     void initBaseVectors();
     
     //Function for dB to pixels convertion
-    int dB2Pixels(double db);
+    double dB2Pixels(double db);
     
     //Function for Hz to pixels convertion
-    int freq2Pixels(double f);
+    double freq2Pixels(double f);
     
     //Function for pixels to dB convertion
-    double Pixels2dB(int pixels);
+    double Pixels2dB(double pixels);
     
     //Function for pixels to Hz convertion
-    double Pixels2freq(int pixels);
+    double Pixels2freq(double pixels);
     
     //Compute a filter points
     void ComputeFilter(int bd_ix); 
