@@ -24,8 +24,9 @@
 #include <gtkmm/filechooserdialog.h>
 #include "eqwindow.h"
 #include "guiconstants.h"
-#include "colors.h"
 #include "setwidgetcolors.h"
+
+#define KNOB_ICON_FILE "/knobs/knob2_32px.png"
 
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
@@ -91,8 +92,11 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveAlign.set(Gtk::ALIGN_RIGHT, Gtk::ALIGN_CENTER,0.0, 0.0);
   m_BypassAlign.set_size_request(80, -1);
   
-  m_InGain = Gtk::manage(new GainCtl("In", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
-  m_OutGain = Gtk::manage(new GainCtl("Out", m_iNumOfChannels, 6, -20, m_bundlePath.c_str()));
+  m_GainFaderIn = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_GainFaderOut = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Out Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_VuMeterIn = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "In")); 
+  m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "Out"));
+  
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
   m_FftGainScale = Gtk::manage(new FFTWidget(1.0, 50.0));
   m_FftGainScale->set_value(10.0);
@@ -135,9 +139,16 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_BandBox ,Gtk::PACK_SHRINK);
 
-  m_GainEqBox.pack_start(*m_InGain, Gtk::PACK_SHRINK);
+  m_InGainBox.pack_start(*m_VuMeterIn, Gtk::PACK_EXPAND_WIDGET);
+  m_InGainBox.pack_start(*m_GainFaderIn, Gtk::PACK_SHRINK);
+  
+  m_OutGainBox.pack_start(*m_VuMeterOut, Gtk::PACK_EXPAND_WIDGET);
+  m_OutGainBox.pack_start(*m_GainFaderOut, Gtk::PACK_SHRINK);
+
   m_GainEqBox.pack_start(m_CurveBypassBandsBox, Gtk::PACK_SHRINK);
-  m_GainEqBox.pack_start(*m_OutGain, Gtk::PACK_SHRINK);
+  m_GainEqBox.pack_start(m_InGainBox, Gtk::PACK_SHRINK);
+  m_GainEqBox.pack_start(m_OutGainBox, Gtk::PACK_SHRINK);
+
   m_GainEqBox.set_spacing(2);
   m_MainBox.pack_start(m_GainEqBox);
   m_MainBox.set_spacing(0);
@@ -152,8 +163,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_AButton.set_tooltip_text("A/B eq comparation");
   m_BypassButton.set_tooltip_text("Enable/Disable the equalizer");
   m_FlatButton.set_tooltip_text("Reset all values to default");
-  m_InGain->set_tooltip_text("Adjust the input gain");
-  m_OutGain->set_tooltip_text("Adjust the output gain");
+  m_GainFaderIn->set_tooltip_text("Adjust the input gain");
+  m_GainFaderOut->set_tooltip_text("Adjust the output gain");
   m_LoadButton.set_tooltip_text("Load curve from file");
   m_SaveButton.set_tooltip_text("Save curve to file");
 
@@ -161,13 +172,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_BypassButton.signal_clicked().connect(sigc::mem_fun(*this, &EqMainWindow::onButtonBypass));
   m_AButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonA));
   m_FlatButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFlat));
-  m_InGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
-  m_OutGain->signal_changed().connect( sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
+  
+  m_GainFaderIn->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onInputGainChange));
+  m_GainFaderOut->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onOutputGainChange));
+  
   m_Bode->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveChange));
   m_Bode->signal_enabled().connect(sigc::mem_fun(*this, &EqMainWindow::onCurveBandEnable));
   m_Bode->signal_selected().connect(sigc::mem_fun(*this, &EqMainWindow::onBodeSelectBand));
   m_Bode->signal_unselected().connect(sigc::mem_fun(*this, &EqMainWindow::onBodeUnselectBand));
-  signal_realize().connect( sigc::mem_fun(*this, &EqMainWindow::onRealize));
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &EqMainWindow::on_timeout), TIMER_VALUE_MS);
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
@@ -180,15 +192,10 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_AParams->loadFromTtlFile(m_pluginUri.c_str());
   m_BParams->loadFromTtlFile(m_pluginUri.c_str());  
   m_CurParams = m_AParams;
-  
 
   //Set cutom theme color:
   Gdk::Color m_WinBgColor;
   SetWidgetColors m_WidgetColors;
-
-  //Set Main widget Background
-  m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
-  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor); 
 }
 
 EqMainWindow::~EqMainWindow()
@@ -199,8 +206,10 @@ EqMainWindow::~EqMainWindow()
   delete image_logo_center;
   delete m_AParams;
   delete m_BParams;
-  delete m_InGain;
-  delete m_OutGain;
+  delete m_GainFaderIn;
+  delete m_GainFaderOut;
+  delete m_VuMeterIn;
+  delete m_VuMeterOut;
   delete m_Bode;
   delete m_FftGainScale;
   delete m_port_event_Curve_Gain;
@@ -215,12 +224,6 @@ EqMainWindow::~EqMainWindow()
   delete m_BandCtlArray;
 }
 
-void EqMainWindow::onRealize()
-{
-  Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
-  toplevel->set_resizable(false);  
-}
-
 //Timer to redraw all widgets in case of host port events
 bool EqMainWindow::on_timeout()
 {
@@ -233,13 +236,13 @@ bool EqMainWindow::on_timeout()
   if(m_port_event_InGain)
   {
     m_port_event_InGain = false;
-    m_InGain->setGain(m_CurParams->getInputGain());
+    m_GainFaderIn->set_value((double)m_CurParams->getInputGain());
   }
   
   if(m_port_event_OutGain)
   {
     m_port_event_OutGain = false;
-    m_OutGain->setGain(m_CurParams->getOutputGain());
+    m_GainFaderOut->set_value((double)m_CurParams->getOutputGain());
   }
   
   if(m_port_event_Curve)
@@ -285,14 +288,14 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
   m_CurParams = toBeCurrent;
   
   //Reload All data
-  m_InGain->setGain(m_CurParams->getInputGain());  
-  m_OutGain->setGain(m_CurParams->getOutputGain());
+  m_GainFaderIn->set_value((double)m_CurParams->getInputGain());
+  m_GainFaderOut->set_value((double)m_CurParams->getOutputGain());
 
    //Write to LV2 port
    float aux;
-   aux = m_InGain->getGain();
+   aux =(float) m_GainFaderIn->get_value();
    write_function(controller, EQ_INGAIN, sizeof(float), 0, &aux);
-   aux = m_OutGain->getGain();
+   aux =(float) m_GainFaderOut->get_value();
    write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &aux);
   
   //Reset the Curve Plot
@@ -424,11 +427,11 @@ void EqMainWindow::onInputGainChange()
   #endif
   
   //Save data Change
-  m_CurParams->setInputGain(m_InGain->getGain());
-  
+  m_CurParams->setInputGain((float) m_GainFaderIn->get_value());  
+    
   //Write to LV2 port
   float aux;
-  aux = m_InGain->getGain();
+  aux = (float) m_GainFaderIn->get_value();
   write_function(controller, EQ_INGAIN, sizeof(float), 0, &aux);
   
   #ifdef PRINT_DEBUG_INFO
@@ -443,11 +446,11 @@ void EqMainWindow::onOutputGainChange()
   #endif
   
   //Save data Change
-  m_CurParams->setOutputGain( m_OutGain->getGain());
+  m_CurParams->setOutputGain((float) m_GainFaderOut->get_value());  
   
   //Write to LV2 port
   float aux;
-  aux = m_OutGain->getGain();
+  aux = (float) m_GainFaderOut->get_value();
   write_function(controller, EQ_OUTGAIN, sizeof(float), 0, &aux);
    
   #ifdef PRINT_DEBUG_INFO
@@ -626,38 +629,4 @@ void EqMainWindow::sendAtomFftOn(bool fft_activated)
 void EqMainWindow::onFftGainScale()
 {
   m_Bode->setFftGain(m_FftGainScale->get_value());
-}
-
-bool EqMainWindow::on_expose_event(GdkEventExpose* event)
-{
-  bool ret = Gtk::EventBox::on_expose_event(event); //Call parent redraw()
-  
-  Glib::RefPtr<Gdk::Window> window = get_window();
-  if(window)
-  {
-    Gtk::Allocation allocation = get_allocation();
-    const int width = allocation.get_width();
-    const int height = allocation.get_height();
-    
-    Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
-    
-    //Draw a border to all widgets
-    cr->save();         
-    //cr->rectangle(0.5,0.5, width - 0.5, height - 0.5);
-    cr->move_to(0.5, height-0.5);
-    cr->line_to(0.5, 0.5);
-    cr->line_to(width - 0.5, 0.5);
-    cr->set_source_rgb(0.5, 0.5, 0.6);
-    cr->set_line_width(1.0);
-    cr->stroke(); 
-    cr->move_to(width - 0.5, 0.5);
-    cr->line_to(width - 0.5, height - 0.5);
-    cr->line_to(0.5, height - 0.5);
-    cr->set_source_rgb(0.1, 0.1, 0.2);
-    cr->set_line_width(1.0);
-    cr->stroke(); 
-    cr->restore();
-  }
-
-  return ret;
 }

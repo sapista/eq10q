@@ -95,6 +95,7 @@ fft_gain(10.0)
   signal_scroll_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_scrollwheel_event),true);
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &PlotEQCurve::on_timeout), AUTO_REFRESH_TIMEOUT_MS );
   signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
+  signal_leave_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_leave_widget),true);
   
   //Initialize the base vectors for the first widget size
   initBaseVectors();
@@ -423,6 +424,15 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
     
   return true;
 }
+
+bool PlotEQCurve::on_mouse_leave_widget(GdkEventCrossing* event)
+{
+  bBandFocus = false;
+  m_BandUnselectedSignal.emit();
+  redraw();
+  return true;
+}
+
 
 //Timer callback for auto redraw and graph math
 bool PlotEQCurve::on_timeout()

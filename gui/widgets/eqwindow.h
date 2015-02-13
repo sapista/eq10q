@@ -24,7 +24,7 @@
 #include <iostream>
 #include <string>
 
-#include <gtkmm/eventbox.h>
+
 #include <gtkmm/alignment.h>
 #include <gtkmm/box.h>
 #include <gtkmm/messagedialog.h>
@@ -39,8 +39,10 @@
 #include "../../urid.h"
 #include "../../uris.h"
 
+#include "mainwidget.h"
 #include "bandctl.h"
-#include "gainctl.h"
+#include "vuwidget.h"
+#include "knob2.h"
 #include "eqparams.h"
 #include "bodeplot.h"
 #include "fftctlwidget.h"
@@ -59,7 +61,7 @@
 
 using namespace sigc;
 
-class EqMainWindow : public Gtk::EventBox
+class EqMainWindow : public MainWidget
 {
   public:
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features);
@@ -248,7 +250,7 @@ class EqMainWindow : public Gtk::EventBox
 	    //Connect VuInput ports
 	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels))
 	    {
-	      m_InGain->setVu((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands,data);
+              m_VuMeterIn->setValue((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands,data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Vu input"<<std::endl;
 	      #endif  
@@ -257,7 +259,7 @@ class EqMainWindow : public Gtk::EventBox
 	    //Connect VuOutput ports
 	    else if((int)port >= (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + m_iNumOfChannels) && (int)port < (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
 	    {
-	      m_OutGain->setVu((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands - m_iNumOfChannels, data);
+              m_VuMeterOut->setValue((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 5*m_iNumOfBands - m_iNumOfChannels, data);
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Vu output"<<std::endl;
 	      #endif  
@@ -289,9 +291,8 @@ class EqMainWindow : public Gtk::EventBox
   protected:
     EqParams *m_AParams, *m_BParams, *m_CurParams;
     BandCtl **m_BandCtlArray; 
-    GainCtl *m_InGain, *m_OutGain;
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
-    Gtk::VBox m_CurveBypassBandsBox, m_MainBox;
+    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox;
     ToggleButton m_BypassButton;
     AbButton m_AButton;
     Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
@@ -300,7 +301,9 @@ class EqMainWindow : public Gtk::EventBox
     PlotEQCurve *m_Bode;
     Gtk::Image *image_logo_center;
     FFTWidget *m_FftGainScale;
-
+    KnobWidget2 *m_GainFaderIn, *m_GainFaderOut;
+    VUWidget *m_VuMeterIn, *m_VuMeterOut;
+    
     void loadEqParams();
     void changeAB(EqParams *toBeCurrent);
     void saveToFile();
@@ -314,7 +317,6 @@ class EqMainWindow : public Gtk::EventBox
     void onBandChange(int iBand, int iField, float fValue);
     void onInputGainChange();
     void onOutputGainChange();
-    void onRealize();
     void onCurveChange(int band_ix, float Gain, float Freq, float Q);
     void onCurveBandEnable(int band_ix, bool IsEnabled);
     bool on_timeout();
@@ -324,9 +326,6 @@ class EqMainWindow : public Gtk::EventBox
     void onBodeUnselectBand();
     void onBandCtlSelectBand(int band);
     void onBandCtlUnselectBand();
-    
-    //Override default signal handler:
-    virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
     double SampleRate;

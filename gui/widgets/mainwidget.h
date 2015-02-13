@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2015 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,39 +17,25 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+ 
 
-#ifndef GAIN_CTL_H
-  #define GAIN_CTL_H
+#ifndef MAIN_WIDGET_H
+  #define MAIN_WIDGET_H
 
-#include <gtkmm/box.h>
+#include <gtkmm/eventbox.h>
 
-#include "vuwidget.h"
-#include "faderwidget.h"
-
-class  GainCtl : public Gtk::HBox{
+class MainWidget : public Gtk::EventBox
+{
   public:
-    GainCtl(const Glib::ustring sTitle, int iNumOfChannels, double Fader_dBMax, double Fader_dBMin, const char* bundlePath);
-    virtual ~GainCtl();
-    void setGain(float fValue);
-    void setVu(int channel, float fValue);
-    float getGain();
-     
-    //signal accessor:
-      //Parameters:
-      //bool: true if is the Input Gain control, false if Out
-      //flot: the value of gain
-    typedef sigc::signal<void> signal_GainChanged;
-    signal_GainChanged signal_changed();
+    MainWidget();
+    virtual ~MainWidget();
     
   protected:
-    FaderWidget *m_GainFader;
-    VUWidget *m_VuMeter;
-    const int m_iNumOfChannels;
+    //Override default signal handler:
+    virtual bool on_expose_event(GdkEventExpose* event);
     
-    //Signal Handler
-    void onGainChanged();
-    
-    //Gain change signal
-    signal_GainChanged m_GainChangedSignal;
+    virtual void on_realize();
+    Gdk::Color m_bg_orgi;
 };
+
 #endif

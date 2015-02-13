@@ -22,13 +22,11 @@
 #include <iostream>
 
 #include <cstring>
-#include <gtkmm/window.h>
 #include "dynamicswindow.h"
 #include "guiconstants.h"
-#include "colors.h"
 #include "setwidgetcolors.h"
 
-#define KNOB_ICON_FILE "/knobs/knob2_35px.png"
+#define KNOB_ICON_FILE "/knobs/knob2_32px.png"
 #define KNOB_SIZE_X 75
 #define KNOB_SIZE_Y 72
 #define WIDGET_BORDER 3
@@ -90,13 +88,15 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   
   m_SideChainBox.set_border_width(WIDGET_BORDER);
   m_SideChainBox.set_spacing(WIDGET_BORDER);
-  m_dummy.set_size_request(-1, 20);
-  m_SideChainBox.pack_start(m_dummy);
   m_SideChainBox.pack_start(m_KeyButtonAlign,Gtk::PACK_SHRINK);
   m_SideChainBox.pack_start(m_SideChain2Box,Gtk::PACK_SHRINK);
   m_SideChainBox.show_all_children();
+  m_keyPadding.add(m_SideChainBox);
+  m_keyPadding.set_padding(30,0, 0, 0);
   
-  m_SCBox.add(m_SideChainBox);
+  m_SCBox.add(m_keyPadding);
+  m_sidchianAlign.set_padding(0, 3, 0, 0);
+  m_sidchianAlign.add(m_SCBox);
   
   m_DynBox.set_border_width(WIDGET_BORDER);
   m_DynBox.set_spacing(WIDGET_BORDER);
@@ -128,7 +128,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_TitleBox.show_all_children();
   
   m_BotBox.pack_start(m_TitleBox, Gtk::PACK_SHRINK);
-  m_BotBox.pack_start(m_SCBox, Gtk::PACK_EXPAND_PADDING);
+  m_BotBox.pack_start(m_sidchianAlign, Gtk::PACK_EXPAND_PADDING);
   
   m_Main2Box.pack_start(m_PlotLabelBox, Gtk::PACK_SHRINK);
   m_Main2Box.pack_start(m_BotBox, Gtk::PACK_SHRINK);
@@ -142,13 +142,8 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   //Set cutom theme color:
   Gdk::Color m_WinBgColor;
   SetWidgetColors m_WidgetColors;
-
-  //Set Main widget Background
-  m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
-  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
   m_WidgetColors.setGenericWidgetColors(&m_LTitle);
-  
-  
+ 
   //Connect signals
   m_InGainFader->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onGainChange));
   m_InputVu->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onThresholdChange));
@@ -163,7 +158,6 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   {
     m_Knee->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onKneeChange));
   }
-  signal_realize().connect( sigc::mem_fun(*this, &DynMainWindow::onRealize));
 }
 
 DynMainWindow::~DynMainWindow()
@@ -182,12 +176,6 @@ DynMainWindow::~DynMainWindow()
   delete m_HPF;
   delete m_LPF;
   delete image_logo;
-}
-
-void DynMainWindow::onRealize()
-{
-  Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
-  toplevel->set_resizable(false);
 }
 
 void DynMainWindow::onGainChange()
@@ -283,38 +271,3 @@ void DynMainWindow::onKeyListenChange()
   aux = m_KeyButton.get_active() ? 1.0 : 0.0;
   write_function(controller, PORT_KEY_LISTEN, sizeof(float), 0, &aux);
 }
-
-bool DynMainWindow::on_expose_event(GdkEventExpose* event)
-{
-  bool ret = Gtk::EventBox::on_expose_event(event); //Call parent redraw()
-  
-  Glib::RefPtr<Gdk::Window> window = get_window();
-  if(window)
-  {
-    Gtk::Allocation allocation = get_allocation();
-    const int width = allocation.get_width();
-    const int height = allocation.get_height();
-    
-    Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
-    
-    //Draw a border to all widgets
-    cr->save();         
-    //cr->rectangle(0.5,0.5, width - 0.5, height - 0.5);
-    cr->move_to(0.5, height-0.5);
-    cr->line_to(0.5, 0.5);
-    cr->line_to(width - 0.5, 0.5);
-    cr->set_source_rgb(0.5, 0.5, 0.6);
-    cr->set_line_width(1.0);
-    cr->stroke(); 
-    cr->move_to(width - 0.5, 0.5);
-    cr->line_to(width - 0.5, height - 0.5);
-    cr->line_to(0.5, height - 0.5);
-    cr->set_source_rgb(0.1, 0.1, 0.2);
-    cr->set_line_width(1.0);
-    cr->stroke(); 
-    cr->restore();
-  }
-
-  return ret;
-}
-

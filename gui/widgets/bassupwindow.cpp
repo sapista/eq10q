@@ -22,11 +22,7 @@
 #include <iostream>
 
 #include <cstring>
-#include <gtkmm/window.h>
 #include "bassupwindow.h"
-#include "guiconstants.h"
-#include "colors.h"
-#include "setwidgetcolors.h"
 
 
 #define KNOB_ICON_FILE "/knobs/knob_bassup_84px.png"
@@ -54,27 +50,14 @@ BassUpMainWindow::BassUpMainWindow(const char *uri, std::string bundlePath)
   add(m_MainWidgetAlign);
   m_MainWidgetAlign.show();
   
-  //Set cutom theme color:
-  Gdk::Color m_WinBgColor;
-
-  //Set Main widget Background
-  m_WinBgColor.set_rgb(GDK_COLOR_MACRO( BACKGROUND_R ), GDK_COLOR_MACRO( BACKGROUND_G ), GDK_COLOR_MACRO( BACKGROUND_B ));
-  modify_bg(Gtk::STATE_NORMAL, m_WinBgColor);
-  
+ 
   //Connect signals
   m_Amount->signal_changed().connect(sigc::mem_fun(*this, &BassUpMainWindow::onAmountChange));
-  signal_realize().connect( sigc::mem_fun(*this, &BassUpMainWindow::onRealize));
 }
 
 BassUpMainWindow::~BassUpMainWindow()
 {
   delete m_Amount;
-}
-
-void BassUpMainWindow::onRealize()
-{
-  Gtk::Window* toplevel = dynamic_cast<Gtk::Window *>(this->get_toplevel()); 
-  toplevel->set_resizable(false);
 }
 
 void BassUpMainWindow::onAmountChange()

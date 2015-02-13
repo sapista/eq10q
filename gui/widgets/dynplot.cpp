@@ -189,16 +189,17 @@ bool PlotDynCurve::on_expose_event(GdkEventExpose* event)
     cr->restore();
     
     //Plot InputVU and GainReduction
+    double prange = 0.05*(m_InputVu - DATA_RANGE_MIN);
     cr->save();
     cr->rectangle(CURVE_MARGIN + CURVE_TEXT_OFFSET + 0.5, CURVE_MARGIN + 0.5, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height -  2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
     cr->clip();
     cr->begin_new_sub_path();
     cr->move_to(dB2PixelsX(DATA_RANGE_MIN), dB2PixelsY(DATA_RANGE_MIN));
     cr->line_to(dB2PixelsX(DATA_RANGE_MIN), dB2PixelsY(DATA_RANGE_MIN  + m_Makeup));
-    cr->line_to( dB2PixelsX(m_InputVu),  dB2PixelsY(m_InputVu - m_GainReduction + m_Makeup) );
-    cr->line_to( dB2PixelsX(m_InputVu),  dB2PixelsY(DATA_RANGE_MIN));
+    cr->line_to( dB2PixelsX(m_InputVu + prange),  dB2PixelsY(m_InputVu + prange - m_GainReduction + m_Makeup) );
+    cr->line_to( dB2PixelsX(m_InputVu + prange),  dB2PixelsY(DATA_RANGE_MIN));
     cr->close_path();
-    bkg_gradient_ptr = Cairo::LinearGradient::create(dB2PixelsX(DATA_RANGE_MIN), dB2PixelsY(DATA_RANGE_MIN),dB2PixelsX(m_InputVu), dB2PixelsY(DATA_RANGE_MIN) );   
+    bkg_gradient_ptr = Cairo::LinearGradient::create(dB2PixelsX(DATA_RANGE_MIN), dB2PixelsY(DATA_RANGE_MIN),dB2PixelsX(m_InputVu + prange), dB2PixelsY(DATA_RANGE_MIN) );
     bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.8, 0.4 ); 
     bkg_gradient_ptr->add_color_stop_rgba (0.9, 0.1, 0.6, 0.4, 0.3 ); 
     bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.1, 0.6, 0.4, 0.0 ); 

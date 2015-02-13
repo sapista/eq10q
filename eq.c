@@ -336,34 +336,24 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     sampleR = (double)plugin_data->fInput[1][pos];
     DENORMAL_TO_ZERO(sampleR);
     #endif    
+    
+    //The input amplifier
+    sampleL *= fInGain;
+    fftInSample = sampleL;
+    //Update VU input sample
+    SetSample(plugin_data->InputVu[0], sampleL);
 
+    #if NUM_CHANNELS == 2
+    //The input amplifier
+    sampleR *= fInGain;    
+    fftInSample = 0.5*sampleL + 0.5*sampleR;
+    //Update VU input sample
+    SetSample(plugin_data->InputVu[1], sampleR);
+    #endif    
 
     //Process every band
-    if(iBypass)
-    {
-      resetVU(plugin_data->InputVu[0]);
-      resetVU(plugin_data->OutputVu[0]);
-      #if NUM_CHANNELS == 2
-      resetVU(plugin_data->InputVu[1]);
-      resetVU(plugin_data->OutputVu[1]);   
-      #endif   
-    }
-    else
-    {    
-      //The input amplifier
-      sampleL *= fInGain;
-      fftInSample = sampleL;
-      //Update VU input sample
-      SetSample(plugin_data->InputVu[0], sampleL);
-      
-      #if NUM_CHANNELS == 2
-      //The input amplifier
-      sampleR *= fInGain;    
-      fftInSample = 0.5*sampleL + 0.5*sampleR;
-      //Update VU input sample
-      SetSample(plugin_data->InputVu[1], sampleR);
-      #endif
-      
+    if(!iBypass)
+    {           
       //FFT of input data after input gain
       if(plugin_data->fft_on)
       {

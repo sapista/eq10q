@@ -155,7 +155,7 @@ bool Button::on_expose_event ( GdkEventExpose* event )
     cr->stroke_preserve();
      
     Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr = Cairo::LinearGradient::create(width/2, OUTER_BORDER, width/2, height - OUTER_BORDER);   
-    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.3 ); ; 
+    bkg_gradient_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.3 );
     
     if(m_bPress)
     {

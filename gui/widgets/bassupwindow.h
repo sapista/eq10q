@@ -24,7 +24,6 @@
 #include <iostream>
 #include <string>
 
-#include <gtkmm/eventbox.h>
 #include <gtkmm/alignment.h>
 #include <gtkmm/box.h>
 #include <gtkmm/image.h>
@@ -34,6 +33,7 @@
 //LV2 UI header
 #include "../lv2_ui.h"
 
+#include "mainwidget.h"
 #include "knob2.h"
 
 #define PORT_OUTPUT 0
@@ -42,7 +42,7 @@
 
 using namespace sigc;
 
-class BassUpMainWindow : public Gtk::EventBox
+class BassUpMainWindow : public MainWidget
 {
   public:
     BassUpMainWindow(const char *uri, std::string bundlePath);
@@ -81,7 +81,6 @@ class BassUpMainWindow : public Gtk::EventBox
         
     //Signal Handlers
     void onAmountChange();
-    void onRealize();
     
   private:
     std::string m_pluginUri;

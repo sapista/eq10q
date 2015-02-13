@@ -97,6 +97,7 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual bool on_scrollwheel_event(GdkEventScroll* event);
       virtual bool on_mouse_motion_event(GdkEventMotion* event);
       virtual bool on_timeout();
+      virtual bool on_mouse_leave_widget(GdkEventCrossing* event);
       virtual void redraw();
   
       //Override default signal handler:

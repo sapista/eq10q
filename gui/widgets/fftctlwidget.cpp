@@ -213,11 +213,12 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->arc( 5.5, height - 5.5, 4, 0.5*M_PI, M_PI);
     cr->close_path();  
     Cairo::RefPtr<Cairo::LinearGradient> bkg_gradientLin_ptr = Cairo::LinearGradient::create(width/2, 2, width/2, height - 2);   
-    bkg_gradientLin_ptr->add_color_stop_rgba (0.0,  0.2, 0.2, 0.2, 0.6  );
-    bkg_gradientLin_ptr->add_color_stop_rgba (0.3,  0.2, 0.2, 0.2, 0.0  );
+    bkg_gradientLin_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.2 );
+    bkg_gradientLin_ptr->add_color_stop_rgba (0.7, 0.4, 0.4, 0.4, 0.7 ); 
+    
     cr->set_source(bkg_gradientLin_ptr);
     cr->fill_preserve();
-    cr->set_source_rgb(0.3, 0.3, 0.4);
+    cr->set_source_rgb(0.5, 0.5, 0.5); 
     cr->set_line_width(1.0);
     cr->stroke(); 
     cr->restore();
@@ -255,8 +256,8 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     //Control ball
     cr->arc( 0.0, 0.0, SLIDER_DIAMITER/2.0, 0.0, 2.0*M_PI);   
     bkg_gradient_ptr = Cairo::RadialGradient::create(-2, -2, 0, -2, -2, SLIDER_DIAMITER/2);
-    bkg_gradient_ptr->add_color_stop_rgba (0.2, 0.4, 0.4, 0.6, 1.0); 
-    bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.8, 0.8, 0.9, 0.8); 
+    bkg_gradient_ptr->add_color_stop_rgba (0.2, 0.5, 0.5, 0.7, 1.0); 
+    bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.9, 0.9, 1.0, 0.9); 
     cr->set_source(bkg_gradient_ptr);  
     cr->fill_preserve();
     if(m_bSlider_Focus)
@@ -276,7 +277,7 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->line_to(width/3 + 0.5 + 1, height - SLIDER_DIAMITER - MARGIN + 0.5);
     cr->line_to(width/3 + 0.5 - 1, height - SLIDER_DIAMITER - MARGIN + 0.5);
     cr->close_path();
-    cr->set_source_rgba(0.6, 0.7, 0.8, 0.4);
+    cr->set_source_rgba(0.6, 0.7, 0.8, 0.3);
     cr->fill_preserve();
     cr->set_line_width(1.0);
     cr->set_source_rgba(0.2, 0.2, 0.2, 0.9);

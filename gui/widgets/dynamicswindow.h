@@ -24,7 +24,6 @@
 #include <iostream>
 #include <string>
 
-#include <gtkmm/eventbox.h>
 #include <gtkmm/alignment.h> 
 #include <gtkmm/box.h>
 #include <gtkmm/image.h>
@@ -35,6 +34,7 @@
 //LV2 UI header
 #include "../lv2_ui.h"
 
+#include "mainwidget.h"
 #include "vuwidget.h"
 #include "knob2.h"
 #include "toggle_button.h"
@@ -61,7 +61,7 @@
 
 using namespace sigc;
 
-class DynMainWindow : public Gtk::EventBox
+class DynMainWindow : public MainWidget
 {
   public:
     DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor);
@@ -181,12 +181,11 @@ class DynMainWindow : public Gtk::EventBox
     ToggleButton m_KeyButton;
     PlotDynCurve *m_Plot;
     SideChainBox m_SCBox;
-    Gtk::Alignment m_KeyButtonAlign, m_TitleAlign;
+    Gtk::Alignment m_KeyButtonAlign, m_TitleAlign, m_sidchianAlign, m_keyPadding;
     Gtk::HBox m_VuBox, m_PlotBox, m_BalBox, m_MainBox, m_BotBox, m_SideChain2Box;
     Gtk::VBox m_SideChainBox, m_TitleBox, m_DynBox, m_Main2Box, m_PlotLabelBox;  
     Gtk::Image *image_logo;
     Gtk::Label m_LTitle; 
-    Gtk::Label m_dummy; //A dummy widget to add some space at the top of sidechain box
     
     //Signal Handlers
     void onGainChange();
@@ -198,11 +197,7 @@ class DynMainWindow : public Gtk::EventBox
     void onKneeChange();
     void onHPFChange();
     void onLPFChange();
-    void onRealize();
     void onKeyListenChange();
-    
-    //Override default signal handler:
-    virtual bool on_expose_event(GdkEventExpose* event);
     
   private:
     std::string m_pluginUri;

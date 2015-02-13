@@ -155,7 +155,7 @@ void ToggleButton::drawLedBtn(Cairo::RefPtr< Cairo::Context > cr, bool focus, bo
   //Draw Text FFT
   cr->save();
   Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-  Pango::FontDescription font_desc("sans 12px");
+  Pango::FontDescription font_desc("sans 11px");
   pangoLayout->set_font_description(font_desc);
   pangoLayout->set_text(text.c_str());
   //a shadow

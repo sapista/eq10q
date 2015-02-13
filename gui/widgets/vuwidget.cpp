@@ -27,7 +27,7 @@
 
 #define TEXT_OFFSET 12
 #define MARGIN 6.5
-#define CHANNEL_WIDTH 8
+#define CHANNEL_WIDTH 9
 #define MICROFADER_WIDTH 30
 #define TEXT_DB_SEPARATION 3.0
 #define SCROLL_EVENT_PERCENT 0.02
@@ -174,11 +174,10 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
     cr->paint(); //Fill all with background color
     cr->restore();
     
-    
     //Draw text with pango
     cr->save();
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
-    Pango::FontDescription font_desc("sans 9px");
+    Pango::FontDescription font_desc("mono 9px");
     pangoLayout->set_font_description(font_desc);
     cr->set_source_rgba(0.9, 0.9, 0.9, 0.5);
     
@@ -415,7 +414,7 @@ bool  VUWidget::on_scrollwheel_event(GdkEventScroll* event)
 
 bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
-    double  m = ((double)(3.0*MARGIN-height))/(m_fMax - m_fMin);
+    double m = ((double)(3.0*MARGIN + TOP_OFFSET - height ))/(m_fMax - m_fMin);
     double n = (double)(height - 2.0*MARGIN) - m_fMin*m;
     double faderPos = (event->y - n)/m;
     set_value_th(faderPos);  
