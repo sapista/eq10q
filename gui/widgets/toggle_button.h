@@ -30,7 +30,7 @@ class ToggleButton : public Button
     virtual ~ToggleButton();
     virtual bool get_active();
     virtual void set_active(bool active);
-    static void drawLedBtn(Cairo::RefPtr<Cairo::Context> cr, bool focus, bool enabled, std::string text, int margin, int radius);
+    static void drawLedBtn(Cairo::RefPtr<Cairo::Context> cr, bool focus, bool enabled, std::string text, int margin, int radius, double red = 0.8, double green = 0.8, double blue = 0.5);
   
   protected:
     virtual bool on_button_release_event(GdkEventButton* event);

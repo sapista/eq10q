@@ -32,6 +32,7 @@ class  FFTWidget : public Gtk::DrawingArea
     void set_value(double val);
     double get_value();
     bool get_active();
+    bool get_isSpectrogram();
     
     //signal accessor:
     typedef sigc::signal<void> signal_Changed;
@@ -54,7 +55,7 @@ class  FFTWidget : public Gtk::DrawingArea
   
   private:
     double m_value, m_max, m_min;
-    bool m_bEnabled, m_bSlider_Focus, m_bSlider_Press, m_bBtn_Foucs, m_bBtn_Press;
+    bool m_bEnabled, m_bSlider_Focus, m_bSlider_Press, m_bBtn_Foucs, m_bBtn_Press, m_bIsSpectrogram;
     int width, height;
     double Val2Pixels(double val);
     double Pixels2Val(double px);

@@ -102,7 +102,7 @@ bool ToggleButton::on_expose_event(GdkEventExpose* event)
 }
 
 
-void ToggleButton::drawLedBtn(Cairo::RefPtr< Cairo::Context > cr, bool focus, bool enabled, std::string text, int margin, int radius)
+void ToggleButton::drawLedBtn(Cairo::RefPtr< Cairo::Context > cr, bool focus, bool enabled, std::string text, int margin, int radius, double red, double green, double blue)
 {
   //Draw the FFT enable button
   cr->save();
@@ -129,7 +129,7 @@ void ToggleButton::drawLedBtn(Cairo::RefPtr< Cairo::Context > cr, bool focus, bo
   {
     alpha = 0.8;
   }
-  bkg_gradient_ptr->add_color_stop_rgba (0.3, 0.8, 0.8, 0.5, alpha); 
+  bkg_gradient_ptr->add_color_stop_rgba (0.3, red, green, blue, alpha); 
   bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.7, 0.4, 0.0, alpha); 
   cr->set_source(bkg_gradient_ptr);  
   cr->fill_preserve();

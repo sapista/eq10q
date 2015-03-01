@@ -30,7 +30,7 @@
 #define SCROLL_EVENT_PERCENT 0.02
 
 FFTWidget::FFTWidget(double min, double max):
-m_max(max), m_min(min), m_bEnabled(false), m_bSlider_Focus(false), m_bSlider_Press(false), m_bBtn_Foucs(false), m_bBtn_Press(false)
+m_max(max), m_min(min), m_bEnabled(false), m_bSlider_Focus(false), m_bSlider_Press(false), m_bBtn_Foucs(false), m_bBtn_Press(false), m_bIsSpectrogram(false)
 {
   m_value = 0.5*(m_max - m_min) + m_min; //Start with the middle value
   
@@ -66,6 +66,12 @@ bool FFTWidget::get_active()
 {
   return m_bEnabled;
 }
+
+bool FFTWidget::get_isSpectrogram()
+{
+  return m_bIsSpectrogram;
+}
+
 
 FFTWidget::signal_Changed FFTWidget::signal_changed()
 {
@@ -103,7 +109,22 @@ bool FFTWidget::on_button_press_event(GdkEventButton* event)
     if(m_bBtn_Foucs)
     {
       m_bBtn_Press = true;
-      m_bEnabled = !m_bEnabled;
+      if(m_bEnabled)
+      {
+        if(m_bIsSpectrogram)
+        {
+          m_bEnabled = false;
+          m_bIsSpectrogram = false;
+        }
+        else
+        {
+          m_bIsSpectrogram = true;
+        }
+      }
+      else
+      {
+        m_bEnabled = true;
+      }
       m_ClickSignal.emit();
       redraw();
     }
@@ -284,7 +305,15 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->stroke();
     cr->restore();
    
-    ToggleButton::drawLedBtn(cr, m_bBtn_Foucs, m_bEnabled, "FFT", MARGIN, FFT_BTN_RADIUS);
+    double red = 0.8;
+    double green = 0.8;
+    double blue = 0.5;
+    if(m_bIsSpectrogram)
+    {
+      green = 0.0;
+      blue = 0.2;
+    }
+    ToggleButton::drawLedBtn(cr, m_bBtn_Foucs, m_bEnabled, "FFT", MARGIN, FFT_BTN_RADIUS, red, green, blue);
   }
   return true;
 }

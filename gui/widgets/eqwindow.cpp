@@ -613,7 +613,7 @@ void EqMainWindow::loadFromFile()
 void EqMainWindow::onButtonFft()
 {
   sendAtomFftOn(m_FftGainScale->get_active());
-  m_Bode->setFftActive(m_FftGainScale->get_active());
+  m_Bode->setFftActive(m_FftGainScale->get_active(), m_FftGainScale->get_isSpectrogram());
 }
 
 void EqMainWindow::sendAtomFftOn(bool fft_activated)
