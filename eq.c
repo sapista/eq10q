@@ -43,7 +43,7 @@ This file implements functionalities for a large numbers of equalizers
 #define NUM_BANDS @Eq_Bands_Count@
 #define NUM_CHANNELS @Eq_Channels_Count@
 #define EQ_URI @Eq_Uri@
-#define FFT_N 8192//16384 //FFT sample size, must be a power of 2
+
 
 typedef struct {
   //Plugin ports
@@ -357,7 +357,12 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       //FFT of input data after input gain
       if(plugin_data->fft_on)
       {
-        plugin_data->fft_in[plugin_data->fft_ix] = fftInSample; //Hanning Windowing * 0.5 * (1.0-cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
+        //Hanning Windowing
+        plugin_data->fft_in[plugin_data->fft_ix] = fftInSample* 0.5 * (1.0-cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
+        
+        //Hamming Windowing
+        //plugin_data->fft_in[plugin_data->fft_ix] = fftInSample * (0.54 - 0.46*cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
+        
         plugin_data->fft_ix++;     
         if(plugin_data->fft_ix == FFT_N)
         {

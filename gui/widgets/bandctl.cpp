@@ -450,21 +450,21 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
       if(m_GainBtn.text)
       {
         m_GainBtn.ss.str(""); //Clear stringstream
-        m_GainBtn.ss<<m_GainBtn.value;
+        m_GainBtn.ss<<std::setprecision(2)<< std::fixed << m_GainBtn.value;
         //grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
       else if(m_FreqBtn.text)
       {
         m_FreqBtn.ss.str(""); //Clear stringstream
-        m_FreqBtn.ss<<m_FreqBtn.value;
+        m_FreqBtn.ss<<std::setprecision(2)<< std::fixed <<m_FreqBtn.value;
         //grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
       else if(m_QBtn.text)
       {
         m_QBtn.ss.str(""); //Clear stringstream
-        m_QBtn.ss<<m_QBtn.value;
+        m_QBtn.ss<<std::setprecision(2)<< std::fixed <<m_QBtn.value;
         //grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }

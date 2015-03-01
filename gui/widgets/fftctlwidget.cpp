@@ -213,8 +213,8 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->arc( 5.5, height - 5.5, 4, 0.5*M_PI, M_PI);
     cr->close_path();  
     Cairo::RefPtr<Cairo::LinearGradient> bkg_gradientLin_ptr = Cairo::LinearGradient::create(width/2, 2, width/2, height - 2);   
-    bkg_gradientLin_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.2 );
-    bkg_gradientLin_ptr->add_color_stop_rgba (0.7, 0.4, 0.4, 0.4, 0.7 ); 
+    bkg_gradientLin_ptr->add_color_stop_rgba (0.0, 0.1, 0.2, 0.2, 0.1 );
+    bkg_gradientLin_ptr->add_color_stop_rgba (0.7, 0.4, 0.4, 0.4, 0.3 ); 
     
     cr->set_source(bkg_gradientLin_ptr);
     cr->fill_preserve();

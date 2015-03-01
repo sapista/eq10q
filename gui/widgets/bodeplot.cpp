@@ -21,6 +21,8 @@
 #include "bodeplot.h"
 #include "colors.h"
 #include "guiconstants.h"
+#include "../../dsp/fastmath.h"
+
 #include <cmath>
 #include <ctime>
 
@@ -69,21 +71,13 @@ fft_gain(10.0)
   
   //Allocate memory for FFT data
   fft_raw_data = new double[FFT_N/2];
-  fft_raw_freq = new double[FFT_N/2];
-  for(int i = 0; i < (FFT_N/2); i++)
-  {     
-    fft_raw_freq[i] = (SampleRate * (double)i) /  ((double)FFT_N);
-    fft_raw_data[i] = 0.0;
-    //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<<std::endl;
-  }
-  fft_plot = new double[m_NumOfPoints];
-  fft_plot_scaling = new double[m_NumOfPoints];
-  for(int i = 0; i < m_NumOfPoints; i++)
-  {
-    fft_plot[i]=0.0;
-    fft_plot_scaling[i] =0.1 * pow10(((double)i)/((double)m_NumOfPoints)) + 0.9;
-  }
-  
+  xPixels_fft = new double[FFT_N/2]; 
+  fft_pink_noise = new double[FFT_N/2];
+  fft_plot = new double[FFT_N/2];
+  fft_gradient_LUT = new double [FFT_N/2];
+  fft_ant_data = new double [FFT_N/2];
+  fft_gradient_ptr = Cairo::LinearGradient::create(CURVE_MARGIN + CURVE_TEXT_OFFSET, 0, width - CURVE_MARGIN, 0);  
+  fft_log_lut = GenerateLog10LUT();
   resetCurve();
 
   set_size_request(width, height);
@@ -111,25 +105,28 @@ PlotEQCurve::~PlotEQCurve()
   {
     delete m_filters[i];
   }
-  delete m_filters;
+  delete[] m_filters;
   
   //Delete freq and pixels pointers
-  delete f;
-  delete xPixels;
+  delete[] f;
+  delete[] xPixels;
   
   //Delete Y array pointers
-  delete main_y; 
+  delete[] main_y; 
   for (int i = 0; i<m_TotalBandsCount; i++)
   {
     delete band_y[i];
   }
-  delete band_y;
+  delete[] band_y;
   
   //Delete FFT plots
-  delete fft_plot;
-  delete fft_raw_data;
-  delete fft_raw_freq;
-  delete fft_plot_scaling;
+  delete[] fft_raw_data;
+  delete[] fft_pink_noise;
+  delete[] xPixels_fft;
+  delete[] fft_plot;
+  delete[] fft_gradient_LUT;
+  delete[] fft_ant_data;
+  free(fft_log_lut);
 }
 
 void PlotEQCurve::initBaseVectors()
@@ -150,6 +147,22 @@ void PlotEQCurve::initBaseVectors()
   {
     xPixels_Grid[i] = freq2Pixels(f_grid[i]);
   }
+  
+  //Init FFT vectors
+  const double m = 1.0/(double)(width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
+  const double n = 1-m*(double)(width - CURVE_MARGIN);
+  double fft_raw_freq;
+  for(int i = 0; i < (FFT_N/2); i++)
+  {     
+    fft_raw_freq = (SampleRate * (double)i) /  ((double)(FFT_N));
+    xPixels_fft[i] = freq2Pixels(fft_raw_freq);
+    fft_pink_noise[i] =  3.0*(log10(fft_raw_freq/20.0)/log10(2));
+    fft_raw_data[i] = 0.0;
+    fft_gradient_LUT[i] = m*xPixels_fft[i] + n;
+    fft_plot[i]= 0.0;
+    fft_ant_data[i] = 0.0;
+    //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<< "Pixels = "<< xPixels_fft[i] <<std::endl;
+  }  
 }
 
 
@@ -495,22 +508,32 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     cr->stroke(); 
     cr->restore();
     
+    
     //Draw FFT background
     if(m_FftActive)
-    {
-      double fft_point;
+    {     
+      //Draw the FFT plot Curve to develop only!
       cr->save();
-      for(int i = 0; i < m_NumOfPoints; i++)
+      cr->rectangle(CURVE_MARGIN + CURVE_TEXT_OFFSET, CURVE_MARGIN, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
+      cr->clip();     
+   
+      for (int i = 0; i < FFT_N/2; i++)
       {
-        fft_point =   fft_plot[i] > 1.0 ?  1.0 :  fft_plot[i]; //Normalizein case of exciding max
-        cr->set_line_width(1.5);
-        cr->set_source_rgba(0.6, 0.8, 0.6,  fft_point > 0.8 ? 0.8 : fft_point);
-        cr->move_to( xPixels[i] + 0.5 , CURVE_MARGIN + (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
-        cr->line_to( xPixels[i] + 0.5 , height - CURVE_MARGIN - CURVE_TEXT_OFFSET - (1.0 - fft_point)*(height/2 - CURVE_MARGIN));
-        cr->stroke();
+        cr->line_to(xPixels_fft[i], fft_plot[i]);
       }
-      cr->restore();    
-    }   
+      for (int i = FFT_N/2 - 1; i >= 0; i--)
+      {
+        cr->line_to(xPixels_fft[i], height - CURVE_TEXT_OFFSET - fft_plot[i]);
+      }   
+      cr->set_source(fft_gradient_ptr);
+      cr->fill_preserve();
+      cr->set_line_width(1);
+      cr->set_line_join(Cairo::LINE_JOIN_ROUND);
+      cr->set_source_rgba(0, 0.4 , 0.6, 0.5);
+      cr->stroke();
+      cr->restore();
+      
+    }
     
     //Draw the grid
     cr->save();
@@ -654,26 +677,6 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       }
     
     }
-
-    
-    //Draw the FFT plot Curve to develop only!
-    /*
-    cr->save();
-    cr->set_line_width(1);
-    cr->set_source_rgb(0, 1, 0);
-    cr->set_line_width(1);
-    ydB = fft_plot[0] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : fft_plot[0];
-    ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
-    cr->move_to(xPixels[0] + 0.5, dB2Pixels(ydB) + 0.5);
-    for (int i = 1; i < m_NumOfPoints; i++)
-    {
-      ydB = fft_plot[i] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : fft_plot[i];
-      ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
-      cr->line_to(xPixels[i] + 0.5, dB2Pixels(ydB) + 0.5);
-    }
-    cr->stroke();
-    cr->restore();
-    */
     
     if (!m_Bypass)
     {
@@ -909,33 +912,21 @@ void PlotEQCurve::setSampleRate(double samplerate)
 
 void PlotEQCurve::setFftData()
 {
-  double sum;
-  bool found;
-  int j = 0;
-  for(int i = 0; i<m_NumOfPoints; i++)
+  const double center = CURVE_MARGIN + 0.5*(double)(height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
+  const double m = ((double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height))/(2*60.0);
+  const double n = CURVE_MARGIN;
+  const double m_g = 2.0/(double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height);
+  const double n_g = 1.0 - m_g*(double)CURVE_MARGIN;
+  float val;
+  fft_gradient_ptr = Cairo::LinearGradient::create(CURVE_MARGIN + CURVE_TEXT_OFFSET, 0, width - CURVE_MARGIN, 0);  
+  for (int i = 0; i < FFT_N/2; i++)
   {
-    sum = 0.0; 
-    found = false;
-    while(fft_raw_freq[j] <= f[i] && j < (FFT_N/2)) //Binning to f[i]
-    {
-      //sum+=fabs(2.0 * fft_raw_data[j] / ((double)FFT_N));
-      sum+=sqrt(fft_raw_data[j]);
-      found = true;
-      j++;
-    }
-    //fft_plot[i] = 20.0*log10(2.0*sum/((double)FFT_N) + 0.03475429);
-    
-    if(found)
-    {
-      sum *= fft_gain*fft_plot_scaling[i];     
-      fft_plot[i] = sum > fft_plot[i] ? sum : sum  + 0.7*fft_plot[i];     
-    }
-    else
-    {
-      fft_plot[i] = 0.5*fft_plot[i -1]; //Copy previous value if no data (very cheap interpolation)
-    }
-    
-  }  
+    fft_ant_data[i] = fft_raw_data[i] >  fft_ant_data[i] ? fft_raw_data[i] : fft_raw_data[i] + 0.5 * fft_ant_data[i];
+    val = sqrt((float)fft_ant_data[i]);
+    fft_plot[i] = m*(20.0f*fastLog10((int*)(&val), fft_log_lut) + fft_gain + fft_pink_noise[i]) + n;
+    fft_plot[i] = fft_plot[i] > center ? center : fft_plot[i];
+    fft_gradient_ptr->add_color_stop_rgba (fft_gradient_LUT[i], 0.0, m_g*fft_plot[i] + n_g, 1.0 - m_g*fft_plot[i] + n_g, m_g*fft_plot[i] + n_g); 
+  }
   redraw();
 }
 

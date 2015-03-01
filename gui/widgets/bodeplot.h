@@ -24,6 +24,7 @@
 #include <iostream>
 #include <gtkmm/drawingarea.h>
 #include "filter.h"
+#include "../eq_defines.h"
 
 #define NUM_POINTS_PER_DECADE 150
 #define MIN_FREQ 18.0
@@ -37,7 +38,6 @@
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
 #define AUTO_REFRESH_TIMEOUT_MS 20
-#define FFT_N 8192 //16384 //Very important! to have this equalt to eq.c (DSP part)
 
 typedef struct
 {
@@ -132,10 +132,15 @@ class PlotEQCurve : public Gtk::DrawingArea
     double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
     
     //FFT vectors
-    double *fft_raw_freq;
+    double *xPixels_fft;
+    double *fft_pink_noise;
     double *fft_plot;
-    double *fft_plot_scaling;
+    double *fft_gradient_LUT;
+    double *fft_ant_data;
     double fft_gain;
+    float *fft_log_lut;
+    Cairo::RefPtr<Cairo::LinearGradient> fft_gradient_ptr;
+    
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;

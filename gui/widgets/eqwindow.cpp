@@ -97,14 +97,15 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_VuMeterIn = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "In")); 
   m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "Out"));
   
+  
+  m_FftGainScale = Gtk::manage(new FFTWidget(-10.0, 20.0));
+  m_FftGainScale->set_value(0.0);
+  
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
-  m_FftGainScale = Gtk::manage(new FFTWidget(1.0, 50.0));
-  m_FftGainScale->set_value(10.0);
   
   m_BandBox.set_spacing(0);
   m_BandBox.set_homogeneous(true);
   m_BandCtlArray = new BandCtl*[m_iNumOfBands];
-  
   
   for (int i = 0; i< m_iNumOfBands; i++)
   {
@@ -221,7 +222,7 @@ EqMainWindow::~EqMainWindow()
   {
     delete m_BandCtlArray[i];
   }
-  delete m_BandCtlArray;
+  delete[] m_BandCtlArray;
 }
 
 //Timer to redraw all widgets in case of host port events
