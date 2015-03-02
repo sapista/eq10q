@@ -30,7 +30,9 @@
 #define SCROLL_EVENT_PERCENT 0.02
 
 FFTWidget::FFTWidget(double min, double max):
-m_max(max), m_min(min), m_bEnabled(false), m_bSlider_Focus(false), m_bSlider_Press(false), m_bBtn_Foucs(false), m_bBtn_Press(false), m_bIsSpectrogram(false)
+m_max(max), m_min(min), m_bEnabled(false), m_bSlider_Focus(false), m_bSlider_Press(false), 
+m_bBtn_Foucs(false), m_bBtn_Press(false), m_bIsSpectrogram(false),
+m_bHold(false), m_bHoldFocus(false)
 {
   m_value = 0.5*(m_max - m_min) + m_min; //Start with the middle value
   
@@ -53,7 +55,7 @@ void FFTWidget::set_value(double val)
 {
   m_value = val;
   m_value = m_value > m_max ? m_max : m_value;
-  m_value = m_value < m_min ? m_min : m_value;
+  m_value = m_value < m_min ? m_min : m_value;  
   redraw();
 }
 
@@ -72,6 +74,11 @@ bool FFTWidget::get_isSpectrogram()
   return m_bIsSpectrogram;
 }
 
+bool FFTWidget::get_isHolding()
+{
+  return m_bHold;
+}
+
 
 FFTWidget::signal_Changed FFTWidget::signal_changed()
 {
@@ -81,6 +88,11 @@ FFTWidget::signal_Changed FFTWidget::signal_changed()
 FFTWidget::signal_Changed_btnClicked FFTWidget::signal_clicked()
 {
   return m_ClickSignal;
+}
+
+FFTWidget::signal_Changed_btnClicked FFTWidget::signal_hold_clicked()
+{
+  return m_HoldClickSignal;
 }
 
 
@@ -128,6 +140,13 @@ bool FFTWidget::on_button_press_event(GdkEventButton* event)
       m_ClickSignal.emit();
       redraw();
     }
+    
+    if(m_bHoldFocus)
+    {
+      m_bHold = true;
+      m_HoldClickSignal.emit();
+      redraw();
+    }
   }
   return true;
 }
@@ -136,6 +155,11 @@ bool FFTWidget::on_button_release_event(GdkEventButton* event)
 {
   m_bSlider_Press = false;
   m_bBtn_Press = false;
+  if(m_bHold)
+  {
+    m_bHold = false;
+    m_HoldClickSignal.emit();  
+  }
   redraw();
   return true;
 }
@@ -145,6 +169,7 @@ bool FFTWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
   m_bSlider_Focus = false;
   m_bBtn_Foucs = false;
+  m_bHoldFocus = false;
   
   if(m_bSlider_Press)
   {
@@ -165,6 +190,13 @@ bool FFTWidget::on_mouse_motion_event(GdkEventMotion* event)
            (event->y < (MARGIN + 4*FFT_BTN_RADIUS)) )
   {
     m_bBtn_Foucs = true;
+  }
+  else if( (event->x > (MARGIN)) &&
+           (event->x < (MARGIN + 4*FFT_BTN_RADIUS)) &&     
+           (event->y > (height - MARGIN - BUTTON_HEIGHT)) &&  
+           (event->y < (height - MARGIN)) )
+  {
+    m_bHoldFocus = true;
   }
   
   redraw();
@@ -193,15 +225,15 @@ bool FFTWidget::on_scrollwheel_event(GdkEventScroll* event)
 
 double FFTWidget::Val2Pixels(double val)
 {
-  double m = (double)(3.0*MARGIN + 2*SLIDER_DIAMITER + BUTTON_HEIGHT - height)/(m_max - m_min);
-  double n = (double)(height - SLIDER_DIAMITER - MARGIN) - m*m_min;
+  double m = (double)(4*MARGIN + 2*SLIDER_DIAMITER + 2*BUTTON_HEIGHT - height)/(m_max - m_min);
+  double n = (double)(height - SLIDER_DIAMITER - 2*MARGIN - BUTTON_HEIGHT) - m*m_min;
   return m*val + n;
 }
 
 double FFTWidget::Pixels2Val(double px)
 {
-  double m = (double)(3.0*MARGIN + 2*SLIDER_DIAMITER + BUTTON_HEIGHT - height)/(m_max - m_min);
-  double n = (double)(height - SLIDER_DIAMITER - MARGIN) - m*m_min;
+  double m = (double)(4*MARGIN + 2*SLIDER_DIAMITER + 2*BUTTON_HEIGHT - height)/(m_max - m_min);
+  double n = (double)(height - SLIDER_DIAMITER - 2*MARGIN - BUTTON_HEIGHT) - m*m_min;
   return (px - n)/m;
 }
 
@@ -247,7 +279,7 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     //Draw fader backgroud line
     cr->save();
     cr->set_line_cap(Cairo::LINE_CAP_ROUND);
-    cr->move_to(round(2*width/3) + 0.5, height - SLIDER_DIAMITER - MARGIN); 
+    cr->move_to(round(2*width/3) + 0.5, height - SLIDER_DIAMITER - 2*MARGIN - BUTTON_HEIGHT); 
     cr->line_to(round(2*width/3) + 0.5, 2*MARGIN + SLIDER_DIAMITER + BUTTON_HEIGHT);   
     cr->set_source_rgba(0.7, 0.7, 0.7, 0.7);
     cr->set_line_width(3);
@@ -294,9 +326,9 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     //Draw a nice triangle at left side of slider
     cr->save();   
     cr->begin_new_sub_path();
-    cr->arc(width/3 + 0.5,  2*MARGIN + 2*SLIDER_DIAMITER + BUTTON_HEIGHT + 0.5, 3, M_PI, 0.0);
-    cr->line_to(width/3 + 0.5 + 1, height - SLIDER_DIAMITER - MARGIN + 0.5);
-    cr->line_to(width/3 + 0.5 - 1, height - SLIDER_DIAMITER - MARGIN + 0.5);
+    cr->arc(width/3 + 0.5,  2*MARGIN + SLIDER_DIAMITER + BUTTON_HEIGHT + 0.5, 3, M_PI, 0.0);
+    cr->line_to(width/3 + 0.5 + 1, height - SLIDER_DIAMITER - 2*MARGIN - BUTTON_HEIGHT + 0.5);
+    cr->line_to(width/3 + 0.5 - 1, height - SLIDER_DIAMITER - 2*MARGIN - BUTTON_HEIGHT + 0.5);
     cr->close_path();
     cr->set_source_rgba(0.6, 0.7, 0.8, 0.3);
     cr->fill_preserve();
@@ -304,7 +336,33 @@ bool FFTWidget::on_expose_event(GdkEventExpose* event)
     cr->set_source_rgba(0.2, 0.2, 0.2, 0.9);
     cr->stroke();
     cr->restore();
-   
+    
+    //Draw the hold button
+    /********
+    cr->save();
+    cr->begin_new_sub_path();
+    cr->arc( MARGIN + 3.5, height - MARGIN - BUTTON_HEIGHT + 3.5, 3, M_PI, -0.5*M_PI);
+    cr->arc( width - MARGIN - 3.5, height - MARGIN - BUTTON_HEIGHT + 3.5, 3, -0.5*M_PI, 0);
+    cr->arc( width - MARGIN - 3.5, height - MARGIN - 3.5, 3, 0, 0.5*M_PI);
+    cr->arc( MARGIN + 3.5, height - MARGIN - 3.5, 3, 0.5*M_PI, M_PI);
+    cr->close_path();  
+    cr->set_line_width(1);
+    cr->set_source_rgba(0.9, 0.9, 0.9, 0.7); //TODO change color
+    cr->stroke();
+    Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
+    Pango::FontDescription font_desc("sans 11px");
+    pangoLayout->set_font_description(font_desc);
+    pangoLayout->set_text("Hold");
+    cr->move_to(MARGIN + 5, height - MARGIN - BUTTON_HEIGHT/2 - 6);
+    pangoLayout->show_in_cairo_context(cr);
+    cr->stroke();  
+    cr->restore();
+    *****/
+    cr->save();
+    cr->translate(0, height - 2*MARGIN - BUTTON_HEIGHT );
+    ToggleButton::drawLedBtn(cr, m_bHoldFocus, m_bHold, "Hold", MARGIN, FFT_BTN_RADIUS);
+    cr->restore();
+    
     double red = 0.8;
     double green = 0.8;
     double blue = 0.5;

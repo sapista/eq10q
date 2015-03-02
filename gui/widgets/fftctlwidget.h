@@ -33,6 +33,7 @@ class  FFTWidget : public Gtk::DrawingArea
     double get_value();
     bool get_active();
     bool get_isSpectrogram();
+    bool get_isHolding();
     
     //signal accessor:
     typedef sigc::signal<void> signal_Changed;
@@ -40,7 +41,8 @@ class  FFTWidget : public Gtk::DrawingArea
     
     typedef sigc::signal<void> signal_Changed_btnClicked;
     signal_Changed_btnClicked signal_clicked();
-    
+    signal_Changed_btnClicked signal_hold_clicked();
+        
   protected:
     //Override default signal handler:
     virtual bool on_expose_event(GdkEventExpose* event);
@@ -55,7 +57,7 @@ class  FFTWidget : public Gtk::DrawingArea
   
   private:
     double m_value, m_max, m_min;
-    bool m_bEnabled, m_bSlider_Focus, m_bSlider_Press, m_bBtn_Foucs, m_bBtn_Press, m_bIsSpectrogram;
+    bool m_bEnabled, m_bSlider_Focus, m_bSlider_Press, m_bBtn_Foucs, m_bBtn_Press, m_bIsSpectrogram, m_bHold, m_bHoldFocus;
     int width, height;
     double Val2Pixels(double val);
     double Pixels2Val(double px);
@@ -65,6 +67,9 @@ class  FFTWidget : public Gtk::DrawingArea
     
     //Button click signal
     signal_Changed_btnClicked m_ClickSignal;
+    
+    //Button click signal
+    signal_Changed_btnClicked m_HoldClickSignal;
   
 };
 #endif

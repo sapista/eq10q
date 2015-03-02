@@ -30,5 +30,5 @@
 
 #define PORT_OFFSET  3
 
-#define FFT_N 4096//8192//16384 //FFT sample size, must be a power of 2
+#define FFT_N 4096 //FFT sample size, must be a power of 2
 #endif

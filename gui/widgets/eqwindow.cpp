@@ -185,13 +185,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
   m_FftGainScale->signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
+  m_FftGainScale->signal_hold_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onHoldFft));
   m_FftGainScale->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
   m_BParams = new EqParams(m_iNumOfBands);
   m_AParams->loadFromTtlFile(m_pluginUri.c_str());
-  m_BParams->loadFromTtlFile(m_pluginUri.c_str());  
+  m_BParams->loadFromTtlFile(m_pluginUri.c_str());   
   m_CurParams = m_AParams;
 
   //Set cutom theme color:
@@ -615,6 +616,12 @@ void EqMainWindow::onButtonFft()
   sendAtomFftOn(m_FftGainScale->get_active());
   m_Bode->setFftActive(m_FftGainScale->get_active(), m_FftGainScale->get_isSpectrogram());
 }
+
+void EqMainWindow::onHoldFft()
+{
+  m_Bode->setFftHold(m_FftGainScale->get_isHolding());
+}
+
 
 void EqMainWindow::sendAtomFftOn(bool fft_activated)
 {

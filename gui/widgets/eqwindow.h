@@ -321,6 +321,7 @@ class EqMainWindow : public MainWidget
     void onCurveBandEnable(int band_ix, bool IsEnabled);
     bool on_timeout();
     void onButtonFft();
+    void onHoldFft();
     void onFftGainScale();
     void onBodeSelectBand(int band);
     void onBodeUnselectBand();

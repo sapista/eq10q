@@ -46,7 +46,8 @@ bIsFirstRun(true),
 SampleRate(44.1e3),
 m_FftActive(false),
 fft_gain(10.0),
-m_bIsSpectrogram(false)
+m_bIsSpectrogram(false),
+m_bFftHold(false)
 {
     
    //Calc the number of points
@@ -128,7 +129,6 @@ PlotEQCurve::~PlotEQCurve()
   delete[] fft_plot;
   delete[] fft_gradient_LUT;
   delete[] fft_ant_data;
-  delete[] fft_gradient_ptr;
   free(fft_log_lut);
 }
 
@@ -154,24 +154,17 @@ void PlotEQCurve::initBaseVectors()
   
   //Init FFT vectors
   const double m = 1.0/(double)(width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
-  const double n = 1-m*(double)(width - CURVE_MARGIN);
   double fft_raw_freq;
   for(int i = 0; i < (FFT_N/2); i++)
   {     
     fft_raw_freq = (SampleRate * (double)i) /  ((double)(FFT_N));
-    xPixels_fft[i] = freq2Pixels(fft_raw_freq);
+    xPixels_fft[i] = freq2Pixels(fft_raw_freq) - CURVE_MARGIN - CURVE_TEXT_OFFSET;
     fft_pink_noise[i] =  3.0*(log10(fft_raw_freq/20.0)/log10(2));
     fft_raw_data[i] = 0.0;
-    fft_gradient_LUT[i] = m*xPixels_fft[i] + n;
+    fft_gradient_LUT[i] = m*xPixels_fft[i];
     fft_plot[i]= 0.0;
     fft_ant_data[i] = 0.0;
     //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<< "Pixels = "<< xPixels_fft[i] <<std::endl;
-  }
-  
-  fft_gradient_ptr = new Cairo::RefPtr<Cairo::LinearGradient>[height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET];
-  for(int i = 0; i<height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET; i++)
-  {
-    fft_gradient_ptr[i] = Cairo::LinearGradient::create(CURVE_MARGIN + CURVE_TEXT_OFFSET, 0, width - CURVE_MARGIN, 0);  
   }
 }
 
@@ -486,6 +479,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     {
       initBaseVectors();
       bIsFirstRun = false;
+      m_fft_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
     }     
     
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
@@ -520,45 +514,16 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     
     
     //Draw FFT data
-    if(m_FftActive)
+    if(m_FftActive && !bIsFirstRun)
     {     
-      cr->save();
+      cr->save();     
+      cr->set_source(m_fft_surface_ptr, CURVE_MARGIN + CURVE_TEXT_OFFSET, CURVE_MARGIN);
       cr->rectangle(CURVE_MARGIN + CURVE_TEXT_OFFSET, CURVE_MARGIN, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
       cr->clip();     
-   
-      if(m_bIsSpectrogram)
-      {
-        //Draw the FFT spectrogram
-        for(int i = 0; i < (height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET); i++)
-        {
-          cr->rectangle(CURVE_MARGIN + CURVE_TEXT_OFFSET, i + CURVE_MARGIN, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, 1);
-          cr->set_source(fft_gradient_ptr[i]);
-          cr->fill();
-          Gtk::Main::iteration(false); //Perform a main event loop interation to avoid freezing the LV2-Host
-        }
-      }
-      
-      else
-      {
-        //Draw the FFT plot Curve
-        for (int i = 0; i < FFT_N/2; i++)
-        {
-          cr->line_to(xPixels_fft[i], fft_plot[i]);
-        }
-        for (int i = FFT_N/2 - 1; i >= 0; i--)
-        {
-          cr->line_to(xPixels_fft[i], height - CURVE_TEXT_OFFSET - fft_plot[i]);
-        }   
-        cr->set_source(fft_gradient_ptr[0]);
-        cr->fill_preserve();
-        cr->set_line_width(1);
-        cr->set_line_join(Cairo::LINE_JOIN_ROUND);
-        cr->set_source_rgba(0, 0.4 , 0.6, 0.5);
-        cr->stroke();
-      } 
+      cr->paint();
       cr->restore();
     }
-    
+       
     //Draw the grid
     cr->save();
     cr->set_source_rgb(0.3, 0.3, 0.3);
@@ -936,34 +901,90 @@ void PlotEQCurve::setSampleRate(double samplerate)
 
 void PlotEQCurve::setFftData()
 {
-  const double center = CURVE_MARGIN + 0.5*(double)(height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
+  
+  if(bIsFirstRun || m_bFftHold)
+  {
+    //Wait for initializations in on_expose_event
+    return;
+  }
+  
+  const double center = 0.5*(double)(height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
   const double m = ((double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height))/(2*60.0);
-  const double n = CURVE_MARGIN;
   const double m_g = 2.0/(double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height);
-  const double n_g = 1.0 - m_g*(double)CURVE_MARGIN;
+  const double n_g = 1.0;
   float val;
+   
+  Cairo::RefPtr<Cairo::LinearGradient> fft_gradient_ptr = Cairo::LinearGradient::create(0, 0, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, 0);  
+  for (int i = 0; i < FFT_N/2; i++)
+  {
+    if(m_bIsSpectrogram)
+    {
+      val = sqrt((float)fft_raw_data[i]);
+    }
+    else
+    {
+      fft_ant_data[i] = fft_raw_data[i] >  fft_ant_data[i] ? fft_raw_data[i] : fft_raw_data[i] + 0.5 * fft_ant_data[i];
+      val = sqrt((float)fft_ant_data[i]);
+    }
+    fft_plot[i] = m*(20.0f*fastLog10((int*)(&val), fft_log_lut) + fft_gain + fft_pink_noise[i]);
+    fft_plot[i] = fft_plot[i] > center ? center : fft_plot[i];
+    fft_gradient_ptr->add_color_stop_rgba (fft_gradient_LUT[i], 0.5, m_g*fft_plot[i] + n_g,  1.0,  m_g*fft_plot[i] + n_g); 
+  } 
+
+  //Create cairo context using the buffer surface
+  Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_fft_surface_ptr);  
+  
+  //Store a copy of the image
+  Cairo::RefPtr<Cairo::ImageSurface> img_ant = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
+  Cairo::RefPtr<Cairo::Context> cr_ant = Cairo::Context::create(img_ant);  
+  cr_ant->save();
+  cr_ant->set_source (m_fft_surface_ptr, 0, 0);
+  cr_ant->paint();
+  cr_ant->restore();
+  
+  //Clear current context  
+  cr->save();
+  cr->set_operator(Cairo::OPERATOR_CLEAR);
+  cr->paint();
+  cr->restore();
   
   if(m_bIsSpectrogram)
   {
-    //shift all data
-    for(int i = (height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET - 1); i > 0; i--)
-    {
-      fft_gradient_ptr[i] = fft_gradient_ptr[i-1];
-    }
+    //Draw the FFT spectrogram
+    cr->save();
+    cr->set_source (img_ant, 0, 2);
+    cr->rectangle(0, 0, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET - 1);
+    cr->fill();
+    cr->restore();
     
-  }
-
-  fft_gradient_ptr[0] = Cairo::LinearGradient::create(CURVE_MARGIN + CURVE_TEXT_OFFSET, 0, width - CURVE_MARGIN, 0);  
-  
- 
-  for (int i = 0; i < FFT_N/2; i++)
+    cr->save();
+    cr->rectangle(0, 0, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, 2);
+    cr->set_source(fft_gradient_ptr);
+    cr->fill();
+    cr->restore();
+  }   
+  else
   {
-    fft_ant_data[i] = fft_raw_data[i] >  fft_ant_data[i] ? fft_raw_data[i] : fft_raw_data[i] + 0.5 * fft_ant_data[i];
-    val = sqrt((float)fft_ant_data[i]);
-    fft_plot[i] = m*(20.0f*fastLog10((int*)(&val), fft_log_lut) + fft_gain + fft_pink_noise[i]) + n;
-    fft_plot[i] = fft_plot[i] > center ? center : fft_plot[i];
-    fft_gradient_ptr[0]->add_color_stop_rgba (fft_gradient_LUT[i], 0.5, m_g*fft_plot[i] + n_g,  1.0,  m_g*fft_plot[i] + n_g); 
-  }
+    
+    //Draw the FFT plot Curve
+    cr->save();
+    for (int i = 0; i < FFT_N/2; i++)
+    {
+      cr->line_to(xPixels_fft[i], fft_plot[i]);
+    }
+    for (int i = FFT_N/2 - 1; i >= 0; i--)
+    {
+      cr->line_to(xPixels_fft[i], height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET - fft_plot[i]);
+    }   
+    cr->set_source(fft_gradient_ptr);
+    cr->fill_preserve();
+    cr->set_line_width(1);
+    cr->set_line_join(Cairo::LINE_JOIN_ROUND);
+    cr->set_source_rgba(0, 0.4 , 0.6, 0.5);
+    cr->stroke();
+    cr->restore();
+  } 
+  
   redraw();
 }
 
@@ -971,8 +992,21 @@ void PlotEQCurve::setFftActive(bool active, bool isSpectrogram)
 {
   m_FftActive = active;
   m_bIsSpectrogram = isSpectrogram;
+
+  //Clear plot screen
+  Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_fft_surface_ptr);   
+  cr->save();
+  cr->set_operator(Cairo::OPERATOR_CLEAR);
+  cr->paint();
+  cr->restore();
   redraw();
 }
+
+void PlotEQCurve::setFftHold(bool hold)
+{
+  m_bFftHold = hold;
+}
+
 
 void PlotEQCurve::setFftGain(double g)
 {

@@ -67,6 +67,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setFftData();
     virtual void setFftActive(bool active, bool isSpectrogram);
     virtual void setFftGain(double g);
+    virtual void setFftHold(bool hold);
     virtual void glowBand(int band);
     virtual void unglowBands();
     
@@ -139,9 +140,8 @@ class PlotEQCurve : public Gtk::DrawingArea
     double *fft_ant_data;
     double fft_gain;
     float *fft_log_lut;
-    bool m_bIsSpectrogram;
-    Cairo::RefPtr<Cairo::LinearGradient> *fft_gradient_ptr;
-    
+    bool m_bIsSpectrogram, m_bFftHold;
+    Cairo::RefPtr<Cairo::ImageSurface> m_fft_surface_ptr;    
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;
