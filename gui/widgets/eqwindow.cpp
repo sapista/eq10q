@@ -326,6 +326,10 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
     write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + m_iNumOfBands, sizeof(float), 0, &aux); //Freq
     aux = m_CurParams->getBandQ(i);
     write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + 2*m_iNumOfBands, sizeof(float), 0, &aux); //Q
+    aux = m_CurParams->getBandEnabled(i);
+    write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + 4*m_iNumOfBands, sizeof(float), 0, &aux); //Enable
+    aux = m_CurParams->getBandType(i);
+    write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands, sizeof(float), 0, &aux); //Filter type
   }
   
   m_Bode->reComputeRedrawAll();
