@@ -28,10 +28,12 @@ This file implements functionalities for a large numbers of equalizers
 #include <stdlib.h>
 #include <fftw3.h>
 
-#include "lv2.h"
-#include "forge.h"
-#include "util.h"
-#include "urid.h"
+#include <lv2/lv2plug.in/ns/lv2core/lv2.h>
+#include <lv2/lv2plug.in/ns/ext/atom/forge.h>
+#include <lv2/lv2plug.in/ns/ext/atom/util.h>
+#include <lv2/lv2plug.in/ns/ext/urid/urid.h>
+
+
 #include "uris.h"
 
 #include "gui/eq_defines.h"

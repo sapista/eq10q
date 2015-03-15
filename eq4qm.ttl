@@ -19,7 +19,7 @@
   lv2:binary <eq4qm.so>;
   doap:name "EQ4Q Mono";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
-  lv2:requiredFeature urid:map
+  lv2:requiredFeature urid:map;
   lv2:optionalFeature lv2:hardRtCapable;
 
 guiext:ui <http://eq10q.sourceforge.net/eq/eq4qm/gui>;

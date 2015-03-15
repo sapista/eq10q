@@ -28,7 +28,7 @@ This file implements functionalities for diferent dynamic plugins
 #include <stdlib.h>
 #include <math.h>
 
-#include "lv2.h"
+#include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include "dsp/db.h"
 #include "dsp/fastmath.h"
 #include "dsp/vu.h"

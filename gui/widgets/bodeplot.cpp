@@ -34,6 +34,8 @@
 //Use the DSP code to generate digital filter coefs
 #include "../../dsp/filter.h"
 
+#define SPLINE_TENSION 0.2
+
 PlotEQCurve::PlotEQCurve(int iNumOfBands)
 :width(PLOT_WIDTH),
 height(PLOT_HIGHT),
@@ -907,10 +909,9 @@ void PlotEQCurve::setFftData()
     //Wait for initializations in on_expose_event
     return;
   }
-  
-  const double center = 0.5*(double)(height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
-  const double m = ((double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height))/(2*60.0);
-  const double m_g = 2.0/(double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height);
+
+  const double m = ((double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height))/(80.0); //TODO this 100 is the FFT plot range in dB so maybe I want to use that to scale the plot instead of a gain element? Think about it!
+  const double m_g = 1.0/(double)(2*CURVE_MARGIN + CURVE_TEXT_OFFSET - height);
   const double n_g = 1.0;
   float val;
    
@@ -927,7 +928,6 @@ void PlotEQCurve::setFftData()
       val = sqrt((float)fft_ant_data[i]);
     }
     fft_plot[i] = m*(20.0f*fastLog10((int*)(&val), fft_log_lut) + fft_gain + fft_pink_noise[i]);
-    fft_plot[i] = fft_plot[i] > center ? center : fft_plot[i];
     fft_gradient_ptr->add_color_stop_rgba (fft_gradient_LUT[i], 0.5, m_g*fft_plot[i] + n_g,  1.0,  m_g*fft_plot[i] + n_g); 
   } 
 
@@ -968,20 +968,47 @@ void PlotEQCurve::setFftData()
     
     //Draw the FFT plot Curve
     cr->save();
-    for (int i = 0; i < FFT_N/2; i++)
+    cr->move_to(0, height);
+    
+    double Ax, Ay, Bx, By; 
+    //Starting from i = 1 because i = 0 is DC
+    for (int i = 1; i < FFT_N/2; i++)
     {
-      cr->line_to(xPixels_fft[i], fft_plot[i]);
+      if(i == 1)
+      {
+        //Limit left A = Pk-1
+        Ax = xPixels_fft[0];
+        Ay =  fft_plot[0];
+      }
+      else
+      {
+        //Calc ctl point A       
+        Ax = xPixels_fft[i - 1] + SPLINE_TENSION * ( xPixels_fft[i] -  xPixels_fft[i - 2] );
+        Ay = fft_plot[i - 1] + SPLINE_TENSION * ( fft_plot[i] -  fft_plot[i - 2] );
+      }
+      
+      if(i == (FFT_N/2 - 1))
+      {
+        //Limit rigth A = Pk
+        Bx = xPixels_fft[i];
+        By = fft_plot[i];
+      }
+      else
+      {
+        //Calc ctl point A
+        Bx = xPixels_fft[i] - SPLINE_TENSION * ( xPixels_fft[i + 1] -  xPixels_fft[i - 1] );
+        By = fft_plot[i] - SPLINE_TENSION * ( fft_plot[i + 1] -  fft_plot[i - 1] );
+      }
+      cr->curve_to(Ax, Ay, Bx, By, xPixels_fft[i], fft_plot[i]);
     }
-    for (int i = FFT_N/2 - 1; i >= 0; i--)
-    {
-      cr->line_to(xPixels_fft[i], height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET - fft_plot[i]);
-    }   
-    cr->set_source(fft_gradient_ptr);
+    
+    cr->line_to(width, height);
+    cr->line_to(0, height);
+    cr->set_source_rgba(0.21, 0.15, 0.78, 0.7);
     cr->fill_preserve();
-    cr->set_line_width(1);
-    cr->set_line_join(Cairo::LINE_JOIN_ROUND);
-    cr->set_source_rgba(0, 0.4 , 0.6, 0.5);
-    cr->stroke();
+    cr->set_source(fft_gradient_ptr);
+    cr->fill();
+   
     cr->restore();
   } 
   

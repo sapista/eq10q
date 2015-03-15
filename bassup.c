@@ -27,7 +27,7 @@ This plugin is inside the Sapista Plugins Bundle
 #include <stdlib.h>
 #include <math.h>
 
-#include "lv2.h"
+#include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include "dsp/filter.h"
 
 #define BASSUP_URI "http://eq10q.sourceforge.net/bassup"

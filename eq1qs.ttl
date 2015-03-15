@@ -19,7 +19,7 @@
   lv2:binary <eq1qs.so>;
   doap:name "EQ1Q Stereo";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
-  lv2:requiredFeature urid:map
+  lv2:requiredFeature urid:map;
   lv2:optionalFeature lv2:hardRtCapable;
 
 guiext:ui <http://eq10q.sourceforge.net/eq/eq1qs/gui>;

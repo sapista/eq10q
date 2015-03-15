@@ -21,11 +21,6 @@
 #ifndef EQ10Q_URIS_H
 #define EQ10Q_URIS_H
 
-#define EG_SAMPLER_URI          "http://lv2plug.in/plugins/eg-sampler"
-#define EG_SAMPLER__sample      EG_SAMPLER_URI "#sample"
-#define EG_SAMPLER__applySample EG_SAMPLER_URI "#applySample"
-#define EG_SAMPLER__freeSample  EG_SAMPLER_URI "#freeSample"
-
 #define EQ_ATOM_URI "http://eq10q.sourceforge.net/atom"
 #define EQ_DSP2UI_COM EQ_ATOM_URI "#dsp2ui"
 #define EQ_SAMPLE_RATE EQ_ATOM_URI "#samplerate"

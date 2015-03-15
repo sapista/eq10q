@@ -98,7 +98,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "Out"));
   
   
-  m_FftGainScale = Gtk::manage(new FFTWidget(-10.0, 20.0));
+  m_FftGainScale = Gtk::manage(new FFTWidget(-20.0, 20.0));
   m_FftGainScale->set_value(0.0);
   
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));

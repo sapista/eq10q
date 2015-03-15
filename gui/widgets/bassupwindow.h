@@ -31,7 +31,7 @@
 #include <cmath>
 
 //LV2 UI header
-#include "../lv2_ui.h"
+#include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 
 #include "mainwidget.h"
 #include "knob2.h"

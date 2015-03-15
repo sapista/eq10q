@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cmath>
-#include "lv2_ui.h"
+#include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 
 //Build
 //g++ -g guitester.cpp eqbutton.cpp ctlbutton.cpp pixmapcombo.cpp bandctl.cpp gainctl.cpp eqparams.cpp faderwidget.cpp vuwidget.cpp ../eqwindow.cpp ../dsp/filter.c -o test `pkg-config gtkmm-2.4 slv2 --libs --cflags`

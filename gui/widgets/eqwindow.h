@@ -33,10 +33,10 @@
 #include <cmath>
 
 //LV2 UI header
-#include "../lv2_ui.h"
-#include "../../forge.h"
-#include "../../util.h"
-#include "../../urid.h"
+#include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
+#include <lv2/lv2plug.in/ns/ext/atom/forge.h>
+#include <lv2/lv2plug.in/ns/ext/atom/util.h>
+#include <lv2/lv2plug.in/ns/ext/urid/urid.h>
 #include "../../uris.h"
 
 #include "mainwidget.h"

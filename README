@@ -24,6 +24,7 @@ Before install EQ10Q you must resolve all required libraries:
   - G++ compiler
   - cmake
   - pkg-config
+  - LV2 Headers
   - Gtkmm >= 2.4
   - FFTW3
 
