@@ -45,10 +45,10 @@
 #include "knob2.h"
 #include "eqparams.h"
 #include "bodeplot.h"
-#include "fftctlwidget.h"
 #include "button.h"
 #include "toggle_button.h"
 #include "abbutton.h"
+#include "sidechainbox.h"
 
 //Include eq definition
 #include "../eq_defines.h"
@@ -292,17 +292,17 @@ class EqMainWindow : public MainWidget
     EqParams *m_AParams, *m_BParams, *m_CurParams;
     BandCtl **m_BandCtlArray; 
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
-    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox;
-    ToggleButton m_BypassButton;
+    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox, m_FftCtlVBox;
+    ToggleButton m_BypassButton, m_FftRtaActive, m_FftSpecActive;
     AbButton m_AButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign;
-    Button m_FlatButton, m_SaveButton, m_LoadButton;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign, m_FftAlignInner;
+    Button m_FlatButton, m_SaveButton, m_LoadButton, m_FftHold;
     Gtk::Alignment m_MainWidgetAlign;
     PlotEQCurve *m_Bode;
     Gtk::Image *image_logo_center;
-    FFTWidget *m_FftGainScale;
-    KnobWidget2 *m_GainFaderIn, *m_GainFaderOut;
+    KnobWidget2 *m_GainFaderIn, *m_GainFaderOut, *m_FftGain, *m_FftRange;
     VUWidget *m_VuMeterIn, *m_VuMeterOut;
+    SideChainBox *m_FftBox;
     
     void loadEqParams();
     void changeAB(EqParams *toBeCurrent);
@@ -320,14 +320,17 @@ class EqMainWindow : public MainWidget
     void onCurveChange(int band_ix, float Gain, float Freq, float Q);
     void onCurveBandEnable(int band_ix, bool IsEnabled);
     bool on_timeout();
-    void onButtonFft();
-    void onHoldFft();
+    void onButtonFftRta();
+    void onButtonFftSpc();
+    void onHoldFft_press();
+    void onHoldFft_release();
     void onFftGainScale();
+    void onFftRangeScale();
     void onBodeSelectBand(int band);
     void onBodeUnselectBand();
     void onBandCtlSelectBand(int band);
     void onBandCtlUnselectBand();
-    
+        
   private:
     double SampleRate;
     float m_bypassValue;   

@@ -27,13 +27,17 @@
 #include "setwidgetcolors.h"
 
 #define KNOB_ICON_FILE "/knobs/knob2_32px.png"
+#define KNOB_ICON_FILE_MINI "/knobs/knob2_25px.png"
 
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
   :m_BypassButton("Eq On"),
+  m_FftRtaActive("RTA"),
+  m_FftSpecActive("Spec"),
   m_FlatButton("Flat"),
   m_SaveButton("Save"),
-  m_LoadButton("Load"),  
+  m_LoadButton("Load"), 
+  m_FftHold("Hold"),
   m_iNumOfChannels(iAudioChannels),
   m_iNumOfBands(iNumBands),
   m_bMutex(false),
@@ -74,8 +78,6 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   
   //load image logo
   image_logo_center = new Gtk::Image(m_bundlePath + std::string(IMAGE_LOGO_PATH));
-  //image_logo_center( m_bundlePath + "/" + std::string(IMAGE_LOGO_PATH))
-  //image_logo_center("/home/sapista/build/LV2/trunk/gui/icons/logoeq10q.png")
 
   m_MainWidgetAlign.set_padding(3,3,3,3);
   
@@ -96,10 +98,24 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_GainFaderOut = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Out Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
   m_VuMeterIn = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "In")); 
   m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "Out"));
+    
+  m_FftRange = Gtk::manage(new KnobWidget2(20.0, 100.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE_MINI).c_str(), KNOB_TYPE_LIN ));
+  m_FftGain = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Gain", "dB", (m_bundlePath + KNOB_ICON_FILE_MINI).c_str(), KNOB_TYPE_LIN, true ));
+  m_FftRange->set_value(80.0);
+  m_FftGain->set_value(0.0);
+  m_FftCtlVBox.pack_start(m_FftRtaActive, Gtk::PACK_EXPAND_PADDING);
+  m_FftCtlVBox.pack_start(m_FftSpecActive, Gtk::PACK_EXPAND_PADDING);
+  m_FftCtlVBox.pack_start(m_FftHold, Gtk::PACK_EXPAND_PADDING);
+  m_FftCtlVBox.pack_start(*m_FftGain, Gtk::PACK_EXPAND_PADDING);
+  m_FftCtlVBox.pack_start(*m_FftRange, Gtk::PACK_EXPAND_PADDING);
   
+  m_FftAlignInner.add(m_FftCtlVBox);
+  m_FftAlignInner.set_padding(30,8, 8, 10);
+  m_FftBox = Gtk::manage(new SideChainBox("   FFT ", 10));
+  m_FftBox->add(m_FftAlignInner);
+  m_FftAlign.set_padding(0, 3, 0, 0);
+  m_FftAlign.add(*m_FftBox);
   
-  m_FftGainScale = Gtk::manage(new FFTWidget(-20.0, 20.0));
-  m_FftGainScale->set_value(0.0);
   
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
   
@@ -120,7 +136,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //Bode plot layout
   m_PlotBox.set_spacing(0);
   m_PlotBox.pack_start(*m_Bode);
-  m_PlotBox.pack_start(*m_FftGainScale,Gtk::PACK_SHRINK);
+  m_PlotBox.pack_start(m_FftAlign,Gtk::PACK_SHRINK);
 
   //Box layout
   m_ABFlatBox.set_homogeneous(false);
@@ -134,8 +150,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_SaveButton.show();
   m_LoadAlign.show();
   m_SaveAlign.show();
-  m_FftGainScale->show();
-  
+
   m_CurveBypassBandsBox.pack_start(m_PlotBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_BandBox ,Gtk::PACK_SHRINK);
@@ -184,9 +199,14 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &EqMainWindow::on_timeout), TIMER_VALUE_MS);
   m_SaveButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::saveToFile));
   m_LoadButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::loadFromFile));
-  m_FftGainScale->signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFft));
-  m_FftGainScale->signal_hold_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onHoldFft));
-  m_FftGainScale->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
+  
+  //FFT Control
+  m_FftRtaActive.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFftRta));
+  m_FftSpecActive.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonFftSpc));
+  m_FftHold.signal_press().connect( sigc::mem_fun(*this, &EqMainWindow::onHoldFft_press));
+  m_FftHold.signal_release().connect( sigc::mem_fun(*this, &EqMainWindow::onHoldFft_release)); 
+  m_FftGain->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
+  m_FftRange->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftRangeScale));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -213,12 +233,14 @@ EqMainWindow::~EqMainWindow()
   delete m_VuMeterIn;
   delete m_VuMeterOut;
   delete m_Bode;
-  delete m_FftGainScale;
   delete m_port_event_Curve_Gain;
   delete m_port_event_Curve_Freq;
   delete m_port_event_Curve_Q;
   delete m_port_event_Curve_Type;
   delete m_port_event_Curve_Enable;
+  delete m_FftGain;
+  delete m_FftRange;
+  delete m_FftBox;
   for(int i = 0; i < m_iNumOfBands; i++)
   {
     delete m_BandCtlArray[i];
@@ -233,6 +255,7 @@ bool EqMainWindow::on_timeout()
   {
     m_port_event_Bypass = false;
     m_BypassButton.set_active(m_bypassValue > 0.5f ? false : true);
+    m_Bode->setBypass(m_bypassValue > 0.5f ? true : false); 
   }
 
   if(m_port_event_InGain)
@@ -256,31 +279,33 @@ bool EqMainWindow::on_timeout()
       {
 	m_port_event_Curve_Gain[i] = false;
 	m_BandCtlArray[i]->setGain(m_CurParams->getBandGain(i));
+        m_Bode->setBandGain(i, m_CurParams->getBandGain(i)); 
       }
       if(m_port_event_Curve_Freq[i])
       {
 	m_port_event_Curve_Freq[i] = false;
 	m_BandCtlArray[i]->setFreq(m_CurParams->getBandFreq(i));
+        m_Bode->setBandFreq(i, m_CurParams->getBandFreq(i));
       }
       if(m_port_event_Curve_Q[i])
       {
 	m_port_event_Curve_Q[i] = false;
 	m_BandCtlArray[i]->setQ(m_CurParams->getBandQ(i));
+        m_Bode->setBandQ(i, m_CurParams->getBandQ(i));
       }
       if(m_port_event_Curve_Enable[i])
       {
 	m_port_event_Curve_Enable[i] = false;
 	m_BandCtlArray[i]->setEnabled(m_CurParams->getBandEnabled(i));
+        m_Bode->setBandEnable(i, m_CurParams->getBandEnabled(i));
       }    
       if(m_port_event_Curve_Type[i])
       {
 	m_port_event_Curve_Type[i] = false;
 	m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i));
+        m_Bode->setBandType(i, m_CurParams->getBandType(i)); 
       }
-      
-      m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
     }
-    m_Bode->reComputeRedrawAll();
   }
   return true;
 }
@@ -317,7 +342,12 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
     m_BandCtlArray[i]->setFilterType(m_CurParams->getBandType(i)); 
     m_BandCtlArray[i]->setQ(usedQ);
     m_CurParams->setBandQ(i, usedQ);
-    m_Bode->setBandParamsQuiet(i, m_CurParams->getBandGain(i), m_CurParams->getBandFreq(i), m_CurParams->getBandQ(i) , m_CurParams->getBandType(i), m_CurParams->getBandEnabled(i));
+    
+    m_Bode->setBandGain(i, m_CurParams->getBandGain(i));
+    m_Bode->setBandFreq(i, m_CurParams->getBandFreq(i));
+    m_Bode->setBandQ(i, m_CurParams->getBandQ(i));
+    m_Bode->setBandEnable(i, m_CurParams->getBandEnabled(i));
+    m_Bode->setBandType(i, m_CurParams->getBandType(i));
     
     //Write to LV2 ports
     aux = m_CurParams->getBandGain(i);
@@ -331,8 +361,6 @@ void EqMainWindow::changeAB(EqParams *toBeCurrent)
     aux = m_CurParams->getBandType(i);
     write_function(controller, i + PORT_OFFSET + 2*m_iNumOfChannels + 3*m_iNumOfBands, sizeof(float), 0, &aux); //Filter type
   }
-  
-  m_Bode->reComputeRedrawAll();
 }
 
 void EqMainWindow::onButtonA()
@@ -528,21 +556,6 @@ void EqMainWindow::onBandCtlUnselectBand()
 
 void EqMainWindow::loadEqParams()
 {
-  
-  ///TODO: Load from *.ttl file insted of global constants!
-//   onGainChange(true, GAIN_DEFAULT);
-//   onGainChange(false, GAIN_DEFAULT);
-//   for(int i = 0; i< m_iNumOfBands; i++)
-//   {
-//     onBandChange(i, GAIN_TYPE, GAIN_DEFAULT);
-//     onBandChange(i, FREQ_TYPE, FREQ_MIN);
-//     onBandChange(i, Q_TYPE, PEAK_Q_DEFAULT);
-//     onBandChange(i, FILTER_TYPE, PEAK);
-//     onBandChange(i, ONOFF_TYPE, 0.0);
-//   }
-
-  //TODO: el punt ttl s'ha de modificar? esta el type de 1 a 12 i aqui el tinc de 0 a 11, com esta en el motor de audio?
-  //TODO: estic provant amb una URI que funcioni, la URI ha d'estar fora!
   m_CurParams->loadFromTtlFile(m_pluginUri.c_str());
   changeAB(m_CurParams);
 }
@@ -615,17 +628,36 @@ void EqMainWindow::loadFromFile()
   delete fileChosser;
 }
 
-void EqMainWindow::onButtonFft()
+void EqMainWindow::onButtonFftRta()
 {
-  sendAtomFftOn(m_FftGainScale->get_active());
-  m_Bode->setFftActive(m_FftGainScale->get_active(), m_FftGainScale->get_isSpectrogram());
+  sendAtomFftOn( m_FftRtaActive.get_active() );
+  m_Bode->setFftActive(m_FftRtaActive.get_active(), false);
+  if(m_FftRtaActive.get_active())
+  {
+    m_FftSpecActive.set_active(false);
+  }
 }
 
-void EqMainWindow::onHoldFft()
+void EqMainWindow::onButtonFftSpc()
 {
-  m_Bode->setFftHold(m_FftGainScale->get_isHolding());
+  sendAtomFftOn( m_FftSpecActive.get_active() );
+  m_Bode->setFftActive(m_FftSpecActive.get_active(), true);
+  if(m_FftSpecActive.get_active())
+  {
+    m_FftRtaActive.set_active(false);
+  }
 }
 
+
+void EqMainWindow::onHoldFft_press()
+{
+  m_Bode->setFftHold(true);
+}
+
+void EqMainWindow::onHoldFft_release()
+{
+  m_Bode->setFftHold(false);
+}
 
 void EqMainWindow::sendAtomFftOn(bool fft_activated)
 {
@@ -640,5 +672,11 @@ void EqMainWindow::sendAtomFftOn(bool fft_activated)
 
 void EqMainWindow::onFftGainScale()
 {
-  m_Bode->setFftGain(m_FftGainScale->get_value());
+  m_Bode->setFftGain(m_FftGain->get_value());
 }
+
+void EqMainWindow::onFftRangeScale()
+{
+  m_Bode->setFftRange(m_FftRange->get_value());
+}
+

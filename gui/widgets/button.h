@@ -34,6 +34,8 @@ class Button : public Gtk::DrawingArea
     //Slot prototype: void signal_clicked();
     typedef sigc::signal<void> signal_Click;      
     signal_Click signal_clicked();
+    signal_Click signal_press();
+    signal_Click signal_release();
     
   protected:
     //Override default signal handler:
@@ -48,5 +50,7 @@ class Button : public Gtk::DrawingArea
     bool m_bFocus, m_bPress;
     int width, height;
     signal_Click m_sigClick;
+    signal_Click m_sigPress;
+    signal_Click m_sigRelease;
 };
 #endif

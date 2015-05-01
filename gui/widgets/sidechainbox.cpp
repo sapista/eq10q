@@ -21,11 +21,10 @@
 #include "sidechainbox.h"
 #include "colors.h"
 
-#define TOP_PADDING 20
 #define MARGIN 6
 #define RADIUS 4
 
-SideChainBox::SideChainBox()
+SideChainBox::SideChainBox( std::string sTitle, int top_padding): m_title(sTitle), m_top_padding(top_padding)
 {
 
 }
@@ -57,16 +56,16 @@ bool SideChainBox::on_expose_event(GdkEventExpose* event)
     
     //Draw a box
     cr->save();
-    cr->arc( MARGIN + 0.5, MARGIN + TOP_PADDING + 0.5, RADIUS, M_PI, -0.5*M_PI);
-    cr->line_to(width/2 - 34 , MARGIN + TOP_PADDING + 0.5 - RADIUS);
-    cr->move_to(width/2 + 34 , MARGIN + TOP_PADDING + 0.5 - RADIUS);
-    cr->line_to(width - 1 - MARGIN - 0.5, MARGIN + TOP_PADDING + 0.5 - RADIUS);
-    cr->arc( width - 1 - MARGIN - 0.5, MARGIN + TOP_PADDING + 0.5, RADIUS, -0.5*M_PI, 0);
+    cr->arc( MARGIN + 0.5, MARGIN + m_top_padding + 0.5, RADIUS, M_PI, -0.5*M_PI);
+    cr->line_to(width/6 , MARGIN + m_top_padding + 0.5 - RADIUS);
+    cr->move_to(5*width/6 , MARGIN + m_top_padding + 0.5 - RADIUS);
+    cr->line_to(width - 1 - MARGIN - 0.5, MARGIN + m_top_padding + 0.5 - RADIUS);
+    cr->arc( width - 1 - MARGIN - 0.5, MARGIN + m_top_padding + 0.5, RADIUS, -0.5*M_PI, 0);
     cr->line_to(width - 1 - MARGIN - 0.5 + RADIUS, height - 1 - MARGIN  - 0.5);
     cr->arc( width - 1 - MARGIN - 0.5, height - 1 - MARGIN  - 0.5, RADIUS, 0.0,  0.5*M_PI);
     cr->line_to( MARGIN + 0.5, height - 1 - MARGIN  - 0.5 + RADIUS);
     cr->arc( MARGIN  + 0.5, height - 1 - MARGIN  - 0.5, RADIUS, 0.5*M_PI, M_PI);
-    cr->line_to( MARGIN + 0.5 - RADIUS,  MARGIN + TOP_PADDING + 0.5 );
+    cr->line_to( MARGIN + 0.5 - RADIUS,  MARGIN + m_top_padding + 0.5 );
     cr->set_line_width(1);
     cr->set_source_rgba(1,1,1, 0.3);
     cr->stroke();
@@ -77,10 +76,10 @@ bool SideChainBox::on_expose_event(GdkEventExpose* event)
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 12px");
     pangoLayout->set_font_description(font_desc);
-    pangoLayout->set_text("Side-Chain");
+    pangoLayout->set_text(m_title);
 
     //and text
-    cr->move_to(width/2 - 32, MARGIN + TOP_PADDING/2 );
+    cr->move_to(width/6 + 4,  m_top_padding - 6 );
     cr->set_source_rgba(0.9, 0.9, 0.9, 0.7);
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke();  

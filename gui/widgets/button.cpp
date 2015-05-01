@@ -50,6 +50,7 @@ bool Button::on_button_press_event ( GdkEventButton* event )
                event->x < (width - OUTER_BORDER) &&
                event->y > OUTER_BORDER &&
                event->y < (height - OUTER_BORDER);
+    m_sigPress.emit();
     redraw();
   }
   return true;
@@ -64,7 +65,7 @@ bool Button::on_button_release_event ( GdkEventButton* event )
   {
     m_sigClick.emit();  
   }
-
+  m_sigRelease.emit();
   m_bPress = false;
   m_bFocus = false;
   redraw();
@@ -85,6 +86,7 @@ bool Button::on_mouse_leave_widget ( GdkEventCrossing* event )
 {
   m_bFocus = false;
   redraw();
+  m_sigRelease.emit();
   return true;
 }
 
@@ -99,6 +101,17 @@ Button::signal_Click Button::signal_clicked()
 {
   return m_sigClick;
 }
+
+Button::signal_Click Button::signal_press()
+{
+  return m_sigPress;
+}
+
+Button::signal_Click Button::signal_release()
+{
+  return m_sigRelease;
+}
+
 
 void Button::redraw()
 {

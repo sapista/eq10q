@@ -26,18 +26,22 @@
 #include "filter.h"
 #include "../eq_defines.h"
 
-#define NUM_POINTS_PER_DECADE 150
-#define MIN_FREQ 18.0
+#define MIN_FREQ 18.0 
 #define MAX_FREQ 22000.0
+#define MIN_SPAN_DEC 0.5
+#define CURVE_NUM_OF_POINTS 500
 #define GRID_VERTICAL_LINES 28
 #define DB_GRID_RANGE 50.0
 #define CURVE_MARGIN 8
 #define CURVE_BORDER 1.5
-#define CURVE_TEXT_OFFSET 18
+#define CURVE_TEXT_OFFSET_X 18
+#define CURVE_TEXT_OFFSET_Y 38
+#define ZOOM_WIDGET_BORDER_Y 22
 #define PLOT_HIGHT 250
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
-#define AUTO_REFRESH_TIMEOUT_MS 20
+#define AUTO_REFRESH_TIMEOUT_MS 40 //25 frames per second should be enough
+#define SPECTROGRAM_LINE_THICKNESS 3.0 
 
 typedef struct
 {
@@ -53,10 +57,7 @@ class PlotEQCurve : public Gtk::DrawingArea
   public:
     PlotEQCurve(int iNumOfBands);
     virtual ~PlotEQCurve();
-    
-    void reComputeRedrawAll();
     void resetCurve();
-    void setBandParamsQuiet(int bd_ix, float newGain, float newFreq, float newQ, int newType, bool bIsEnabled);
     virtual void setBandGain(int bd_ix, float newGain);
     virtual void setBandFreq(int bd_ix, float newFreq);
     virtual void setBandQ(int bd_ix, float newQ);
@@ -67,10 +68,11 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setFftData();
     virtual void setFftActive(bool active, bool isSpectrogram);
     virtual void setFftGain(double g);
+    virtual void setFftRange(double r);
     virtual void setFftHold(bool hold);
     virtual void glowBand(int band);
     virtual void unglowBands();
-    
+        
     //signal accessor:
     //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
     typedef sigc::signal<void, int, float, float, float> signal_BandChanged;
@@ -97,9 +99,16 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual bool on_button_release_event(GdkEventButton* event);
       virtual bool on_scrollwheel_event(GdkEventScroll* event);
       virtual bool on_mouse_motion_event(GdkEventMotion* event);
-      virtual bool on_timeout();
+      virtual bool on_timeout_redraw();
       virtual bool on_mouse_leave_widget(GdkEventCrossing* event);
-      virtual void redraw();
+      virtual void cueBandRedraws(int band);
+      virtual void redraw_background_widget();
+      virtual void redraw_zoom_widget();
+      virtual void redraw_curve_widget();
+      virtual void redraw_grid_widget();
+      virtual void redraw_xAxis_widget();
+      virtual void redraw_yAxis_widget();
+      virtual void redraw_fft_widget();
   
       //Override default signal handler:
       virtual bool on_expose_event(GdkEventExpose* event);
@@ -107,15 +116,15 @@ class PlotEQCurve : public Gtk::DrawingArea
   private:
     int width, height; 
     int m_TotalBandsCount;
-    int m_NumOfPoints;
     bool m_Bypass;
     int m_iBandSel;
     bool bMotionIsConnected;
     bool bBandFocus;
-    int iRedrawByTimer;
-    bool bIsFirstRun;
+    bool *m_Bands2Redraw;
+    bool m_BandRedraw, m_fullRedraw, m_justRedraw;
     double SampleRate;
     bool m_FftActive;
+    double m_minFreq, m_maxFreq;
     
     //To hadle mouse mouve events
     sigc::connection m_motion_connection;
@@ -136,22 +145,36 @@ class PlotEQCurve : public Gtk::DrawingArea
     double *xPixels_fft;
     double *fft_pink_noise;
     double *fft_plot;
-    double *fft_gradient_LUT;
     double *fft_ant_data;
     double fft_gain;
+    double fft_range;
     float *fft_log_lut;
-    bool m_bIsSpectrogram, m_bFftHold;
-    Cairo::RefPtr<Cairo::ImageSurface> m_fft_surface_ptr;    
+    bool m_bIsSpectrogram, m_bFftHold, m_FftRedraw;
+    
+    //Zoom widget data
+    struct zoom_widget
+    {
+      bool center_focus;
+      bool f1_focus;
+      bool f2_focus;
+      double x1;
+      double x2;
+      double x_ant;
+      bool center_press;
+      bool f1_press;
+      bool f2_press;
+    } m_zoom_widget;
+    
+    
+    //Cairo surfaces
+    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_fft_surface_ptr, m_zoom_surface_ptr, m_curve_surface_ptr, m_grid_surface_ptr, m_xAxis_surface_ptr, m_yAxis_surface_ptr; 
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;
     signal_BandEnabled m_BandEnabledSignal;
     signal_BandSelected m_BandSelectedSignal;
     signal_BandUnselected m_BandUnselectedSignal;
-    
-    //Method to initialize base vectors xPixels_Grind, f, xPixels
-    void initBaseVectors();
-    
+        
     //Function for dB to pixels convertion
     double dB2Pixels(double db);
     
@@ -170,5 +193,13 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Curve math functions   
     void CalcBand_DigitalFilter(int bd_ix);
     
+    //Compute zoom bar
+    virtual void setCenterSpan(double center, double span);
+    virtual void resetCenterSpan();   
+    virtual void setCenter(double center);
+    virtual void setSpan(double span);
+    void recomputeMinFreq_fromX1Pixel(double x1);
+    void recomputeMaxFreq_fromX2Pixel(double x2);
+    void recomputeCenterFreq(double xDiff);
 };
 #endif
