@@ -54,8 +54,7 @@ m_maxFreq(MAX_FREQ),
 fft_gain(0.0),
 fft_range(80.0),
 m_bIsSpectrogram(false),
-m_bFftHold(false),
-m_FftRedraw(false)
+m_bFftHold(false)
 {    
   //Allocate memory for filter data strcuts
   m_filters = new FilterBandParams*[m_TotalBandsCount];
@@ -669,14 +668,6 @@ bool PlotEQCurve::on_timeout_redraw()
     bRedraw = true;
   }
   
-  //Redraw if FFT data has requested
-  if(m_FftRedraw)
-  {
-    bRedraw = true;;
-    m_FftRedraw = false;
-    redraw_fft_widget();
-  }
-
   //Redraw if curve changed
   if(m_BandRedraw)
   {
@@ -964,12 +955,11 @@ void PlotEQCurve::setSampleRate(double samplerate)
 
 void PlotEQCurve::setFftData()
 {
-  if(!m_fft_surface_ptr || m_bFftHold)
+  if(m_fft_surface_ptr && !m_bFftHold)
   {
-    //Wait for initializations in on_expose_event
-    return;
+    redraw_fft_widget();
+    m_justRedraw = true;
   }
-  m_FftRedraw = true;
 }
 
 void PlotEQCurve::setFftActive(bool active, bool isSpectrogram)
@@ -983,7 +973,9 @@ void PlotEQCurve::setFftActive(bool active, bool isSpectrogram)
   cr->set_operator(Cairo::OPERATOR_CLEAR);
   cr->paint();
   cr->restore();
-  m_FftRedraw = true;
+  
+  
+  m_justRedraw = true;
 }
 
 void PlotEQCurve::setFftHold(bool hold)

@@ -40,7 +40,7 @@
 #define PLOT_HIGHT 250
 #define PLOT_WIDTH 300
 #define SCROLL_EVENT_INCREMENT 0.3
-#define AUTO_REFRESH_TIMEOUT_MS 40 //25 frames per second should be enough
+#define AUTO_REFRESH_TIMEOUT_MS 20
 #define SPECTROGRAM_LINE_THICKNESS 3.0 
 
 typedef struct
@@ -149,7 +149,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     double fft_gain;
     double fft_range;
     float *fft_log_lut;
-    bool m_bIsSpectrogram, m_bFftHold, m_FftRedraw;
+    bool m_bIsSpectrogram, m_bFftHold;
     
     //Zoom widget data
     struct zoom_widget
