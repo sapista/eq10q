@@ -56,11 +56,13 @@ This file implements functionalities for diferent dynamic plugins
 #define PORT_KNEE 13
 
 #ifdef PLUGIN_IS_COMPRESSOR
+#define PORT_DRY_WET 14
+#define PORT_OUTPUT_R 15
+#define PORT_INPUT_R 16
+#else
+#define PORT_DRY_WET 13
 #define PORT_OUTPUT_R 14
 #define PORT_INPUT_R 15
-#else
-#define PORT_OUTPUT_R 13
-#define PORT_INPUT_R 14
 #endif
 
 typedef struct {
@@ -78,6 +80,7 @@ typedef struct {
   float *lpffreq;
   float *ingain;
   float *fVuIn;
+  float *drywet;
   #ifdef PLUGIN_IS_COMPRESSOR
   float *knee;
   #endif
@@ -148,6 +151,10 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
 	    plugin->fVuIn=(float*)data;
 	    break;
 
+    case PORT_DRY_WET:
+            plugin->drywet = (float*)data;
+            break;
+            
     #ifdef PLUGIN_IS_COMPRESSOR
     case PORT_KNEE:
 	    plugin->knee = (float*)data;
@@ -193,6 +200,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float lpffreq = *(plugin_data->lpffreq);
   const float KeyListen = *(plugin_data->key_listen);
   const float InputGain = dB2Lin(*(plugin_data->ingain));
+  const float DryWet =  *(plugin_data->drywet);
   float gr_meter = 1.0f;
   
   //Read ports (gate)
@@ -357,9 +365,9 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     #endif
     //=================== END OF COMPRESSOR CODE ======================
     
-    plugin_data->output[0][i] = input_filtered*(KeyListen) + input_preL*gain_reduction*(1-KeyListen);
+    plugin_data->output[0][i] = input_filtered*(KeyListen) + input_preL*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
     #if NUM_CHANNELS == 2
-    plugin_data->output[1][i] = input_filtered*(KeyListen) + input_preR*gain_reduction*(1-KeyListen);
+    plugin_data->output[1][i] = input_filtered*(KeyListen) + input_preR*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
     #endif
 
   }

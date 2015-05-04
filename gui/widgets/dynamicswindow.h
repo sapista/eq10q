@@ -54,7 +54,8 @@
 #define PORT_GAIN 10
 #define PORT_INVU 11
 #define PORT_GAINREDUCTION 12
-#define PORT_KNEE 13
+#define PORT_KNEE_COMP_DRY_WET_GATE 13
+#define PORT_DRY_WET_COMP 14
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
@@ -152,10 +153,16 @@ class DynMainWindow : public MainWidget
             m_Plot->set_inputvu(data);
 	  break;
 	  
-	  case PORT_KNEE:
-	    m_Knee->set_value(data);
-            m_Plot->set_knee(data);
-	  break;
+	  case PORT_KNEE_COMP_DRY_WET_GATE:
+            if(m_bIsCompressor)
+            {
+              m_Knee->set_value(data);
+              m_Plot->set_knee(data);
+              break; //If is compressor break here and sets knee, if is gate continue to set Dry/Wet using the same method as compressor
+            }          
+          case PORT_DRY_WET_COMP:
+              m_DryWet->set_value(100.0*data); //In range of 0% to 100%
+            break;
 	}       
         
 	#ifdef PRINT_DEBUG_INFO	    
@@ -178,6 +185,7 @@ class DynMainWindow : public MainWidget
     KnobWidget2 *m_Knee;
     KnobWidget2 *m_HPF;
     KnobWidget2 *m_LPF;
+    KnobWidget2 *m_DryWet;
     ToggleButton m_KeyButton;
     PlotDynCurve *m_Plot;
     SideChainBox m_SCBox;
@@ -197,6 +205,7 @@ class DynMainWindow : public MainWidget
     void onKneeChange();
     void onHPFChange();
     void onLPFChange();
+    void onDryWetChange();
     void onKeyListenChange();
     
   private:

@@ -45,6 +45,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
   m_LPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key LPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
+  m_DryWet = Gtk::manage(new KnobWidget2(0.0, 100.0, "Dry/Wet", "%", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
 
   if(m_bIsCompressor)
   {
@@ -106,6 +107,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   {
     m_DynBox.pack_start(*m_Knee, Gtk::PACK_SHRINK);
   }
+  m_DynBox.pack_start(*m_DryWet, Gtk::PACK_SHRINK);
   m_DynBox.show_all_children();
   
   m_BalBox.set_border_width(WIDGET_BORDER);
@@ -153,6 +155,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_Release->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onReleaseChange));
   m_LPF->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onLPFChange));
   m_HPF->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onHPFChange));
+  m_DryWet->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onDryWetChange));
   m_KeyButton.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onKeyListenChange));
   if(m_bIsCompressor)
   {
@@ -175,6 +178,7 @@ DynMainWindow::~DynMainWindow()
   }
   delete m_HPF;
   delete m_LPF;
+  delete m_DryWet;
   delete image_logo;
 }
 
@@ -245,7 +249,7 @@ void DynMainWindow::onKneeChange()
   float aux;
   aux = m_Knee->get_value();
   m_Plot->set_knee(aux);
-  write_function(controller, PORT_KNEE, sizeof(float), 0, &aux);
+  write_function(controller, PORT_KNEE_COMP_DRY_WET_GATE, sizeof(float), 0, &aux);
 }
 
 void DynMainWindow::onHPFChange()
@@ -262,6 +266,21 @@ void DynMainWindow::onLPFChange()
   float aux;
   aux = m_LPF->get_value();
   write_function(controller, PORT_LPFFREQ, sizeof(float), 0, &aux);
+}
+
+void DynMainWindow::onDryWetChange()
+{
+  //Write to LV2 port
+  float aux;
+  aux = 0.01*m_DryWet->get_value(); //Div by 100 to get 0% to 100% in range 0 to 1
+  if(m_bIsCompressor)
+  {
+    write_function(controller, PORT_DRY_WET_COMP, sizeof(float), 0, &aux);
+  }
+  else
+  {
+    write_function(controller, PORT_KNEE_COMP_DRY_WET_GATE, sizeof(float), 0, &aux);
+  }
 }
 
 void DynMainWindow::onKeyListenChange()

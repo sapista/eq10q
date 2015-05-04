@@ -468,6 +468,7 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
         //grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
+      
     }
     else
     {
@@ -651,6 +652,7 @@ bool BandCtl::on_scrollwheel_event(GdkEventScroll* event)
 
 bool BandCtl::on_key_press_event(GdkEventKey* event)
 { 
+  std::cout<<"Key press event: "<<event->keyval<<std::endl; //TODO delete
   switch(event->keyval)
   {
     case GDK_KEY_Return:
