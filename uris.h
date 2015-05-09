@@ -22,11 +22,13 @@
 #define EQ10Q_URIS_H
 
 #define EQ_ATOM_URI "http://eq10q.sourceforge.net/atom"
-#define EQ_DSP2UI_COM EQ_ATOM_URI "#dsp2ui"
-#define EQ_SAMPLE_RATE EQ_ATOM_URI "#samplerate"
-#define EQ_FFT_DATA EQ_ATOM_URI "#fftdata"
+#define EQ_SAMPLE_RATE_KEY EQ_ATOM_URI "#sampleratekey"
+#define EQ_SAMPLE_RATE_RESPONSE EQ_ATOM_URI "#samplerate"
+#define EQ_FFT_DATA_KEY EQ_ATOM_URI "#fftdatakey"
+#define EQ_FFT_DATA_EVENT EQ_ATOM_URI "#fftdataevent"
 #define EQ_FFT_ON EQ_ATOM_URI "#ffton"
 #define EQ_FFT_OFF EQ_ATOM_URI "#fftoff"
+#define EQ_SAMPLE_RATE_REQUEST  EQ_ATOM_URI "#sampleraterequest"
 
 typedef struct
 {
@@ -36,11 +38,13 @@ typedef struct
   LV2_URID atom_Vector;
   LV2_URID atom_URID;
   LV2_URID atom_eventTransfer;
-  LV2_URID Dsp_2_Ui_COM;
-  LV2_URID atom_sample_rate;  
-  LV2_URID atom_fft_data;
+  LV2_URID atom_sample_rate_key;
+  LV2_URID atom_sample_rate_response;  
+  LV2_URID atom_fft_data_key;
+  LV2_URID atom_fft_data_event;
   LV2_URID atom_fft_on;
   LV2_URID atom_fft_off;
+  LV2_URID atom_sample_rate_request;
 } Eq10qURIs;
 
 static inline void map_eq10q_uris(LV2_URID_Map* map, Eq10qURIs* uris)
@@ -51,11 +55,13 @@ static inline void map_eq10q_uris(LV2_URID_Map* map, Eq10qURIs* uris)
   uris->atom_Vector        = map->map(map->handle, LV2_ATOM__Vector);
   uris->atom_URID          = map->map(map->handle, LV2_ATOM__URID);
   uris->atom_eventTransfer = map->map(map->handle, LV2_ATOM__eventTransfer); 
-  uris->Dsp_2_Ui_COM       = map->map(map->handle, EQ_DSP2UI_COM);
-  uris->atom_sample_rate   = map->map(map->handle, EQ_SAMPLE_RATE);
-  uris->atom_fft_data      = map->map(map->handle, EQ_FFT_DATA);
+  uris->atom_sample_rate_key =  map->map(map->handle, EQ_SAMPLE_RATE_KEY);
+  uris->atom_sample_rate_response   = map->map(map->handle, EQ_SAMPLE_RATE_RESPONSE);
+  uris->atom_fft_data_key      = map->map(map->handle, EQ_FFT_DATA_KEY);
+  uris->atom_fft_data_event      = map->map(map->handle, EQ_FFT_DATA_EVENT);
   uris->atom_fft_on        = map->map(map->handle, EQ_FFT_ON);
-  uris->atom_fft_off        = map->map(map->handle, EQ_FFT_OFF);
+  uris->atom_fft_off       = map->map(map->handle, EQ_FFT_OFF);
+  uris->atom_sample_rate_request = map->map(map->handle, EQ_SAMPLE_RATE_REQUEST);
 }
 
 #endif

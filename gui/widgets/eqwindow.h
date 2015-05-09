@@ -66,7 +66,8 @@ class EqMainWindow : public MainWidget
   public:
     EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features);
     virtual ~EqMainWindow();   
-    
+    void request_sample_rate();
+        
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
     {
@@ -79,26 +80,34 @@ class EqMainWindow : public MainWidget
           if (format == uris.atom_eventTransfer && atom->type == uris.atom_Object)
           {           
             const LV2_Atom_Object* obj = (const LV2_Atom_Object*)atom;
-            if (obj->body.otype == uris.Dsp_2_Ui_COM)
+            
+            if(obj->body.otype == uris.atom_sample_rate_response)
             {
-              const LV2_Atom* samplerate_val = NULL;        
-              const LV2_Atom* fftdata_val = NULL;      
-              const int n_props  = lv2_atom_object_get(obj, 
-                                                       uris.atom_sample_rate, &samplerate_val, 
-                                                       uris.atom_fft_data, &fftdata_val,
-                                                       NULL);
+                const LV2_Atom* samplerate_val = NULL;
+                const int n_props  = lv2_atom_object_get(obj, uris.atom_sample_rate_key, &samplerate_val, NULL);
 
-              if (n_props != 2 || 
-                  samplerate_val->type != uris.atom_Double ||
-                  fftdata_val->type != uris.atom_Vector)
+              if (n_props != 1 ||   samplerate_val->type != uris.atom_Double)
               {
-                std::cout<<"Atom Object does not have the required properties with correct types"<<std::endl;
+                std::cout<<"Atom Object does not have the required properties (sample-rate) with correct types"<<std::endl;
               }
               else
               {
                 SampleRate = ((const LV2_Atom_Double*)samplerate_val)->body;
                 m_Bode->setSampleRate(SampleRate);
-                
+              }
+            }
+            
+            else if(obj->body.otype == uris.atom_fft_data_event)
+            {
+              const LV2_Atom* fftdata_val = NULL;      
+              const int n_props  = lv2_atom_object_get(obj, uris.atom_fft_data_key, &fftdata_val, NULL);
+
+              if (n_props != 1 || fftdata_val->type != uris.atom_Vector)
+              {
+                std::cout<<"Atom Object does not have the required properties (fft-data) with correct types"<<std::endl;
+              }
+              else
+              {
                 const LV2_Atom_Vector* vec = (const LV2_Atom_Vector*)fftdata_val; 
                 if (vec->body.child_type != uris.atom_Double) 
                 {
@@ -106,7 +115,6 @@ class EqMainWindow : public MainWidget
                 }
                 else
                 {
-
                   // Number of elements = (total size - header size) / element size
                   const size_t n_elem = ((fftdata_val->size - sizeof(LV2_Atom_Vector_Body))/ sizeof(double));
       
@@ -116,15 +124,13 @@ class EqMainWindow : public MainWidget
                   if(n_elem == (FFT_N/2))
                   {
                     // Double elements immediately follow the vector body header
-                    double* fftdata = (double*)(&vec->body + 1);
-                    memcpy(m_Bode->fft_raw_data, fftdata, n_elem*sizeof(double));
-                    m_Bode->setFftData();
+                    m_Bode->setFftData((double*)(&vec->body + 1));
                   }                 
                 }
               }
             }
           }
-      }
+      }//End of Atom ports reading
       
       
       //Standard LV2 ports handling

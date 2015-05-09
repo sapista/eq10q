@@ -48,6 +48,9 @@ static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, co
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();
 
+  //Get sample rate from DSP
+  gui_data->request_sample_rate();
+  
   #ifdef TESTING_EQ10Q
   cout<<" Done"<<endl;
   #endif

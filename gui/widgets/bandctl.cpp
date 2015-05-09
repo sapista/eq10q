@@ -652,7 +652,6 @@ bool BandCtl::on_scrollwheel_event(GdkEventScroll* event)
 
 bool BandCtl::on_key_press_event(GdkEventKey* event)
 { 
-  std::cout<<"Key press event: "<<event->keyval<<std::endl; //TODO delete
   switch(event->keyval)
   {
     case GDK_KEY_Return:

@@ -47,7 +47,7 @@ bBandFocus(false),
 m_BandRedraw(false),
 m_fullRedraw(false),
 m_justRedraw(false),
-SampleRate(44.1e3),
+SampleRate(0), //Initially zero to force the freq vectors initialization 
 m_FftActive(false),
 m_minFreq(MIN_FREQ),
 m_maxFreq(MAX_FREQ),
@@ -79,8 +79,8 @@ m_bFftHold(false)
   m_Bands2Redraw = new bool[m_TotalBandsCount];
   
   //Allocate memory for FFT data
-  fft_raw_data = new double[FFT_N/2];
   xPixels_fft = new double[FFT_N/2]; 
+  xPixels_fft_bins = new double[FFT_N/2]; 
   fft_pink_noise = new double[FFT_N/2];
   fft_plot = new double[FFT_N/2];
   fft_ant_data = new double [FFT_N/2];
@@ -113,18 +113,8 @@ m_bFftHold(false)
 
 
   //Init FFT vectors
-  double fft_raw_freq;
-  for(int i = 0; i < (FFT_N/2); i++)
-  {     
-    fft_raw_freq = (SampleRate * (double)i) /  ((double)(FFT_N));
-    xPixels_fft[i] = log10(fft_raw_freq/MIN_FREQ)/log10(MAX_FREQ/MIN_FREQ);
-    fft_pink_noise[i] =  3.0*(log10(fft_raw_freq/20.0)/log10(2));
-    fft_raw_data[i] = 0.0;
-    fft_plot[i]= 0.0;
-    fft_ant_data[i] = 0.0;
-    //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<< "Pixels = "<< xPixels_fft[i] <<std::endl;
-  }
-    
+  setSampleRate(44.1e3);
+      
   //Allow this widget to get keyboard focus
   set_can_focus(true);
 }
@@ -152,9 +142,9 @@ PlotEQCurve::~PlotEQCurve()
   delete[] band_y;
   
   //Delete FFT plots
-  delete[] fft_raw_data;
   delete[] fft_pink_noise;
   delete[] xPixels_fft;
+  delete[] xPixels_fft_bins;
   delete[] fft_plot;
   delete[] fft_ant_data;
   free(fft_log_lut);
@@ -189,6 +179,13 @@ void PlotEQCurve::setCenterSpan(double center, double span)
   {   
     xPixels[i] = (double)(i)*(((double)(width - 2*CURVE_MARGIN-CURVE_TEXT_OFFSET_X))/((double)(CURVE_NUM_OF_POINTS - 1)));
     f[i] = Pixels2freq(xPixels[i]);
+  }
+  
+  //Recalc freq bins to fit fft into widget size
+  const double wrangePx = (freq2Pixels(MAX_FREQ) - freq2Pixels(MIN_FREQ));
+  for(int i = 0; i < (FFT_N/2); i++)
+  {
+    xPixels_fft_bins[i] =  round(xPixels_fft[i] * wrangePx)/(wrangePx);
   }
   
   //Clear spectrogram to fit the new zoom windows
@@ -939,9 +936,8 @@ void PlotEQCurve::setSampleRate(double samplerate)
       for(int i = 0; i < (FFT_N/2); i++)
       {     
         fft_raw_freq = (SampleRate * (double)i) /  ((double)(FFT_N));
-        xPixels_fft[i] = log10(fft_raw_freq/MIN_FREQ)/log10(MAX_FREQ/MIN_FREQ);
+        xPixels_fft[i] = log10(fft_raw_freq/MIN_FREQ)/log10(MAX_FREQ/MIN_FREQ);        
         fft_pink_noise[i] =  3.0*(log10(fft_raw_freq/20.0)/log10(2));
-        fft_raw_data[i] = 0.0;
         fft_plot[i]= 0.0;
         fft_ant_data[i] = 0.0;
         //std::cout<<"freq["<<i<<"] = "<<  fft_raw_freq[i]<< "Pixels = "<< xPixels_fft[i] <<std::endl;
@@ -953,8 +949,9 @@ void PlotEQCurve::setSampleRate(double samplerate)
   }
 }
 
-void PlotEQCurve::setFftData()
+void PlotEQCurve::setFftData(double *fft_data)
 {
+  fft_raw_data = fft_data;
   if(m_fft_surface_ptr && !m_bFftHold)
   {
     redraw_fft_widget();
@@ -1496,8 +1493,15 @@ void PlotEQCurve::redraw_fft_widget()
   float val;
    
   Cairo::RefPtr<Cairo::LinearGradient> fft_gradient_ptr = Cairo::LinearGradient::create(0, 0, 1.0, 0);    
-  for (int i = 0; i < FFT_N/2; i++)
-  {
+
+  double binMax = 1e6;
+  double binX[FFT_N/2];
+  double binY[FFT_N/2];
+  int binCount = 0; 
+  fft_plot[0] = 1e6; //I don't care about DC
+  
+  for (int i = 1; i < FFT_N/2; i++) 
+  {     
     if(m_bIsSpectrogram)
     {
       val = sqrt((float)fft_raw_data[i]);
@@ -1508,7 +1512,21 @@ void PlotEQCurve::redraw_fft_widget()
       val = sqrt((float)fft_ant_data[i]);
     }
     fft_plot[i] = m*(20.0f*fastLog10((int*)(&val), fft_log_lut) + fft_gain + fft_pink_noise[i]);
-    fft_gradient_ptr->add_color_stop_rgba (xPixels_fft[i], 0.5, -1.0*fft_plot[i] + 1.0,  1.0,  -1.0*fft_plot[i] + 1.0); 
+    
+    if(xPixels_fft_bins[i] == xPixels_fft_bins[i-1])
+    {
+      //Inside bin code
+      binMax = fft_plot[i] < binMax ? fft_plot[i] : binMax; //Yes it is reversed because binMax is really a pixel min
+    }
+    else
+    { 
+      binX[binCount] = xPixels_fft_bins[i-1];
+      binY[binCount] = binMax;
+      fft_gradient_ptr->add_color_stop_rgba (binX[binCount], 0.5, -1.0*binMax + 1.0,  1.0,  -1.0*binMax + 1.0); 
+      binCount++;
+      binMax =  fft_plot[i];
+      
+    }
   } 
   
   //Create cairo context using the buffer surface
@@ -1533,7 +1551,7 @@ void PlotEQCurve::redraw_fft_widget()
     //Draw the FFT spectrogram
     cr->save();
     cr->set_source (img_ant, 0, SPECTROGRAM_LINE_THICKNESS);
-    cr->rectangle(0, 0, m_fft_surface_ptr->get_width(), m_fft_surface_ptr->get_height() - SPECTROGRAM_LINE_THICKNESS);
+    cr->rectangle(0, SPECTROGRAM_LINE_THICKNESS, m_fft_surface_ptr->get_width(), m_fft_surface_ptr->get_height() - SPECTROGRAM_LINE_THICKNESS);
     cr->fill();
     cr->restore();
     
@@ -1554,39 +1572,41 @@ void PlotEQCurve::redraw_fft_widget()
     cr->scale(freq2Pixels(MAX_FREQ) - freq2Pixels(MIN_FREQ),  m_fft_surface_ptr->get_height());
     
     cr->move_to(0.0, 1.0);
-    double Ax, Ay, Bx, By; 
-    //Starting from i = 1 because i = 0 is DC
-    for (int i = 1; i < FFT_N/2; i++)
-    {
+            
+    //Curve smooth version 
+    double Ax, Ay, Bx, By;
+    for(int i = 1; i<binCount; i++)
+    {          
       if(i == 1)
       {
         //Limit left A = Pk-1
-        Ax = xPixels_fft[0];
-        Ay =  fft_plot[0];
+        Ax = binX[0];
+        Ay =  binY[0];
       }
       else
       {
         //Calc ctl point A       
-        Ax = xPixels_fft[i - 1] + SPLINE_TENSION * ( xPixels_fft[i] -  xPixels_fft[i - 2] );
-        Ay = fft_plot[i - 1] + SPLINE_TENSION * ( fft_plot[i] -  fft_plot[i - 2] );
+        Ax = binX[i - 1] + SPLINE_TENSION * ( binX[i] -  binX[i - 2] );
+        Ay = binY[i - 1] + SPLINE_TENSION * ( binY[i] -  binY[i - 2] );          
       }
       
-      if(i == (FFT_N/2 - 1))
+      if(i == (binCount - 1))
       {
         //Limit rigth A = Pk
-        Bx = xPixels_fft[i];
-        By = fft_plot[i];
+        Bx = binX[i];
+        By = binY[i];
       }
       else
       {
         //Calc ctl point A
-        Bx = xPixels_fft[i] - SPLINE_TENSION * ( xPixels_fft[i + 1] -  xPixels_fft[i - 1] );
-        By = fft_plot[i] - SPLINE_TENSION * ( fft_plot[i + 1] -  fft_plot[i - 1] );
+        Bx = binX[i] - SPLINE_TENSION * ( binX[i + 1] -  binX[i - 1] );
+        By = binY[i] - SPLINE_TENSION * ( binY[i + 1] -  binY[i - 1] );          
       }
-      cr->curve_to(Ax, Ay, Bx, By, xPixels_fft[i], fft_plot[i]);
-    }    
+      cr->curve_to(Ax, Ay, Bx, By, binX[i], binY[i]);
+    }      
+
     cr->line_to(1.0, 1.0);
-    cr->line_to(0.0, 1.0);
+    cr->line_to(0.0, 1.0);    
     cr->set_source_rgba(0.21, 0.15, 0.78, 0.7);
     cr->fill_preserve();
     cr->set_source(fft_gradient_ptr);

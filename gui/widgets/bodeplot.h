@@ -37,8 +37,8 @@
 #define CURVE_TEXT_OFFSET_X 18
 #define CURVE_TEXT_OFFSET_Y 38
 #define ZOOM_WIDGET_BORDER_Y 22
-#define PLOT_HIGHT 250
-#define PLOT_WIDTH 300
+#define PLOT_HIGHT 300
+#define PLOT_WIDTH 400
 #define SCROLL_EVENT_INCREMENT 0.3
 #define AUTO_REFRESH_TIMEOUT_MS 20
 #define SPECTROGRAM_LINE_THICKNESS 3.0 
@@ -65,7 +65,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setBandEnable(int bd_ix, bool bIsEnabled);
     virtual void setBypass(bool bypass);
     virtual void setSampleRate(double samplerate);
-    virtual void setFftData();
+    virtual void setFftData(double *fft_data);
     virtual void setFftActive(bool active, bool isSpectrogram);
     virtual void setFftGain(double g);
     virtual void setFftRange(double r);
@@ -89,10 +89,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     //Slot prototype: void on_band_selected(int band_ix, bool enabled);
     typedef sigc::signal<void> signal_BandUnselected;
     signal_BandUnselected signal_unselected();
-    
-    //Public fft data to allow copying directly by atom
-    double *fft_raw_data;
-    
+       
   protected:    
       //Mouse grab signal handlers
       virtual bool on_button_press_event(GdkEventButton* event);
@@ -142,7 +139,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
     
     //FFT vectors
-    double *xPixels_fft;
+    double *xPixels_fft, *xPixels_fft_bins;
     double *fft_pink_noise;
     double *fft_plot;
     double *fft_ant_data;
@@ -150,6 +147,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     double fft_range;
     float *fft_log_lut;
     bool m_bIsSpectrogram, m_bFftHold;
+    double *fft_raw_data;
     
     //Zoom widget data
     struct zoom_widget

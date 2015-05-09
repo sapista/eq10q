@@ -248,6 +248,19 @@ EqMainWindow::~EqMainWindow()
   delete[] m_BandCtlArray;
 }
 
+void EqMainWindow::request_sample_rate()
+{
+  //Request Sample rate
+  int AtomPortNumber = PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels + 1; 
+  uint8_t obj_buf[64];
+  lv2_atom_forge_set_buffer(&forge, obj_buf, sizeof(obj_buf)); 
+  LV2_Atom_Forge_Frame frame;
+  LV2_Atom* msg = (LV2_Atom*)lv2_atom_forge_object(&forge, &frame, 0, uris.atom_sample_rate_request);
+  lv2_atom_forge_pop(&forge, &frame); 
+  write_function(controller, AtomPortNumber, lv2_atom_total_size(msg), uris.atom_eventTransfer, msg);
+}
+
+
 //Timer to redraw all widgets in case of host port events
 bool EqMainWindow::on_timeout()
 {
@@ -629,7 +642,7 @@ void EqMainWindow::loadFromFile()
 }
 
 void EqMainWindow::onButtonFftRta()
-{
+{ 
   sendAtomFftOn( m_FftRtaActive.get_active() );
   m_Bode->setFftActive(m_FftRtaActive.get_active(), false);
   if(m_FftRtaActive.get_active())

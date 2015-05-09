@@ -82,9 +82,10 @@ typedef struct {
   Vu *OutputVu[NUM_CHANNELS];
 
   //FFT Analysis
-  int fft_ix; //Index to follow buffers
+  int fft_ix, fft_ix2; //Index to follow buffers
   double *fft_in, *fft_out;
-  fftw_plan fft_p;
+  double *fft_in2, *fft_out2; //Time shifted-seconf-fft-vectors
+  fftw_plan fft_p, fft_p2;
   int fft_on;
   double fft_normalization;
 } EQ;
@@ -106,6 +107,8 @@ static void cleanupEQ(LV2_Handle instance)
   
   fftw_destroy_plan(plugin->fft_p);
   fftw_free(plugin->fft_in); fftw_free(plugin->fft_out);
+  fftw_destroy_plan(plugin->fft_p2);
+  fftw_free(plugin->fft_in2); fftw_free(plugin->fft_out2);
   free(instance);
 }
 
@@ -241,12 +244,22 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   
   //Initialize FFT objects
   plugin_data->fft_ix = 0;
+  plugin_data->fft_ix2 = FFT_N/2;
   plugin_data->fft_in = (double*) fftw_malloc(sizeof(double) * FFT_N);
+  plugin_data->fft_in2 = (double*) fftw_malloc(sizeof(double) * FFT_N);
   plugin_data->fft_out = (double*) fftw_malloc(sizeof(double) * FFT_N);
+  plugin_data->fft_out2 = (double*) fftw_malloc(sizeof(double) * FFT_N);
   plugin_data->fft_p = fftw_plan_r2r_1d(FFT_N, plugin_data->fft_in, plugin_data->fft_out, FFTW_R2HC, FFTW_ESTIMATE);
+  plugin_data->fft_p2 = fftw_plan_r2r_1d(FFT_N, plugin_data->fft_in2, plugin_data->fft_out2, FFTW_R2HC, FFTW_ESTIMATE);
   plugin_data->fft_on = 0; //Initialy no GUI then no need to compute FFT
   plugin_data->fft_normalization = pow(2.0/ ((double) FFT_N), 2.0);
-  
+  for(i = 0; i<= FFT_N; i++)
+  {
+    plugin_data->fft_in[i] = 0;
+    plugin_data->fft_in2[i] = 0;
+    plugin_data->fft_out[i] = 0;
+    plugin_data->fft_out2[i] = 0; //First fft_out2 samples will not be calculated by FFT (first-time shift)
+  }
   return (LV2_Handle)plugin_data;
   
   fail:
@@ -275,8 +288,7 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   //Interpolation coefs force to recompute
   int recalcCoefs[NUM_BANDS];
   int forceRecalcCoefs = 0;
-  
-  int fft_send = 0; //If 1 LV2::Atom must send fftbuffer
+
   double fftInSample; //Sample to push throught the FFT buffer
   double  sampleL; //Current processing sample left signal
   #if NUM_CHANNELS == 2
@@ -320,13 +332,26 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
         {
           plugin_data->fft_on = 0;
           plugin_data->fft_ix = 0;
+          plugin_data->fft_ix = FFT_N/2;
         }
-        //printf("FFT ON: %d\n", plugin_data->fft_on);
+        else if(obj->body.otype == plugin_data->uris.atom_sample_rate_request)
+        {
+          //Send sample rate
+          LV2_Atom_Forge_Frame frameSR;       
+          lv2_atom_forge_frame_time(&plugin_data->forge, 0);
+          lv2_atom_forge_object( &plugin_data->forge, &frameSR, 0, plugin_data->uris.atom_sample_rate_response); 
+          lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_sample_rate_key); 
+          lv2_atom_forge_double(&plugin_data->forge, plugin_data->sampleRate); 
+          lv2_atom_forge_pop(&plugin_data->forge, &frameSR);
+                
+          // Close off sequence
+          lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
+        }
       }
       ev = lv2_atom_sequence_next(ev);
     }
   }
-    
+  
   //Compute the filter
   for (pos = 0; pos < sample_count; pos++) 
   {       
@@ -355,17 +380,18 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 
     //Process every band
     if(!iBypass)
-    {           
+    {       
+      
       //FFT of input data after input gain
       if(plugin_data->fft_on)
       {
         //Hanning Windowing
         plugin_data->fft_in[plugin_data->fft_ix] = fftInSample* 0.5 * (1.0-cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
-        
-        //Hamming Windowing
-        //plugin_data->fft_in[plugin_data->fft_ix] = fftInSample * (0.54 - 0.46*cos((2.0*PI*((double)plugin_data->fft_ix))/((double)(FFT_N-1))));
+        plugin_data->fft_in2[plugin_data->fft_ix2] = fftInSample* 0.5 * (1.0-cos((2.0*PI*((double)plugin_data->fft_ix2))/((double)(FFT_N-1))));
         
         plugin_data->fft_ix++;     
+        plugin_data->fft_ix2++;
+        
         if(plugin_data->fft_ix == FFT_N)
         {
           //FFT inout buffer full compute
@@ -385,11 +411,47 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
             {
               img = 0.0;
             }
-            plugin_data->fft_out[ffti] = plugin_data->fft_normalization*(real*real + img*img);
+            plugin_data->fft_out[ffti] = 0.5*(plugin_data->fft_normalization*(real*real + img*img) + plugin_data->fft_out2[ffti]);
           }
           
           plugin_data->fft_ix = 0;      
-          fft_send = 1;
+          
+
+          //Send FFT data vector
+          LV2_Atom_Forge_Frame frameFft;       
+          lv2_atom_forge_frame_time(&plugin_data->forge, 0);
+          lv2_atom_forge_object( &plugin_data->forge, &frameFft, 0, plugin_data->uris.atom_fft_data_event); 
+          lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_fft_data_key);
+          lv2_atom_forge_vector(&plugin_data->forge, sizeof(double), plugin_data->uris.atom_Double, (FFT_N/2), plugin_data->fft_out);
+          lv2_atom_forge_pop(&plugin_data->forge, &frameFft);
+          
+          // Close off sequence
+          lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
+        }
+        
+        if(plugin_data->fft_ix2 == FFT_N)
+        {
+          //FFT inout buffer full compute
+          fftw_execute(plugin_data->fft_p2);
+          
+          //Compute FFT Normalized Magnitude^2 
+          double real, img;
+          int ffti;
+          for(ffti = 0; ffti<= FFT_N/2; ffti++)
+          {
+            real = plugin_data->fft_out2[ffti];
+            if(ffti > 0 && ffti < (FFT_N/2))
+            {
+              img = plugin_data->fft_out2[FFT_N -ffti];
+            }
+            else
+            {
+              img = 0.0;
+            }
+            plugin_data->fft_out2[ffti] = plugin_data->fft_normalization*(real*real + img*img);
+          }
+          
+          plugin_data->fft_ix2 = 0;                
         }
       }
       
@@ -482,21 +544,6 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   *(plugin_data->fVuIn[1]) = ComputeVu(plugin_data->InputVu[1], sample_count);
   *(plugin_data->fVuOut[1]) = ComputeVu(plugin_data->OutputVu[1], sample_count);
   #endif
-  
-  //Send sample Rate and FFT data vector some day in the future...
-  LV2_Atom_Forge_Frame frame;       
-  lv2_atom_forge_frame_time(&plugin_data->forge, 0);
-  lv2_atom_forge_object( &plugin_data->forge, &frame, 0, plugin_data->uris.Dsp_2_Ui_COM); 
-  lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_sample_rate);
-  lv2_atom_forge_double(&plugin_data->forge, plugin_data->sampleRate); 
-  //Send FFT frame
-  lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_fft_data);
-  lv2_atom_forge_vector(&plugin_data->forge, sizeof(double), plugin_data->uris.atom_Double, fft_send * (FFT_N/2), plugin_data->fft_out);
-  lv2_atom_forge_pop(&plugin_data->forge, &frame);
-  
-  // Close off sequence
-  lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
-      
 }
 
 static const LV2_Descriptor eqDescriptor = {
