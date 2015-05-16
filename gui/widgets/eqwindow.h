@@ -298,17 +298,17 @@ class EqMainWindow : public MainWidget
     EqParams *m_AParams, *m_BParams, *m_CurParams;
     BandCtl **m_BandCtlArray; 
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
-    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox, m_FftCtlVBox;
-    ToggleButton m_BypassButton, m_FftRtaActive, m_FftSpecActive;
+    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox, m_FftCtlVBox, m_dBScaleBox, m_FftdBBox;
+    ToggleButton m_BypassButton, m_FftRtaActive, m_FftSpecActive, m_dB10Scale, m_dB25Scale, m_dB50Scale;
     AbButton m_AButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign, m_FftAlignInner;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign, m_FftAlignInner, m_FftAlngGain, m_FftAlngRange, m_dBScaleAlign, m_dBScaleAlignInner;
     Button m_FlatButton, m_SaveButton, m_LoadButton, m_FftHold;
     Gtk::Alignment m_MainWidgetAlign;
     PlotEQCurve *m_Bode;
     Gtk::Image *image_logo_center;
     KnobWidget2 *m_GainFaderIn, *m_GainFaderOut, *m_FftGain, *m_FftRange;
     VUWidget *m_VuMeterIn, *m_VuMeterOut;
-    SideChainBox *m_FftBox;
+    SideChainBox *m_FftBox, *m_dBScaleFrame;
     
     void loadEqParams();
     void changeAB(EqParams *toBeCurrent);
@@ -336,6 +336,10 @@ class EqMainWindow : public MainWidget
     void onBodeUnselectBand();
     void onBandCtlSelectBand(int band);
     void onBandCtlUnselectBand();
+    
+    void onDbScale10Changed();
+    void onDbScale25Changed();
+    void onDbScale50Changed();
         
   private:
     double SampleRate;

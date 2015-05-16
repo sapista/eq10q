@@ -31,7 +31,6 @@
 #define MIN_SPAN_DEC 0.5
 #define CURVE_NUM_OF_POINTS 500
 #define GRID_VERTICAL_LINES 28
-#define DB_GRID_RANGE 50.0
 #define CURVE_MARGIN 8
 #define CURVE_BORDER 1.5
 #define CURVE_TEXT_OFFSET_X 18
@@ -70,6 +69,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void setFftGain(double g);
     virtual void setFftRange(double r);
     virtual void setFftHold(bool hold);
+    virtual void setPlotdBRange(double range);
     virtual void glowBand(int band);
     virtual void unglowBands();
         
@@ -122,6 +122,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     double SampleRate;
     bool m_FftActive;
     double m_minFreq, m_maxFreq;
+    double m_dB_plot_range;
     
     //To hadle mouse mouve events
     sigc::connection m_motion_connection;

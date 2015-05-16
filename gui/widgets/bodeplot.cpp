@@ -51,6 +51,7 @@ SampleRate(0), //Initially zero to force the freq vectors initialization
 m_FftActive(false),
 m_minFreq(MIN_FREQ),
 m_maxFreq(MAX_FREQ),
+m_dB_plot_range(50.0),
 fft_gain(0.0),
 fft_range(80.0),
 m_bIsSpectrogram(false),
@@ -823,7 +824,7 @@ void PlotEQCurve::cueBandRedraws(int band)
 
 double PlotEQCurve::dB2Pixels(double db)
 {
-  return ((((double)height)/2.0) - ((((double)height) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y)/DB_GRID_RANGE)*db - CURVE_TEXT_OFFSET_Y/2 - CURVE_MARGIN);
+  return ((((double)height)/2.0) - ((((double)height) - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y)/m_dB_plot_range)*db - CURVE_TEXT_OFFSET_Y/2 - CURVE_MARGIN);
 }
 
 double PlotEQCurve::freq2Pixels(double f)
@@ -833,7 +834,7 @@ double PlotEQCurve::freq2Pixels(double f)
 
 double PlotEQCurve::Pixels2dB(double pixels)
 {
-  return DB_GRID_RANGE*((((double)height)-CURVE_TEXT_OFFSET_Y- 2*CURVE_MARGIN -2*pixels)/(2*((double)height) - 4*CURVE_MARGIN - 2*CURVE_TEXT_OFFSET_Y));
+  return m_dB_plot_range*((((double)height)-CURVE_TEXT_OFFSET_Y- 2*CURVE_MARGIN -2*pixels)/(2*((double)height) - 4*CURVE_MARGIN - 2*CURVE_TEXT_OFFSET_Y));
 }
 
 double PlotEQCurve::Pixels2freq(double pixels)
@@ -989,6 +990,14 @@ void PlotEQCurve::setFftGain(double g)
 void PlotEQCurve::setFftRange(double r)
 {
   fft_range = r;
+}
+
+void PlotEQCurve::setPlotdBRange(double range)
+{
+  m_dB_plot_range = 2.0*range;
+  
+  //Redraw all by timer
+  m_fullRedraw = true;
 }
 
 void PlotEQCurve::redraw_background_widget()
@@ -1228,8 +1237,8 @@ void PlotEQCurve::redraw_curve_widget()
         cr->move_to(0, dB2Pixels(0.0));
         for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
         {
-          ydB = band_y[i][j] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : band_y[i][j];
-          ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+          ydB = band_y[i][j] > m_dB_plot_range/2 ? m_dB_plot_range/2 : band_y[i][j];
+          ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
           cr->line_to(xPixels[j], dB2Pixels(ydB));
         }
         cr->line_to(m_curve_surface_ptr->get_width(), dB2Pixels(0.0));
@@ -1246,8 +1255,8 @@ void PlotEQCurve::redraw_curve_widget()
         cr->move_to(0, dB2Pixels(0.0));
         for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
         {
-          ydB = band_y[i][j] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : band_y[i][j];
-          ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+          ydB = band_y[i][j] > m_dB_plot_range/2 ? m_dB_plot_range/2 : band_y[i][j];
+          ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
           cr->line_to(xPixels[j], dB2Pixels(ydB));
         }
         cr->line_to(m_curve_surface_ptr->get_width(), dB2Pixels(0.0));
@@ -1264,13 +1273,13 @@ void PlotEQCurve::redraw_curve_widget()
       cr->save();
       cr->set_source_rgb(1, 1, 1);
       cr->set_line_width(1);
-      ydB = main_y[0] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : main_y[0];
-      ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+      ydB = main_y[0] > m_dB_plot_range/2 ? m_dB_plot_range/2 : main_y[0];
+      ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
       cr->move_to(xPixels[0], dB2Pixels(ydB) + 0.5);
       for (int i = 1; i < CURVE_NUM_OF_POINTS; i++)
       {
-        ydB = main_y[i] > DB_GRID_RANGE/2 ? DB_GRID_RANGE/2 : main_y[i];
-        ydB = ydB < -DB_GRID_RANGE/2 ? -DB_GRID_RANGE/2 : ydB;
+        ydB = main_y[i] > m_dB_plot_range/2 ? m_dB_plot_range/2 : main_y[i];
+        ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
         cr->line_to(xPixels[i], dB2Pixels(ydB) + 0.5);
       }
       cr->stroke();
@@ -1360,7 +1369,7 @@ void PlotEQCurve::redraw_grid_widget()
       cr->stroke();
     }
     
-    for(int i = -DB_GRID_RANGE/2; i <= DB_GRID_RANGE/2; i+=5)
+    for(int i = -m_dB_plot_range/2; i <= m_dB_plot_range/2; i+=(int)(m_dB_plot_range/10.0))
     {
       cr->move_to(0, dB2Pixels(i) + 0.5);
       cr->line_to(m_grid_surface_ptr->get_width(), dB2Pixels(i) + 0.5);
@@ -1474,7 +1483,7 @@ void PlotEQCurve::redraw_yAxis_widget()
     pangoLayout->set_font_description(font_desc);
     pangoLayout->set_alignment(Pango::ALIGN_RIGHT);
 
-    for(int i = -DB_GRID_RANGE/2; i <= DB_GRID_RANGE/2; i+=10)
+    for(int i = -m_dB_plot_range/2; i <= m_dB_plot_range/2; i+=(int)(m_dB_plot_range/10.0))
     {
       std::stringstream ss;
       ss<< std::setprecision(2) << i;

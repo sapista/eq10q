@@ -34,6 +34,9 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   :m_BypassButton("Eq On"),
   m_FftRtaActive("RTA"),
   m_FftSpecActive("Spec"),
+  m_dB10Scale("10 dB"),
+  m_dB25Scale("25 dB"),
+  m_dB50Scale("50 dB"),
   m_FlatButton("Flat"),
   m_SaveButton("Save"),
   m_LoadButton("Load"), 
@@ -105,17 +108,35 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_FftGain->set_value(0.0);
   m_FftCtlVBox.pack_start(m_FftRtaActive, Gtk::PACK_EXPAND_PADDING);
   m_FftCtlVBox.pack_start(m_FftSpecActive, Gtk::PACK_EXPAND_PADDING);
+  m_FftAlngGain.add(*m_FftGain); 
+  m_FftAlngGain.set_padding(2, 5, 8, 12);
+  m_FftCtlVBox.pack_start(m_FftAlngGain, Gtk::PACK_SHRINK);
+  m_FftAlngRange.add(*m_FftRange);
+  m_FftAlngRange.set_padding(2, 5, 8, 12);
+  m_FftCtlVBox.pack_start(m_FftAlngRange, Gtk::PACK_SHRINK);
   m_FftCtlVBox.pack_start(m_FftHold, Gtk::PACK_EXPAND_PADDING);
-  m_FftCtlVBox.pack_start(*m_FftGain, Gtk::PACK_EXPAND_PADDING);
-  m_FftCtlVBox.pack_start(*m_FftRange, Gtk::PACK_EXPAND_PADDING);
   
   m_FftAlignInner.add(m_FftCtlVBox);
-  m_FftAlignInner.set_padding(30,8, 8, 10);
+  m_FftAlignInner.set_padding(25, 8, 6, 6);
   m_FftBox = Gtk::manage(new SideChainBox("   FFT ", 10));
   m_FftBox->add(m_FftAlignInner);
   m_FftAlign.set_padding(0, 3, 0, 0);
   m_FftAlign.add(*m_FftBox);
   
+  m_dBScaleBox.pack_start(m_dB10Scale, Gtk::PACK_EXPAND_PADDING);
+  m_dBScaleBox.pack_start(m_dB25Scale, Gtk::PACK_EXPAND_PADDING);
+  m_dBScaleBox.pack_start(m_dB50Scale, Gtk::PACK_EXPAND_PADDING);
+  
+  m_dBScaleAlignInner.add(m_dBScaleBox);
+  m_dBScaleAlignInner.set_padding(25, 8, 6, 6);  
+  m_dBScaleFrame = Gtk::manage(new SideChainBox(" Range ", 10));
+  m_dBScaleFrame->add(m_dBScaleAlignInner);
+  m_dBScaleAlign.set_padding(0, 3, 0, 0);
+  m_dBScaleAlign.add(*m_dBScaleFrame);
+  
+  //dB Scale & Fft Ctl box packing
+  m_FftdBBox.pack_start(m_dBScaleAlign,Gtk::PACK_SHRINK);
+  m_FftdBBox.pack_start(m_FftAlign,Gtk::PACK_SHRINK);
   
   m_Bode = Gtk::manage(new PlotEQCurve(m_iNumOfBands));
   
@@ -136,7 +157,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //Bode plot layout
   m_PlotBox.set_spacing(0);
   m_PlotBox.pack_start(*m_Bode);
-  m_PlotBox.pack_start(m_FftAlign,Gtk::PACK_SHRINK);
+  m_PlotBox.pack_start(m_FftdBBox,Gtk::PACK_SHRINK);
 
   //Box layout
   m_ABFlatBox.set_homogeneous(false);
@@ -183,7 +204,10 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_GainFaderOut->set_tooltip_text("Adjust the output gain");
   m_LoadButton.set_tooltip_text("Load curve from file");
   m_SaveButton.set_tooltip_text("Save curve to file");
-
+  m_dB10Scale.set_tooltip_text("Change plot range to 10 dB");
+  m_dB25Scale.set_tooltip_text("Change plot range to 25 dB");
+  m_dB50Scale.set_tooltip_text("Change plot range to 50 dB");
+  
   //connect signals
   m_BypassButton.signal_clicked().connect(sigc::mem_fun(*this, &EqMainWindow::onButtonBypass));
   m_AButton.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onButtonA));
@@ -207,6 +231,13 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_FftHold.signal_release().connect( sigc::mem_fun(*this, &EqMainWindow::onHoldFft_release)); 
   m_FftGain->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftGainScale));
   m_FftRange->signal_changed().connect(sigc::mem_fun(*this, &EqMainWindow::onFftRangeScale));
+  
+  //dB Scale controlrs
+  m_Bode->setPlotdBRange(25.0);
+  m_dB25Scale.set_active(true);
+  m_dB10Scale.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onDbScale10Changed));
+  m_dB25Scale.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onDbScale25Changed));
+  m_dB50Scale.signal_clicked().connect( sigc::mem_fun(*this, &EqMainWindow::onDbScale50Changed));
   
   //Load the EQ Parameters objects, the params for A curve will be loaded by host acording previous session plugin state
   m_AParams = new EqParams(m_iNumOfBands);
@@ -693,3 +724,26 @@ void EqMainWindow::onFftRangeScale()
   m_Bode->setFftRange(m_FftRange->get_value());
 }
 
+void EqMainWindow::onDbScale10Changed()
+{
+  m_dB10Scale.set_active(true);
+  m_dB25Scale.set_active(false);
+  m_dB50Scale.set_active(false);
+  m_Bode->setPlotdBRange(10.0);
+}
+
+void EqMainWindow::onDbScale25Changed()
+{
+  m_dB10Scale.set_active(false);
+  m_dB25Scale.set_active(true);
+  m_dB50Scale.set_active(false);
+  m_Bode->setPlotdBRange(25.0);
+}
+
+void EqMainWindow::onDbScale50Changed()
+{
+  m_dB10Scale.set_active(false);
+  m_dB25Scale.set_active(false);
+  m_dB50Scale.set_active(true);
+  m_Bode->setPlotdBRange(50.0);
+}
