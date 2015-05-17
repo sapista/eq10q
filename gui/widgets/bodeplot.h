@@ -29,7 +29,7 @@
 #define MIN_FREQ 18.0 
 #define MAX_FREQ 22000.0
 #define MIN_SPAN_DEC 0.5
-#define CURVE_NUM_OF_POINTS 500
+#define CURVE_NUM_OF_POINTS 1000
 #define GRID_VERTICAL_LINES 28
 #define CURVE_MARGIN 8
 #define CURVE_BORDER 1.5
@@ -101,7 +101,8 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual void cueBandRedraws(int band);
       virtual void redraw_background_widget();
       virtual void redraw_zoom_widget();
-      virtual void redraw_curve_widget();
+      virtual void redraw_curve_widgets(int band);
+      virtual void redraw_main_curve();
       virtual void redraw_grid_widget();
       virtual void redraw_xAxis_widget();
       virtual void redraw_yAxis_widget();
@@ -166,7 +167,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     
     
     //Cairo surfaces
-    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_fft_surface_ptr, m_zoom_surface_ptr, m_curve_surface_ptr, m_grid_surface_ptr, m_xAxis_surface_ptr, m_yAxis_surface_ptr; 
+    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_fft_surface_ptr, m_zoom_surface_ptr, *m_curve_surface_ptr, m_maincurve_surface_ptr, m_grid_surface_ptr, m_xAxis_surface_ptr, m_yAxis_surface_ptr; 
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;

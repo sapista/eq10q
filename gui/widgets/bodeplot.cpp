@@ -76,8 +76,19 @@ m_bFftHold(false)
     band_y[i] = new double[CURVE_NUM_OF_POINTS];
   }
   
+  //init curves to zero state
+  for(int i = 0; i<CURVE_NUM_OF_POINTS; i++)
+  {
+    main_y[i] = 0.0;
+    for(int j = 0; j <m_TotalBandsCount; j++)
+    {
+            band_y[j][i] = 0.0;
+    }
+  }
+  
   //Allocate memory for band redraw vector
   m_Bands2Redraw = new bool[m_TotalBandsCount];
+  m_curve_surface_ptr = new  Cairo::RefPtr<Cairo::ImageSurface> [m_TotalBandsCount];
   
   //Allocate memory for FFT data
   xPixels_fft = new double[FFT_N/2]; 
@@ -148,6 +159,7 @@ PlotEQCurve::~PlotEQCurve()
   delete[] xPixels_fft_bins;
   delete[] fft_plot;
   delete[] fft_ant_data;
+  delete[] m_curve_surface_ptr;
   free(fft_log_lut);
 }
 
@@ -295,27 +307,21 @@ void PlotEQCurve::resetCurve()
 }
 
 void PlotEQCurve::ComputeFilter(int bd_ix)
-{ 
-  
+{  
   if(m_filters[bd_ix]->fType != NOT_SET)
   {
     CalcBand_DigitalFilter(bd_ix);
   }
   
-  //Reset main_y
-  for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
-  {
-    main_y[j] = 0.0;
-  }
-  
   //Compute Shape
-  for(int i = 0; i < m_TotalBandsCount; i++)
+  for(int i = 0; i < CURVE_NUM_OF_POINTS; i++)
   {
-    if(m_filters[i]->bIsOn)
+    main_y[i] = 0.0;
+    for( int j = 0; j < m_TotalBandsCount; j++)
     {
-      for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
+      if(m_filters[j]->bIsOn)
       {
-	main_y[j] = main_y[j] + band_y[i][j];
+        main_y[i] += band_y[j][i];
       }
     }
   }
@@ -349,24 +355,6 @@ void  PlotEQCurve::setBandType(int bd_ix, int newType)
 void  PlotEQCurve::setBandEnable(int bd_ix, bool bIsEnabled)
 {
   m_filters[bd_ix]->bIsOn = bIsEnabled;
-  
-  //Restem a la main curve la corba de la banda que es desactiva
-  if (!bIsEnabled)
-  {
-    for(int i = 0; i<CURVE_NUM_OF_POINTS; i++)
-    {
-      main_y[i] = main_y[i] - band_y[bd_ix][i];
-    }
-  }
-  
-  //Restaura la main curve
-  else 
-  {
-    for(int i = 0; i<CURVE_NUM_OF_POINTS; i++)
-    {
-      main_y[i] = main_y[i] + band_y[bd_ix][i];
-    }
-  }
   cueBandRedraws(bd_ix);
 }
     
@@ -675,9 +663,10 @@ bool PlotEQCurve::on_timeout_redraw()
       {
         m_Bands2Redraw[i] = false;
         ComputeFilter(i);
+        redraw_curve_widgets(i);
       }
     }
-    redraw_curve_widget();
+    redraw_main_curve();
     m_BandRedraw = false;
     bRedraw = true;
   }
@@ -710,8 +699,8 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     width = allocation.get_width();
     height = allocation.get_height();
   
-    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_curve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr))
-    {
+    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_maincurve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr))
+    {      
       m_background_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height);
       m_fft_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
       m_zoom_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, CURVE_TEXT_OFFSET_Y - ZOOM_WIDGET_BORDER_Y);
@@ -719,7 +708,11 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       //Set initial x1 and x2
       redraw_zoom_widget();
         
-      m_curve_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
+      m_maincurve_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
+      for(int i = 0; i < m_TotalBandsCount; i++)
+      {
+        m_curve_surface_ptr[i] = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
+      }
       m_grid_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
       m_xAxis_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, CURVE_TEXT_OFFSET_Y);    
       m_yAxis_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, CURVE_TEXT_OFFSET_X, height - CURVE_TEXT_OFFSET_Y);
@@ -783,11 +776,11 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       cr->restore();
     }
 
-    //Draw the curve for each band
-    if(m_curve_surface_ptr)
+    //Draw the curve
+    if(m_maincurve_surface_ptr)
     {     
       cr->save();          
-      cr->set_source(m_curve_surface_ptr, CURVE_MARGIN + CURVE_TEXT_OFFSET_X, CURVE_MARGIN);
+      cr->set_source(m_maincurve_surface_ptr, CURVE_MARGIN + CURVE_TEXT_OFFSET_X, CURVE_MARGIN);
       cr->paint();
       cr->restore();
     }
@@ -930,7 +923,7 @@ void PlotEQCurve::setSampleRate(double samplerate)
   {
     SampleRate = samplerate;
     
-    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_curve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr))
+    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_maincurve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr))
     {
       //Init FFT vectors using real sampleRate
       double fft_raw_freq;
@@ -1212,12 +1205,48 @@ void PlotEQCurve::redraw_zoom_widget()
   }
 }
 
-void PlotEQCurve::redraw_curve_widget()
-{
-  if(m_curve_surface_ptr)
+void PlotEQCurve::redraw_curve_widgets(int band)
+{ 
+  if(m_curve_surface_ptr[band])
   {
     //Create cairo context using the buffer surface
-    Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_curve_surface_ptr);
+    Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_curve_surface_ptr[band]);
+    
+    //Clear current context  
+    cr->save();
+    cr->set_operator(Cairo::OPERATOR_CLEAR);
+    cr->paint();
+    cr->restore();
+  
+    //Draw curve area in band color
+    cr->save();
+    if(m_filters[band]->bIsOn and !m_Bypass) //If band is enabled and not bypass
+    {
+      Gdk::Color color(bandColorLUT[band]);
+      cr->set_source_rgba(color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.3);
+    }
+    else //band is disabled
+    {
+      cr->set_source_rgba(1, 1, 1, 0.3);
+    }
+    cr->move_to(0, dB2Pixels(0.0));
+    for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
+    {
+      cr->line_to(xPixels[j], dB2Pixels(band_y[band][j]));
+    }
+    cr->line_to(m_curve_surface_ptr[band]->get_width(), dB2Pixels(0.0));
+    cr->line_to( 0, dB2Pixels(0.0));
+    cr->fill();
+    cr->restore();
+  }
+}
+
+void PlotEQCurve::redraw_main_curve()
+{
+ if(m_maincurve_surface_ptr)
+  {
+    //Create cairo context using the buffer surface
+    Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_maincurve_surface_ptr);
     
     //Clear current context  
     cr->save();
@@ -1225,46 +1254,16 @@ void PlotEQCurve::redraw_curve_widget()
     cr->paint();
     cr->restore();
 
-    double ydB;   
     for(int i = 0; i < m_TotalBandsCount; i++) //for each band
     {
-      if(m_filters[i]->bIsOn and !m_Bypass) //If band is enabled and not bypass
-      {
-        //Draw curve area in band color
-        cr->save();
-        Gdk::Color color(bandColorLUT[i]);
-        cr->set_source_rgba(color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.3);
-        cr->move_to(0, dB2Pixels(0.0));
-        for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
-        {
-          ydB = band_y[i][j] > m_dB_plot_range/2 ? m_dB_plot_range/2 : band_y[i][j];
-          ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
-          cr->line_to(xPixels[j], dB2Pixels(ydB));
-        }
-        cr->line_to(m_curve_surface_ptr->get_width(), dB2Pixels(0.0));
-        cr->line_to( 0, dB2Pixels(0.0));
-        cr->fill();
+      //Draw the curve color area for each band
+      if(m_curve_surface_ptr[i])
+      {     
+        cr->save();          
+        cr->set_source(m_curve_surface_ptr[i], 0, 0);
+        cr->paint();
         cr->restore();
       }
-      
-      else //band is disabled
-      {
-        //Draw curve in grey color
-        cr->save();
-        cr->set_source_rgba(1, 1, 1, 0.3);
-        cr->move_to(0, dB2Pixels(0.0));
-        for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
-        {
-          ydB = band_y[i][j] > m_dB_plot_range/2 ? m_dB_plot_range/2 : band_y[i][j];
-          ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
-          cr->line_to(xPixels[j], dB2Pixels(ydB));
-        }
-        cr->line_to(m_curve_surface_ptr->get_width(), dB2Pixels(0.0));
-        cr->line_to(0, dB2Pixels(0.0));
-        cr->fill();
-        cr->restore();
-      }
-    
     }
     
     if (!m_Bypass)
@@ -1273,14 +1272,10 @@ void PlotEQCurve::redraw_curve_widget()
       cr->save();
       cr->set_source_rgb(1, 1, 1);
       cr->set_line_width(1);
-      ydB = main_y[0] > m_dB_plot_range/2 ? m_dB_plot_range/2 : main_y[0];
-      ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
-      cr->move_to(xPixels[0], dB2Pixels(ydB) + 0.5);
+      cr->move_to(xPixels[0], dB2Pixels(main_y[0]) + 0.5);
       for (int i = 1; i < CURVE_NUM_OF_POINTS; i++)
       {
-        ydB = main_y[i] > m_dB_plot_range/2 ? m_dB_plot_range/2 : main_y[i];
-        ydB = ydB < -m_dB_plot_range/2 ? -m_dB_plot_range/2 : ydB;
-        cr->line_to(xPixels[i], dB2Pixels(ydB) + 0.5);
+        cr->line_to(xPixels[i], dB2Pixels(main_y[i]) + 0.5);
       }
       cr->stroke();
       cr->restore();
@@ -1345,6 +1340,7 @@ void PlotEQCurve::redraw_curve_widget()
     }// end Bypass check
   }
 }
+
 
 void PlotEQCurve::redraw_grid_widget()
 {

@@ -95,6 +95,7 @@ m_bGlowBand(false)
   itm_notch = new Gtk::ImageMenuItem(*icon_notch,"Notch"); 
   
   //Allow this widget to get keyboard focus
+  set_flags(Gtk::CAN_FOCUS);
   set_can_focus(true);
   
   itm_lpf->set_always_show_image(true);
@@ -125,7 +126,7 @@ m_bGlowBand(false)
   show();
   
   //Connect mouse signals
-  add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK | Gdk::LEAVE_NOTIFY_MASK);
+  add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK | Gdk::LEAVE_NOTIFY_MASK | Gdk::KEY_PRESS_MASK);
   signal_button_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_button_press_event),true);
   signal_button_release_event().connect(sigc::mem_fun(*this, &BandCtl::on_button_release_event),true);
   signal_scroll_event().connect(sigc::mem_fun(*this, &BandCtl::on_scrollwheel_event),true);
@@ -451,21 +452,21 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
       {
         m_GainBtn.ss.str(""); //Clear stringstream
         m_GainBtn.ss<<std::setprecision(2)<< std::fixed << m_GainBtn.value;
-        //grab_focus();
+        grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
       else if(m_FreqBtn.text)
       {
         m_FreqBtn.ss.str(""); //Clear stringstream
         m_FreqBtn.ss<<std::setprecision(2)<< std::fixed <<m_FreqBtn.value;
-        //grab_focus();
+        grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
       else if(m_QBtn.text)
       {
         m_QBtn.ss.str(""); //Clear stringstream
         m_QBtn.ss<<std::setprecision(2)<< std::fixed <<m_QBtn.value;
-        //grab_focus();
+        grab_focus();
         keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
       }
       

@@ -47,14 +47,20 @@ class VUWidget : public Gtk::DrawingArea
 protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
+  virtual bool on_timeout_redraw();
   void clearPeak(int uChannel);
-  void redraw();
   
   //Mouse grab signal handlers
   virtual bool on_button_press_event(GdkEventButton* event);
   virtual bool on_button_release_event(GdkEventButton* event);
   virtual bool on_scrollwheel_event(GdkEventScroll* event);
   virtual bool on_mouse_motion_event(GdkEventMotion* event);
+  
+  //Surface redraws
+  virtual void redraw_background();
+  virtual void redraw_foreground();
+  virtual void redraw_faderwidget();
+  virtual void redraw_vuwidget();
   
   int m_iChannels;
   float m_fMin; //Min representable value in dB
@@ -63,6 +69,7 @@ protected:
   bool bMotionIsConnected;
   float* m_fValues;
   float* m_fPeaks;
+  int* m_iBuffCnt;
   
   float m_ThFaderValue;
   int m_iThFaderPositon;
@@ -76,11 +83,15 @@ private:
     int height;
     std::string m_Title; 
     sigc::connection m_motion_connection;
+    bool m_redraw_fader, m_redraw_Vu;
     
     //Fader change signal
     signal_FaderChanged m_FaderChangedSignal;
     
     //dB to pixels convertion function
     double dB2Pixels(double dB_in);
+    
+    //Cairo surfaces
+    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_foreground_surface_ptr, m_fader_surface_ptr, m_vu_surface_ptr;
 };
 #endif
