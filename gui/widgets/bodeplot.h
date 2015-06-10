@@ -54,7 +54,7 @@ typedef struct
 class PlotEQCurve : public Gtk::DrawingArea
 {
   public:
-    PlotEQCurve(int iNumOfBands);
+    PlotEQCurve(int iNumOfBands, int channels);
     virtual ~PlotEQCurve();
     void resetCurve();
     virtual void setBandGain(int bd_ix, float newGain);
@@ -73,6 +73,9 @@ class PlotEQCurve : public Gtk::DrawingArea
     virtual void glowBand(int band);
     virtual void unglowBands();
         
+    enum MSState { ML, DUAL, SR, MONO};
+    void setStereoState(int band, MSState state);
+    
     //signal accessor:
     //Slot prototype: void on_band_changed(int band_ix, float Gain, float Freq, float Q);
     typedef sigc::signal<void, int, float, float, float> signal_BandChanged;
@@ -114,6 +117,7 @@ class PlotEQCurve : public Gtk::DrawingArea
   private:
     int width, height; 
     int m_TotalBandsCount;
+    int m_NumChannels;
     bool m_Bypass;
     int m_iBandSel;
     bool bMotionIsConnected;
@@ -137,8 +141,9 @@ class PlotEQCurve : public Gtk::DrawingArea
     int *xPixels; //This pointer is initialized by construcor to an array of total num of points, each item is the pixel space transaltion of corresponding freq
     
     //Curve vector for Y axes in dB units
-    double *main_y; //This pointer is initialized by construcor to an array of total num of points
+    double **main_y; //This pointer is initialized by construcor to an array of total num of points acording the format main_y[channel][num_points]
     double **band_y;  //This pointer is initialized by construcor to an array acording the format band_y[bd_ix][num_points]
+    MSState *band_state; //A vector containing the Stereo states for each band
     
     //FFT vectors
     double *xPixels_fft, *xPixels_fft_bins;

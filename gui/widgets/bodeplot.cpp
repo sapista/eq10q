@@ -37,10 +37,11 @@
 #define SPLINE_TENSION 0.2
 #define BALL_DETECTION_PIXELS 8
 
-PlotEQCurve::PlotEQCurve(int iNumOfBands)
+PlotEQCurve::PlotEQCurve(int iNumOfBands, int channels)
 :width(PLOT_WIDTH),
 height(PLOT_HIGHT),
 m_TotalBandsCount(iNumOfBands), 
+m_NumChannels(channels),
 m_Bypass(false),
 bMotionIsConnected(false),
 bBandFocus(false),
@@ -69,17 +70,34 @@ m_bFftHold(false)
   xPixels = new int[CURVE_NUM_OF_POINTS];
   
   //Allocate memory for Y axes arrays
-  main_y = new double[CURVE_NUM_OF_POINTS];
+  main_y = new double*[m_NumChannels];
+  for (int i = 0; i<m_NumChannels; i++)
+  {
+    main_y[i] = new double[CURVE_NUM_OF_POINTS];
+  }
+  
   band_y = new double*[m_TotalBandsCount];
+  band_state = new MSState[m_TotalBandsCount];
   for (int i = 0; i<m_TotalBandsCount; i++)
   {
     band_y[i] = new double[CURVE_NUM_OF_POINTS];
+    if(m_NumChannels == 2)
+    {
+      band_state[i] = DUAL;
+    }
+    else
+    {
+      band_state[i] = MONO;
+    }
   }
   
   //init curves to zero state
   for(int i = 0; i<CURVE_NUM_OF_POINTS; i++)
   {
-    main_y[i] = 0.0;
+    for(int j = 0; j <m_NumChannels; j++)
+    {
+      main_y[j][i] = 0.0;
+    }
     for(int j = 0; j <m_TotalBandsCount; j++)
     {
             band_y[j][i] = 0.0;
@@ -146,12 +164,19 @@ PlotEQCurve::~PlotEQCurve()
   delete[] xPixels;
   
   //Delete Y array pointers
+  for (int i = 0; i<m_NumChannels; i++)
+  {
+    delete[] main_y[i];
+  }
   delete[] main_y; 
+  
   for (int i = 0; i<m_TotalBandsCount; i++)
   {
-    delete band_y[i];
+    delete[] band_y[i];
   }
   delete[] band_y;
+  
+  delete[] band_state;
   
   //Delete FFT plots
   delete[] fft_pink_noise;
@@ -287,7 +312,10 @@ void PlotEQCurve::resetCurve()
 {
   for(int i = 0; i < CURVE_NUM_OF_POINTS; i++)
   {
-    main_y[i] = 0.0;
+    for(int j = 0; j < m_NumChannels; j++)
+    {
+      main_y[j][i] = 0.0;
+    }
   }
   
   for (int i = 0; i<m_TotalBandsCount; i++)
@@ -316,12 +344,34 @@ void PlotEQCurve::ComputeFilter(int bd_ix)
   //Compute Shape
   for(int i = 0; i < CURVE_NUM_OF_POINTS; i++)
   {
-    main_y[i] = 0.0;
+    for(int j = 0; j < m_NumChannels; j++)
+    {
+      main_y[j][i] = 0.0;
+    }
     for( int j = 0; j < m_TotalBandsCount; j++)
     {
       if(m_filters[j]->bIsOn)
       {
-        main_y[i] += band_y[j][i];
+        switch(band_state[j])
+        {
+          case MONO:
+            main_y[0][i] += band_y[j][i];
+            break;
+            
+          case DUAL:
+            main_y[0][i] += band_y[j][i];
+            main_y[1][i] += band_y[j][i];
+            break;
+            
+          case ML:
+            main_y[0][i] += band_y[j][i];
+            break;
+            
+          case SR:
+            main_y[1][i] += band_y[j][i];
+            break;
+            
+        }
       }
     }
   }
@@ -1270,14 +1320,26 @@ void PlotEQCurve::redraw_main_curve()
     {
       //Draw the main curve
       cr->save();
-      cr->set_source_rgb(1, 1, 1);
+      
       cr->set_line_width(1);
-      cr->move_to(xPixels[0], dB2Pixels(main_y[0]) + 0.5);
-      for (int i = 1; i < CURVE_NUM_OF_POINTS; i++)
+      for(int j = 0; j < m_NumChannels; j++)
       {
-        cr->line_to(xPixels[i], dB2Pixels(main_y[i]) + 0.5);
+        if(m_NumChannels == 1 || j == 1)
+        {
+          cr->set_source_rgb(1, 1, 1);
+        }
+        else
+        {
+          cr->set_source_rgb(0, 1, 1);
+        }
+
+        cr->move_to(xPixels[0], dB2Pixels(main_y[j][0]) + 0.5);
+        for (int i = 1; i < CURVE_NUM_OF_POINTS; i++)
+        {
+          cr->line_to(xPixels[i], dB2Pixels(main_y[j][i]) + 0.5); 
+        }
+        cr->stroke();
       }
-      cr->stroke();
       cr->restore();
       
       //Draw curve control ball
@@ -1618,4 +1680,10 @@ void PlotEQCurve::redraw_fft_widget()
     cr->fill();  
     cr->restore();
   } 
+}
+
+void PlotEQCurve::setStereoState(int band, PlotEQCurve::MSState state)
+{
+  band_state[band] = state;
+  cueBandRedraws(band);
 }

@@ -33,7 +33,7 @@
 class BandCtl : public Gtk::DrawingArea
 {
   public:
-    BandCtl(const int iBandNum,bool *bSemafor, const char* bundlepath);
+    BandCtl(const int iBandNum,bool *bSemafor, const char* bundlepath, bool isStereo = false);
     
     virtual ~BandCtl();
     float getGain();
@@ -47,6 +47,12 @@ class BandCtl : public Gtk::DrawingArea
     void setQ(float fQ);
     void setFilterType(float fType);
     void setEnabled(bool bIsEnabled);
+    
+    enum MSState { ML, DUAL, SR};
+    void setStereoMode(bool bIsMidSide);
+    void setStereoState(MSState state);
+    MSState getStereoState();
+    
     void glowBand(bool glow);
     
     //signal accessor: 
@@ -57,11 +63,15 @@ class BandCtl : public Gtk::DrawingArea
     typedef sigc::signal<void, int, int, float> signal_ctlBandChanged;
     signal_ctlBandChanged signal_changed();
     
+    typedef sigc::signal<void, int> signal_MidSideChanged;
+    signal_MidSideChanged signal_mid_side_changed();
+    
     typedef sigc::signal<void, int> signal_BandSelected;
     signal_BandSelected signal_band_selected();
     
     typedef sigc::signal<void> signal_BandUnSelected;
     signal_BandUnSelected signal_band_unselected();
+    
         
   protected:
     
@@ -83,6 +93,7 @@ class BandCtl : public Gtk::DrawingArea
     virtual bool on_key_press_event(GdkEventKey* event);
     virtual bool on_focus_out_event(GdkEventFocus* event);
     virtual void redraw();
+    virtual void redraw_MidSide_widget();
 
     //Override default signal handler:
     virtual bool on_expose_event(GdkEventExpose* event);
@@ -106,7 +117,18 @@ class BandCtl : public Gtk::DrawingArea
     };
     bool m_bBtnInitialized;
     
+    struct MidSide_Button
+    {
+      double x0, y0, x1, y1;
+      double Mx, Dx, Sx;
+      bool ML_focus, Dual_focus, SR_focus;
+      bool ML_pressed, Dual_pressed, SR_pressed;
+      bool MidSideMode;
+      MSState State;
+    };
+    
     Button m_EnableBtn, m_TypeBtn, m_GainBtn, m_FreqBtn, m_QBtn;   
+    MidSide_Button m_MidSideBtn;
     Gtk::Menu* m_TypePopUp;   
     Gtk::Image *icon_lpf, *icon_hpf, *icon_loShel, *icon_hiShel, *icon_peak, *icon_notch;
     Gtk::ImageMenuItem *itm_lpf, *itm_hpf, *itm_loShel, *itm_hiShel, *itm_peak, *itm_notch;
@@ -120,6 +142,7 @@ class BandCtl : public Gtk::DrawingArea
     Gdk::Color m_Color;
     int m_HpfLpf_slope;
     bool m_bGlowBand;
+    bool m_bIsStereoPlugin;
     
     Glib::RefPtr<Gdk::Pixbuf> m_img_ptr_lpf, m_img_ptr_hpf, m_img_ptr_loshelf, m_img_ptr_hishelf, m_img_ptr_peak, m_img_ptr_notch;
     Cairo::RefPtr<Cairo::ImageSurface> m_image_surface_ptr;    
@@ -129,10 +152,14 @@ class BandCtl : public Gtk::DrawingArea
     void drawBandButton(Button *btn, Cairo::RefPtr<Cairo::Context> cr);
     void setFilterTypeLPFHPFAcordSlope();
     
+    //Cairo surface for Mid Side button
+    Cairo::RefPtr<Cairo::ImageSurface> m_midSide_surface_ptr;
+    
     //Band change signal
     signal_ctlBandChanged m_bandChangedSignal;
     signal_BandSelected m_bandSelectedSignal;
     signal_BandUnSelected m_bandUnSelectedSignal;
+    signal_MidSideChanged m_midsideChangedSignal;
 };
 #endif
 

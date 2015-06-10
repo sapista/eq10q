@@ -264,9 +264,9 @@ doap:maintainer [
     lv2:symbol "filter1_enable";
     lv2:name "Filter 1 Enable";
     lv2:minimum 0;
-    lv2:maximum 1;
+    lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -275,9 +275,9 @@ doap:maintainer [
     lv2:symbol "filter2_enable";
     lv2:name "Filter 2 Enable";
     lv2:minimum 0;
-    lv2:maximum 1;
+    lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -286,9 +286,9 @@ doap:maintainer [
     lv2:symbol "filter3_enable";
     lv2:name "Filter 3 Enable";
     lv2:minimum 0;
-    lv2:maximum 1;
+    lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -297,9 +297,9 @@ doap:maintainer [
     lv2:symbol "filter4_enable";
     lv2:name "Filter 4 Enable";
     lv2:minimum 0;
-    lv2:maximum 1;
+    lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
 ############## VU PORTS ############################
@@ -349,4 +349,15 @@ doap:maintainer [
     lv2:index 32 ;
     lv2:symbol "control" ;
     lv2:name "Control"
+  ],
+  
+  [
+    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    lv2:index 33;
+    lv2:symbol "midsidemode";
+    lv2:name "Mid Side Mode";
+    lv2:minimum 0;
+    lv2:maximum 1;
+    lv2:default 0;
+    lv2:portProperty lv2:toggled;
   ].

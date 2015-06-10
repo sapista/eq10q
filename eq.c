@@ -40,6 +40,7 @@ This file implements functionalities for a large numbers of equalizers
 #include "dsp/vu.h"
 #include "dsp/db.h"
 #include "dsp/filter.h"
+#include "dsp/midside.h"
 
 //Data from CMake
 #define NUM_BANDS @Eq_Bands_Count@
@@ -57,12 +58,17 @@ typedef struct {
   float *fBandParam[NUM_BANDS];
   float *fBandType[NUM_BANDS];
   float *fBandEnabled[NUM_BANDS];
+  #if NUM_CHANNELS == 2
+  float *fMidSideEnable;
+  int   iMidSideMode[NUM_BANDS];
+  #endif
   float *fInput[NUM_CHANNELS];
   float *fOutput[NUM_CHANNELS];
   float *fVuIn[NUM_CHANNELS];
   float *fVuOut[NUM_CHANNELS];
   LV2_Atom_Sequence *notify_port;
   const LV2_Atom_Sequence* control_port;
+  
 
   //Features
   LV2_URID_Map *map;
@@ -76,7 +82,9 @@ typedef struct {
   double sampleRate;
         
   //Plugin DSP
-  Filter *filter[NUM_BANDS];
+  Filter *ProcFilter[NUM_BANDS][NUM_CHANNELS]; //Dummy pointers to Filter structures, used in processing loop. Can point to PortFilter or FlatFilter depending on the MidSide option
+  Filter *PortFilter[NUM_BANDS]; //Filter used for reading LV2 ports and containing the actual coeficients
+  Filter *FlatFilter; //Allways contains coeficients for a flat filter in order to be used as a bypass in MidSide processing option
   Buffers buf[NUM_BANDS][NUM_CHANNELS];
   Vu *InputVu[NUM_CHANNELS];
   Vu *OutputVu[NUM_CHANNELS];
@@ -94,9 +102,11 @@ static void cleanupEQ(LV2_Handle instance)
 {
   EQ *plugin = (EQ *)instance;
   int i;
+  
+  FilterClean(plugin->FlatFilter);
   for(i=0; i<NUM_BANDS; i++)
   {
-    FilterClean(plugin->filter[i]);
+    FilterClean(plugin->PortFilter[i]);
   }
 
   for(i=0; i<NUM_CHANNELS; i++)
@@ -193,9 +203,17 @@ static void connectPortEQ(LV2_Handle instance, uint32_t port, void *data)
       }
       
       //Connect Atom control_port input port from GUI
-      else
+      else if (port == PORT_OFFSET + 2*NUM_CHANNELS + 5*NUM_BANDS + 2*NUM_CHANNELS + 1)
       {
         plugin->control_port = (const LV2_Atom_Sequence*)data;
+      }
+      
+      //Connect the MidSide Mode port only for stereo versions
+      else if (port == PORT_OFFSET + 2*NUM_CHANNELS + 5*NUM_BANDS + 2*NUM_CHANNELS + 2)
+      {
+        #if NUM_CHANNELS == 2
+        plugin->fMidSideEnable = data;
+        #endif
       }
     break;
   }
@@ -207,13 +225,20 @@ static LV2_Handle instantiateEQ(const LV2_Descriptor *descriptor, double s_rate,
   EQ *plugin_data = (EQ *)malloc(sizeof(EQ));  
   plugin_data->sampleRate = s_rate;
   
+  plugin_data->FlatFilter = FilterInit(s_rate);
+  calcCoefs(plugin_data->FlatFilter, 0.0, 20.0, 1.0, F_PEAK, 0.0); //Create a always-flat filter in FlatFilter
+  
   for(i=0; i<NUM_BANDS; i++)
   {
-    plugin_data->filter[i] = FilterInit(s_rate);
+    plugin_data->PortFilter[i] = FilterInit(s_rate);
     for(ch=0; ch<NUM_CHANNELS; ch++)
-    {
+    { 
       flushBuffers(&plugin_data->buf[i][ch]);
+      plugin_data->ProcFilter[i][ch] = plugin_data->PortFilter[i]; //Initially all filters points to LV2 Port controlled filters
     }
+    #if NUM_CHANNELS == 2
+    plugin_data->iMidSideMode[i] = MS_DUAL_CHANNEL;
+    #endif
   }
   
 
@@ -276,6 +301,9 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   const int iBypass = *(plugin_data->fBypass) > 0.0f ? 1 : 0;  
   const float fInGain = dB2Lin(*(plugin_data->fInGain));
   const float fOutGain = dB2Lin(*(plugin_data->fOutGain));
+  #if NUM_CHANNELS == 2
+  const double dMidSideModeIdOn = (double)(*(plugin_data->fMidSideEnable));
+  #endif
   int bd, pos; //loop index
    
 
@@ -298,11 +326,11 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   //Read EQ Ports and mark to recompute if changed
   for(bd = 0; bd<NUM_BANDS; bd++)
   {
-    if(dB2Lin(*(plugin_data->fBandGain[bd])) != plugin_data->filter[bd]->gain ||
-	*plugin_data->fBandFreq[bd] != plugin_data->filter[bd]->freq ||
-	*plugin_data->fBandParam[bd] != plugin_data->filter[bd]->q ||
-	(int)(*plugin_data->fBandType[bd]) != plugin_data->filter[bd]->iType ||
-	*plugin_data->fBandEnabled[bd] != plugin_data->filter[bd]->enable)
+    if(dB2Lin(*(plugin_data->fBandGain[bd])) != plugin_data->PortFilter[bd]->gain ||
+	*plugin_data->fBandFreq[bd] != plugin_data->PortFilter[bd]->freq ||
+	*plugin_data->fBandParam[bd] != plugin_data->PortFilter[bd]->q ||
+	((int)(*plugin_data->fBandType[bd])) != plugin_data->PortFilter[bd]->iType ||
+	((float)(0x01 & ((int)(*plugin_data->fBandEnabled[bd])))) != plugin_data->PortFilter[bd]->enable)
     {
       recalcCoefs[bd] = 1;
       forceRecalcCoefs = 1;
@@ -311,6 +339,33 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
     {
       recalcCoefs[bd] = 0;
     }
+    
+    //Check mid-side ports
+    #if NUM_CHANNELS == 2
+    if((((int)(*plugin_data->fBandEnabled[bd])) >> 1) != plugin_data->iMidSideMode[bd])
+    {
+      plugin_data->iMidSideMode[bd] = ((int)(*plugin_data->fBandEnabled[bd])) >> 1;
+      
+      switch(plugin_data->iMidSideMode[bd])
+      {
+        case MS_DUAL_CHANNEL:
+          plugin_data->ProcFilter[bd][0] = plugin_data->PortFilter[bd];
+          plugin_data->ProcFilter[bd][1] = plugin_data->PortFilter[bd];
+          break;
+          
+        case MS_L_MID_MODE:
+          plugin_data->ProcFilter[bd][0] = plugin_data->PortFilter[bd];
+          plugin_data->ProcFilter[bd][1] = plugin_data->FlatFilter;
+          break;
+          
+        case MS_R_SIDE_MODE:
+          plugin_data->ProcFilter[bd][0] = plugin_data->FlatFilter;
+          plugin_data->ProcFilter[bd][1] = plugin_data->PortFilter[bd];
+          break;
+      }
+      
+    }
+    #endif
   }
   
   //Read input Atom control port (Data from GUI)
@@ -462,60 +517,88 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
 	{
 	  if(recalcCoefs[bd])
 	  {
-	    calcCoefs(plugin_data->filter[bd],
+	    calcCoefs(plugin_data->PortFilter[bd],
 		    dB2Lin(*(plugin_data->fBandGain[bd])),
 		    *plugin_data->fBandFreq[bd],
 		    *plugin_data->fBandParam[bd],
-		    (int)(*plugin_data->fBandType[bd]),
-		    *plugin_data->fBandEnabled[bd]);
+		    (int)(*plugin_data->fBandType[bd]), 
+		    ((float)(0x01 & ((int)(*plugin_data->fBandEnabled[bd])))));
 	    }
 	  }
 	}
       
       
       //EQ PROCESSOR
-	computeFilter(plugin_data->filter[0], &plugin_data->buf[0][0],&sampleL);
+        
+        //Band0
+        #if NUM_CHANNELS == 2
+        LR2MS(&sampleL, &sampleR, dMidSideModeIdOn);
+        #endif
+	computeFilter(plugin_data->ProcFilter[0][0], &plugin_data->buf[0][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[0][1], &plugin_data->buf[0][1],&sampleR);
+        #endif
 	
 	#if NUM_BANDS >= 4
-	computeFilter(plugin_data->filter[1], &plugin_data->buf[1][0],&sampleL);
-	computeFilter(plugin_data->filter[2], &plugin_data->buf[2][0],&sampleL);
-	computeFilter(plugin_data->filter[3], &plugin_data->buf[3][0],&sampleL);
+        //BAND 1
+        computeFilter(plugin_data->ProcFilter[1][0], &plugin_data->buf[1][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[1][1], &plugin_data->buf[1][1],&sampleR);
+        #endif
+        
+        //BAND 2
+        computeFilter(plugin_data->ProcFilter[2][0], &plugin_data->buf[2][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[2][1], &plugin_data->buf[2][1],&sampleR);
+        #endif
+        
+        //BAND 3
+        computeFilter(plugin_data->ProcFilter[3][0], &plugin_data->buf[3][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[3][1], &plugin_data->buf[3][1],&sampleR);
+        #endif
 	#endif
 	
 	#if NUM_BANDS >= 6
-	computeFilter(plugin_data->filter[4], &plugin_data->buf[4][0],&sampleL);
-	computeFilter(plugin_data->filter[5], &plugin_data->buf[5][0],&sampleL);
-	#endif
-	
+        //BAND 4
+        computeFilter(plugin_data->ProcFilter[4][0], &plugin_data->buf[4][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[4][1], &plugin_data->buf[4][1],&sampleR);
+        #endif
+        
+        //BAND 5
+        computeFilter(plugin_data->ProcFilter[5][0], &plugin_data->buf[5][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[5][1], &plugin_data->buf[5][1],&sampleR);
+        #endif
+        #endif
+        
 	#if NUM_BANDS ==10
-	computeFilter(plugin_data->filter[6], &plugin_data->buf[6][0],&sampleL);
-	computeFilter(plugin_data->filter[7], &plugin_data->buf[7][0],&sampleL);
-	computeFilter(plugin_data->filter[8], &plugin_data->buf[8][0],&sampleL);
-	computeFilter(plugin_data->filter[9], &plugin_data->buf[9][0],&sampleL);
+        //BAND 6
+        computeFilter(plugin_data->ProcFilter[6][0], &plugin_data->buf[6][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[6][1], &plugin_data->buf[6][1],&sampleR);
+        #endif
+        
+        //BAND 7
+        computeFilter(plugin_data->ProcFilter[7][0], &plugin_data->buf[7][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[7][1], &plugin_data->buf[7][1],&sampleR);
+        #endif
+        
+        //BAND 8
+        computeFilter(plugin_data->ProcFilter[8][0], &plugin_data->buf[8][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[8][1], &plugin_data->buf[8][1],&sampleR);
+        #endif
+        
+        //BAND 9
+        computeFilter(plugin_data->ProcFilter[9][0], &plugin_data->buf[9][0],&sampleL);
+        #if NUM_CHANNELS == 2
+        computeFilter(plugin_data->ProcFilter[9][1], &plugin_data->buf[9][1],&sampleR);
+        #endif
 	#endif
-	
-	#if NUM_CHANNELS == 2
-	  computeFilter(plugin_data->filter[0], &plugin_data->buf[0][1],&sampleR);
-	  
-	  #if NUM_BANDS >= 4
-	  computeFilter(plugin_data->filter[1], &plugin_data->buf[1][1],&sampleR);
-	  computeFilter(plugin_data->filter[2], &plugin_data->buf[2][1],&sampleR);
-	  computeFilter(plugin_data->filter[3], &plugin_data->buf[3][1],&sampleR);
-	  #endif
-	  
-	  #if NUM_BANDS >= 6
-	  computeFilter(plugin_data->filter[4], &plugin_data->buf[4][1],&sampleR);
-	  computeFilter(plugin_data->filter[5], &plugin_data->buf[5][1],&sampleR);
-	  #endif
-	  
-	  #if NUM_BANDS ==10
-	  computeFilter(plugin_data->filter[6], &plugin_data->buf[6][1],&sampleR);
-	  computeFilter(plugin_data->filter[7], &plugin_data->buf[7][1],&sampleR);
-	  computeFilter(plugin_data->filter[8], &plugin_data->buf[8][1],&sampleR);
-	  computeFilter(plugin_data->filter[9], &plugin_data->buf[9][1],&sampleR);
-	  #endif
-	
-	#endif
+
            
       //The output amplifier
       sampleL *= fOutGain; 
@@ -527,6 +610,9 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
       sampleR *= fOutGain;
       //Update VU output sample
       SetSample(plugin_data->OutputVu[1], sampleR);
+      
+      //Go back to LR signals, be aware that out gains and Vumeters Are M/S or L/R depending on MidSide selected mode
+      MS2LR(&sampleL, &sampleR, dMidSideModeIdOn);
       #endif
     }
 

@@ -232,7 +232,7 @@ class EqMainWindow : public MainWidget
 	    {
 	      ///m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands]->setFilterType(data);
 	      ///m_Bode->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, data);
-	      m_CurParams->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, (int)data);
+	      m_CurParams->setBandType((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands, ((int)data) & 0xFF);
 	      m_port_event_Curve = true; //Marck port even boolean
 	      m_port_event_Curve_Type[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 3*m_iNumOfBands] = true;
 	      #ifdef PRINT_DEBUG_INFO
@@ -245,9 +245,31 @@ class EqMainWindow : public MainWidget
 	    {
 	      ///m_BandCtlArray[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands]->setEnabled(data > 0.5);
 	      ///m_Bode->setBandEnable((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands, data > 0.5);
-	      m_CurParams->setBandEnabled((int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands, data > 0.5);
+
+              int iMidSide = (int)data >> 1;
+              const int sel_band = (int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands;
+              switch(iMidSide)
+              {
+                case 0: 
+                  m_BandCtlArray[sel_band]->setStereoState(BandCtl::DUAL);
+                  m_Bode->setStereoState(sel_band, PlotEQCurve::DUAL);
+                  break;
+                  
+                case 1:
+                  m_BandCtlArray[sel_band]->setStereoState(BandCtl::ML);
+                  m_Bode->setStereoState(sel_band, PlotEQCurve::ML);
+                  break;
+                  
+                case 2:
+                  m_BandCtlArray[sel_band]->setStereoState(BandCtl::SR);
+                  m_Bode->setStereoState(sel_band, PlotEQCurve::SR);
+                  break;
+              }
+              
+              int iEnable = (int)data & 0x01;
+	      m_CurParams->setBandEnabled(sel_band, iEnable > 0);
 	      m_port_event_Curve = true; //Marck port even boolean
-	      m_port_event_Curve_Enable[(int)port - PORT_OFFSET - 2*m_iNumOfChannels - 4*m_iNumOfBands] = true;
+	      m_port_event_Curve_Enable[sel_band] = true;
 	      #ifdef PRINT_DEBUG_INFO
 		std::cout<<"\t-- Band Enabled"<<std::endl;
 	      #endif  
@@ -270,7 +292,16 @@ class EqMainWindow : public MainWidget
 		std::cout<<"\t-- Vu output"<<std::endl;
 	      #endif  
 	    }
-	       
+	      
+	    //Connect Stereo Mode port
+            else if((int)port == (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels + 2))
+            {
+              setStereoMode( data > 0.5);
+              #ifdef PRINT_DEBUG_INFO
+                std::cout<<"\t-- Mid Side"<<std::endl;
+              #endif  
+            }
+            
 	    //No more ports here
 	    else
 	    {
@@ -298,23 +329,24 @@ class EqMainWindow : public MainWidget
     EqParams *m_AParams, *m_BParams, *m_CurParams;
     BandCtl **m_BandCtlArray; 
     Gtk::HBox m_BandBox, m_ABFlatBox, m_GainEqBox, m_PlotBox;
-    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox, m_FftCtlVBox, m_dBScaleBox, m_FftdBBox;
-    ToggleButton m_BypassButton, m_FftRtaActive, m_FftSpecActive, m_dB10Scale, m_dB25Scale, m_dB50Scale;
+    Gtk::VBox m_CurveBypassBandsBox, m_MainBox, m_InGainBox, m_OutGainBox, m_FftCtlVBox, m_dBScaleBox, m_FftdBBox, m_StereoBox;
+    ToggleButton m_BypassButton, m_FftRtaActive, m_FftSpecActive, m_dB10Scale, m_dB25Scale, m_dB50Scale, m_LRStereoMode, m_MSStereoMode;
     AbButton m_AButton;
-    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign, m_FftAlignInner, m_FftAlngGain, m_FftAlngRange, m_dBScaleAlign, m_dBScaleAlignInner;
+    Gtk::Alignment m_FlatAlign, m_ABAlign, m_ButtonAAlign, m_BypassAlign, m_LoadAlign, m_SaveAlign, m_FftAlign, m_FftAlignInner, m_FftAlngGain, m_FftAlngRange, m_dBScaleAlign, m_dBScaleAlignInner, m_StereoInnerAlng, m_StereAlng;
     Button m_FlatButton, m_SaveButton, m_LoadButton, m_FftHold;
     Gtk::Alignment m_MainWidgetAlign;
     PlotEQCurve *m_Bode;
     Gtk::Image *image_logo_center;
     KnobWidget2 *m_GainFaderIn, *m_GainFaderOut, *m_FftGain, *m_FftRange;
     VUWidget *m_VuMeterIn, *m_VuMeterOut;
-    SideChainBox *m_FftBox, *m_dBScaleFrame;
+    SideChainBox *m_FftBox, *m_dBScaleFrame, *m_MidSideBox;
     
     void loadEqParams();
     void changeAB(EqParams *toBeCurrent);
     void saveToFile();
     void loadFromFile();
     void sendAtomFftOn(bool fft_activated);
+    void setStereoMode(bool isMidSide);
     
     //Signal Handlers
     void onButtonA();
@@ -336,10 +368,15 @@ class EqMainWindow : public MainWidget
     void onBodeUnselectBand();
     void onBandCtlSelectBand(int band);
     void onBandCtlUnselectBand();
+    void onBandCtlMidSideChanged(int band);
     
     void onDbScale10Changed();
     void onDbScale25Changed();
     void onDbScale50Changed();
+    
+    void onLeftRightModeSelected();
+    void onMidSideModeSelected();
+
         
   private:
     double SampleRate;
