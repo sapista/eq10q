@@ -1684,6 +1684,9 @@ void PlotEQCurve::redraw_fft_widget()
 
 void PlotEQCurve::setStereoState(int band, PlotEQCurve::MSState state)
 {
-  band_state[band] = state;
-  cueBandRedraws(band);
+  if(m_NumChannels == 2)
+  {
+    band_state[band] = state;
+    cueBandRedraws(band);
+  }
 }

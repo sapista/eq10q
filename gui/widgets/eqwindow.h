@@ -251,8 +251,15 @@ class EqMainWindow : public MainWidget
               switch(iMidSide)
               {
                 case 0: 
-                  m_BandCtlArray[sel_band]->setStereoState(BandCtl::DUAL);
-                  m_Bode->setStereoState(sel_band, PlotEQCurve::DUAL);
+		  m_BandCtlArray[sel_band]->setStereoState(BandCtl::DUAL);
+		  if(m_iNumOfChannels == 1)
+		  {
+		    m_Bode->setStereoState(sel_band, PlotEQCurve::MONO);
+		  }
+		  else
+		  {
+		    m_Bode->setStereoState(sel_band, PlotEQCurve::DUAL);
+		  }
                   break;
                   
                 case 1:

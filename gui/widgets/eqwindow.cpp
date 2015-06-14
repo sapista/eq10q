@@ -861,16 +861,10 @@ void EqMainWindow::setStereoMode(bool isMidSide)
 
 void EqMainWindow::onLeftRightModeSelected()
 {
-  if(m_LRStereoMode.get_active())
-  {
-    setStereoMode(false);
-  }
+  setStereoMode(false);
 }
 
 void EqMainWindow::onMidSideModeSelected()
 {
-  if(m_MSStereoMode.get_active())
-  {
-    setStereoMode(true);
-  } 
+  setStereoMode(true);
 }
