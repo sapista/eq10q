@@ -29,9 +29,6 @@
 #define KNOB_ICON_FILE "/knobs/knob2_32px.png"
 #define KNOB_ICON_FILE_MINI "/knobs/knob2_25px.png"
 
-//TODO I have a segfault in ardour loading the gui
-//TODO I have a segfault everywhere existing the gui --> check distructors!
-
 //Constructor
 EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, const char *bundlePath, const LV2_Feature *const *features)
   :m_BypassButton("Eq On"),
@@ -280,6 +277,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   //Set cutom theme color:
   Gdk::Color m_WinBgColor;
   SetWidgetColors m_WidgetColors;
+  
 }
 
 EqMainWindow::~EqMainWindow()
@@ -331,7 +329,7 @@ void EqMainWindow::request_sample_rate()
 
 //Timer to redraw all widgets in case of host port events
 bool EqMainWindow::on_timeout()
-{
+{ 
   if(m_port_event_Bypass)
   {
     m_port_event_Bypass = false;
@@ -387,7 +385,7 @@ bool EqMainWindow::on_timeout()
         m_Bode->setBandType(i, m_CurParams->getBandType(i)); 
       }
     }
-  }
+  } 
   return true;
 }
 
@@ -846,7 +844,7 @@ void EqMainWindow::onDbScale50Changed()
 }
 
 void EqMainWindow::setStereoMode(bool isMidSide)
-{
+{ 
   m_MSStereoMode.set_active(isMidSide);
   m_LRStereoMode.set_active(!isMidSide);
   for(int i = 0; i < m_iNumOfBands; i++)

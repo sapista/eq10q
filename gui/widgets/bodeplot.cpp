@@ -684,7 +684,7 @@ bool PlotEQCurve::on_mouse_leave_widget(GdkEventCrossing* event)
 
 //Timer callback for auto redraw and graph math
 bool PlotEQCurve::on_timeout_redraw()
-{ 
+{  
   bool bRedraw = false;
   
   //Full redraw request
@@ -731,8 +731,7 @@ bool PlotEQCurve::on_timeout_redraw()
       Gdk::Rectangle r(0, 0, get_allocation().get_width(), get_allocation().get_height());
       win->invalidate_rect(r, false);
     }
-  }
-  
+  } 
   return true;
 }
 
@@ -740,7 +739,6 @@ bool PlotEQCurve::on_timeout_redraw()
 //Override default signal handler:
 bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
 {
- 
   Glib::RefPtr<Gdk::Window> window = get_window();
   if(window)
   {

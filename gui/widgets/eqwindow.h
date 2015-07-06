@@ -70,7 +70,7 @@ class EqMainWindow : public MainWidget
         
     // Informing GUI about changes in the control ports
     void gui_port_event(LV2UI_Handle ui, uint32_t port, uint32_t buffer_size, uint32_t format, const void * buffer)
-    {
+    {     
       //Atom event from DSP
       if((int)port == (PORT_OFFSET + 2*m_iNumOfChannels + 5*m_iNumOfBands + 2*m_iNumOfChannels))
       {

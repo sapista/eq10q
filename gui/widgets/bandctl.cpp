@@ -1001,20 +1001,20 @@ void BandCtl::redraw()
 }
 
 bool BandCtl::on_expose_event(GdkEventExpose* event)
-{
+{ 
  Glib::RefPtr<Gdk::Window> window = get_window();
   if(window)
   {
     Gtk::Allocation allocation = get_allocation();
     width = allocation.get_width();
     height = allocation.get_height();
-    
+
     if(!m_midSide_surface_ptr && m_bIsStereoPlugin)
     {  
       //The Mid Side button surface
-      m_midSide_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, (height - 4.0*OUTER_BORDER - m_EnableBtn.y1)/4.0);
+      m_midSide_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, (height - 4.0*OUTER_BORDER)/4.0);
     }
-    
+   
     if(!m_bBtnInitialized)
     {
       m_EnableBtn.focus = false;
@@ -1062,7 +1062,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
       m_QBtn.text = false;
       m_QBtn.min = PEAK_Q_MIN;
       m_QBtn.max = PEAK_Q_MAX;
-      
+  
       if(m_bIsStereoPlugin)
       {
         m_MidSideBtn.Dual_focus = false;
@@ -1083,7 +1083,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
       
       m_bBtnInitialized = true;
     }
-    
+  
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
     int radius =  (int)round(((double)height) / 20.0);
     double degrees = M_PI / 180.0;   
@@ -1121,7 +1121,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
       cr->set_source_rgba(0.0,1.0,1.0,0.5);
       cr->stroke_preserve();
     }
-    
+
     Cairo::RefPtr<Cairo::LinearGradient> bkg_gradient_ptr = Cairo::LinearGradient::create(width/2, OUTER_BORDER, width/2, height - OUTER_BORDER);   
     if(m_bBandIsEnabled)
     {
@@ -1140,7 +1140,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
     cr->set_source(bkg_gradient_ptr);                       
     cr->fill();
     cr->restore();
-    
+
     //Draw Enable LED
     cr->save();
     cr->translate(m_EnableBtn.x0 - 0.5, m_EnableBtn.y0 + 1.5);
@@ -1160,7 +1160,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
       cr->paint();
       cr->restore();
     }
-    
+  
     //Draw ComboBox Filter Type icon 
     cr->save();
     cr->set_source (m_image_surface_ptr, m_TypeBtn.x0 - 0.5, m_TypeBtn.y0 - 0.5);
@@ -1193,8 +1193,7 @@ bool BandCtl::on_expose_event(GdkEventExpose* event)
       cr->restore();
     }
 
-  }
- 
+  }  
   return true;
 }
 
