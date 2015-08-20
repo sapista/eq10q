@@ -57,8 +57,9 @@ This file implements functionalities for diferent dynamic plugins
 
 #ifdef PLUGIN_IS_COMPRESSOR
 #define PORT_DRY_WET 14
-#define PORT_OUTPUT_R 15
-#define PORT_INPUT_R 16
+#define FEEDBACK_MODE 15
+#define PORT_OUTPUT_R 16
+#define PORT_INPUT_R 17
 #else
 #define PORT_DRY_WET 13
 #define PORT_OUTPUT_R 14
@@ -83,6 +84,7 @@ typedef struct {
   float *drywet;
   #ifdef PLUGIN_IS_COMPRESSOR
   float *knee;
+  float *feedback;
   #endif
   
   //Plugin Internal data
@@ -95,6 +97,10 @@ typedef struct {
   Filter *LPF_fil, *HPF_fil;
   Buffers LPF_buf, HPF_buf;
   float *LutLog10;
+  double antSampleOut_L;
+#if NUM_CHANNELS == 2
+  double antSampleOut_R;
+#endif
 } Dynamics;
 
 static void cleanupDyn(LV2_Handle instance)
@@ -159,6 +165,9 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     case PORT_KNEE:
 	    plugin->knee = (float*)data;
 	    break;
+    case FEEDBACK_MODE:
+	    plugin->feedback = (float*)data;
+	    break;
     #endif
 	    
     #if NUM_CHANNELS == 2
@@ -184,6 +193,10 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   plugin_data->noise = 0.0001; //the noise to get the GR VU workin in GUI
   plugin_data->HPF_fil = FilterInit(s_rate);
   plugin_data->LPF_fil = FilterInit(s_rate);
+  plugin_data->antSampleOut_L = 0.0;
+#if NUM_CHANNELS == 2
+  plugin_data->antSampleOut_R = 0.0;
+#endif
   flushBuffers(&plugin_data->LPF_buf);
   flushBuffers(&plugin_data->HPF_buf);
   return (LV2_Handle)plugin_data;
@@ -216,6 +229,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float ratio =  *(plugin_data->range_ratio);
   const float makeup = dB2Lin(*(plugin_data->hold_makeup));
   const float knee = *(plugin_data->knee);
+  const double FeedBack = (double)*(plugin_data->feedback);
   #endif
   
   //Plguin data
@@ -262,10 +276,18 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
 
     //Input gain
     input_preL =  plugin_data->input[0][i] * InputGain;
+    #ifdef PLUGIN_IS_COMPRESSOR
+    dToFiltersChain = (double)input_preL * (1.0 - FeedBack) + plugin_data->antSampleOut_L*FeedBack;
+    #else
     dToFiltersChain = (double)input_preL;
+    #endif
     #if NUM_CHANNELS == 2
     input_preR = plugin_data->input[1][i] * InputGain;
-    dToFiltersChain = (double)(input_preL + input_preR)*0.5f;
+    #ifdef PLUGIN_IS_COMPRESSOR
+    dToFiltersChain = ((double)(input_preL + input_preR)*(1.0 - FeedBack) + (plugin_data->antSampleOut_L + plugin_data->antSampleOut_R)*FeedBack )*0.5;
+    #else
+    dToFiltersChain = (double)(input_preL + input_preR)*0.5;
+    #endif
     #endif
     
 
@@ -366,8 +388,10 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     //=================== END OF COMPRESSOR CODE ======================
     
     plugin_data->output[0][i] = input_filtered*(KeyListen) + input_preL*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
+    plugin_data->antSampleOut_L = (double) plugin_data->output[0][i];
     #if NUM_CHANNELS == 2
     plugin_data->output[1][i] = input_filtered*(KeyListen) + input_preR*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
+    plugin_data->antSampleOut_R = (double) plugin_data->output[1][i];
     #endif
 
   }

@@ -68,6 +68,11 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_KeyButtonAlign.add(m_KeyButton);
   m_KeyButtonAlign.set_padding(0,0, 10, 10);
   
+  m_FeedBackMode.set_label("Feedback");
+  m_FeedBackMode.set_size_request(-1,20);
+  m_FeedBackModeAlign.add(m_FeedBackMode);
+  m_FeedBackModeAlign.set_padding(0,0, 10, 10);
+  
   m_LTitle.set_use_markup(true);
   m_LTitle.set_markup( "<span font_weight=\"bold\" font=\"12px\" font_family=\"Monospace\">"  + title + "</span>");
   m_LTitle.set_size_request(-1, 25);
@@ -90,6 +95,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_SideChainBox.set_border_width(WIDGET_BORDER);
   m_SideChainBox.set_spacing(WIDGET_BORDER);
   m_SideChainBox.pack_start(m_KeyButtonAlign,Gtk::PACK_SHRINK);
+  m_SideChainBox.pack_start(m_FeedBackModeAlign,Gtk::PACK_SHRINK);
   m_SideChainBox.pack_start(m_SideChain2Box,Gtk::PACK_SHRINK);
   m_SideChainBox.show_all_children();
   m_keyPadding.add(m_SideChainBox);
@@ -157,6 +163,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_HPF->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onHPFChange));
   m_DryWet->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onDryWetChange));
   m_KeyButton.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onKeyListenChange));
+  m_FeedBackMode.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onFeedbackModeChange));
   if(m_bIsCompressor)
   {
     m_Knee->signal_changed().connect(sigc::mem_fun(*this, &DynMainWindow::onKneeChange));
@@ -289,4 +296,12 @@ void DynMainWindow::onKeyListenChange()
   float aux;
   aux = m_KeyButton.get_active() ? 1.0 : 0.0;
   write_function(controller, PORT_KEY_LISTEN, sizeof(float), 0, &aux);
+}
+
+void DynMainWindow::onFeedbackModeChange()
+{
+  //Write to LV2 port
+  float aux;
+  aux = m_FeedBackMode.get_active() ? 1.0 : 0.0;
+  write_function(controller, PORT_FEEDBACK, sizeof(float), 0, &aux);
 }
