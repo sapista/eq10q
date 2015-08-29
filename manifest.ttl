@@ -55,3 +55,11 @@
 <http://eq10q.sourceforge.net/bassup>
   a lv2:Plugin;
   rdfs:seeAlso <bassup.ttl>.
+
+<http://eq10q.sourceforge.net/matrix_lr2ms>
+  a lv2:Plugin;
+  rdfs:seeAlso <lr2ms.ttl>.
+  
+<http://eq10q.sourceforge.net/matrix_ms2lr>
+  a lv2:Plugin;
+  rdfs:seeAlso <ms2lr.ttl>.

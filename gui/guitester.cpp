@@ -96,9 +96,11 @@ HelloWorld::HelloWorld()
   m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs",@Eq_Gui_Test_Path@, features)); //TODO he canviat el constructor!
   m_GateWin =  Gtk::manage(new DynMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), "GT10Q ~ Noise Gate", true));
   m_BassUp = Gtk::manage(new BassUpMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@)));
-  m_hbox.pack_start(*m_EqWin);
-  m_hbox.pack_start(*m_GateWin);
+  m_MidSide =  Gtk::manage(new MidSideMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), true));
+  //m_hbox.pack_start(*m_EqWin);
+  //m_hbox.pack_start(*m_GateWin);
   //m_hbox.pack_start(*m_BassUp, Gtk::PACK_SHRINK);
+  m_hbox.pack_start( *m_MidSide);
   m_hbox.pack_start(m_TestScale);
   add(m_hbox);
 
@@ -122,6 +124,7 @@ HelloWorld::HelloWorld()
   m_EqWin->write_function = writeTestFunction;
   m_GateWin->write_function = writeTestFunction;
   m_BassUp->write_function = writeTestFunction;
+  m_MidSide->write_function = writeTestFunction;
   
   //Test scale
   m_TestScale.set_range(0.0 , 2.0);

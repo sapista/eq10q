@@ -19,7 +19,7 @@ include_directories(${GTKMM_INCLUDE_DIRS})
 set( Eq_Gui_Test_Path "\"${PROJECT_SOURCE_DIR}/gui\"" )
 configure_file("${PROJECT_SOURCE_DIR}/gui/guitester.cpp" "${PROJECT_SOURCE_DIR}/gui/guitester_cfg_.cpp")
 ADD_EXECUTABLE(eq10q_gui_tester  main.cpp guitester_cfg_.cpp)
-target_link_libraries( eq10q_gui_tester  eqwin dynamicwin bassupwin ${GTKMM_LIBRARIES})
+target_link_libraries( eq10q_gui_tester  eqwin dynamicwin bassupwin midsidewin ${GTKMM_LIBRARIES})
 
 #===========================BUILD EQ10Q ALL GUI FILES=============================================
 
@@ -107,8 +107,22 @@ target_link_libraries( compressor_gui  dynamicwin ${GTKMM_LIBRARIES})
 add_library(bassup_gui SHARED bassup_ui.cpp)
 target_link_libraries( bassup_gui  bassupwin ${GTKMM_LIBRARIES})
 
+#Build LR2MS UI
+set( bIsLR2MS "true")
+set( Gui_MidSide_Uri  "\"http://eq10q.sourceforge.net/matrix_lr2ms/gui\"")
+configure_file("${PROJECT_SOURCE_DIR}/gui/midside_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/matrix_lr2ms_gui.cpp")
+add_library(matrix_lr2ms_gui SHARED matrix_lr2ms_gui.cpp)
+target_link_libraries( matrix_lr2ms_gui  midsidewin ${GTKMM_LIBRARIES})
+
+#Build MS2LR UI
+set( bIsLR2MS "false")
+set( Gui_MidSide_Uri  "\"http://eq10q.sourceforge.net/matrix_ms2lr/gui\"")
+configure_file("${PROJECT_SOURCE_DIR}/gui/midside_ui.cpp" "${PROJECT_SOURCE_DIR}/gui/matrix_ms2lr_gui.cpp")
+add_library(matrix_ms2lr_gui SHARED matrix_ms2lr_gui.cpp)
+target_link_libraries( matrix_ms2lr_gui  midsidewin ${GTKMM_LIBRARIES})
+
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui bassup_gui PROPERTIES PREFIX "")
+set_target_properties(eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui bassup_gui matrix_lr2ms_gui matrix_ms2lr_gui PROPERTIES PREFIX "")
 
 ##CLEAN generated .cpp files on run 'make clean'
 SET(generatedGuiConfigFiles
@@ -122,11 +136,13 @@ SET(generatedGuiConfigFiles
       ${PROJECT_SOURCE_DIR}/gui/eq10qs_ui.cpp
       ${PROJECT_SOURCE_DIR}/gui/gate_ui.cpp
       ${PROJECT_SOURCE_DIR}/gui/compressor_ui.cpp
+      ${PROJECT_SOURCE_DIR}/gui/matrix_lr2ms_gui.cpp
+      ${PROJECT_SOURCE_DIR}/gui/matrix_ms2lr_gui.cpp
       )
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedGuiConfigFiles}")
 
 ##=================================INSTALLER===================================================================================
-INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui bassup_gui DESTINATION "${LV2_BUNDLE}/gui")
+INSTALL( TARGETS eq1qm_gui eq1qs_gui eq4qm_gui eq4qs_gui eq6qm_gui eq6qs_gui eq10qm_gui eq10qs_gui gate_gui compressor_gui bassup_gui matrix_lr2ms_gui matrix_ms2lr_gui DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/knobs" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/combopix" DESTINATION "${LV2_BUNDLE}/gui")
 INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/gui/icons" DESTINATION "${LV2_BUNDLE}/gui")

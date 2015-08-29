@@ -123,8 +123,22 @@ target_link_libraries( compressor_stereo lib_vumeter lib_filter m)
 add_library(bassup SHARED bassup.c)
 target_link_libraries( bassup lib_filter m)
 
+#Build LR2MS DSP Stereo
+set( Matrix_Is_LR2MS 1)
+set( Matrix_Uri  "\"http://eq10q.sourceforge.net/matrix_lr2ms\"")
+configure_file("${PROJECT_SOURCE_DIR}/midside_matrix.c" "${PROJECT_SOURCE_DIR}/matrix_lr2ms.c")
+add_library(matrix_lr2ms SHARED matrix_lr2ms.c)
+target_link_libraries( matrix_lr2ms lib_vumeter lib_filter m)
+
+#Build MS2LR DSP Stereo
+set( Matrix_Is_LR2MS 0)
+set( Matrix_Uri  "\"http://eq10q.sourceforge.net/matrix_ms2lr\"")
+configure_file("${PROJECT_SOURCE_DIR}/midside_matrix.c" "${PROJECT_SOURCE_DIR}/matrix_ms2lr.c")
+add_library(matrix_ms2lr SHARED matrix_ms2lr.c)
+target_link_libraries( matrix_ms2lr lib_vumeter lib_filter m)
+
 #remove the lib prefix to all generated .so files
-set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup PROPERTIES PREFIX "")
+set_target_properties(eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup matrix_lr2ms matrix_ms2lr PROPERTIES PREFIX "")
 
 #CLEAN generated .c files on run 'make clean'
 SET(generatedEqConfigFiles 
@@ -134,14 +148,15 @@ SET(generatedEqConfigFiles
       ${PROJECT_SOURCE_DIR}/eq10qm.c;${PROJECT_SOURCE_DIR}/eq10qs.c
       ${PROJECT_SOURCE_DIR}/gate_mono.c;${PROJECT_SOURCE_DIR}/compressor_mono.c
       ${PROJECT_SOURCE_DIR}/gate_stereo.c;${PROJECT_SOURCE_DIR}/compressor_stereo.c
+      ${PROJECT_SOURCE_DIR}/matrix_lr2ms.c;${PROJECT_SOURCE_DIR}/matrix_ms2lr.c
       )
 SET_DIRECTORY_PROPERTIES(PROPERTIES  ADDITIONAL_MAKE_CLEAN_FILES "${generatedEqConfigFiles}")
 
 
 ##===========================THE LV2 INSTALLER================================================
 #INSTALL( DIRECTORY "${PROJECT_SOURCE_DIR}/${LV2_BUNDLE}" DESTINATION "${LV2_BUNDLE}")
-INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" "gate_stereo.ttl" "compressor_stereo.ttl" "bassup.ttl" DESTINATION "${LV2_BUNDLE}")
-INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup DESTINATION "${LV2_BUNDLE}")
+INSTALL( FILES "manifest.ttl" "eq1qm.ttl" "eq1qs.ttl" "eq4qm.ttl" "eq4qs.ttl" "eq6qm.ttl" "eq6qs.ttl" "eq10qm.ttl" "eq10qs.ttl" "gate.ttl" "compressor.ttl" "gate_stereo.ttl" "compressor_stereo.ttl" "bassup.ttl" "lr2ms.ttl" "ms2lr.ttl" DESTINATION "${LV2_BUNDLE}")
+INSTALL( TARGETS eq1qm eq1qs eq4qm eq4qs eq6qm eq6qs eq10qm eq10qs gate compressor gate_stereo compressor_stereo bassup matrix_lr2ms matrix_ms2lr DESTINATION "${LV2_BUNDLE}")
 
 INCLUDE(CPack)
 # cpack -G TGZ
