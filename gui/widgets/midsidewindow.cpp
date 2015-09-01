@@ -37,54 +37,117 @@ MidSideMainWindow::MidSideMainWindow(const char* uri, std::string bundlePath, bo
   m_bisLR2MS(isLR2MS)
 {
   std::string sIn1, sIn2, sOut1, sOut2;
+  m_LabTitle.set_use_markup(true);
+  //Set cutom theme color:
+  Gdk::Color m_WinBgColor;
+  SetWidgetColors m_WidgetColors;
+  m_WidgetColors.setGenericWidgetColors(&m_LabTitle);
+ 
   if(m_bisLR2MS)
   {
-    sIn1 = "L";
-    sIn2 = "R";
-    sOut1 = "M";
-    sOut2 = "S";
+    sIn1 = "In Left";
+    sIn2 = "In Right";
+    sOut1 = "Out Mid";
+    sOut2 = "Out Side";
+    m_LabTitle.set_markup( "<span font_weight=\"bold\" font=\"12px\" font_family=\"Monospace\"> Matrix: Stereo to Mid/Side </span>");
   }
   else
   {
-    sIn1 = "M";
-    sIn2 = "S";
-    sOut1 = "L";
-    sOut2 = "R";
+    sIn1 = "In Mid";
+    sIn2 = "In Side";
+    sOut1 = "Out Left";
+    sOut2 = "Out Right";
+    m_LabTitle.set_markup( "<span font_weight=\"bold\" font=\"12px\" font_family=\"Monospace\"> Matrix: Mid/Side to Stereo </span>");
   }
+    
+  m_InGain1 = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Level", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_InGain2 = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Level", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_OutGain1 = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Level", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_OutGain2 = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Level", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
   
-  m_InGain1 = Gtk::manage(new KnobWidget2(-20.0, 20.0, sIn1 + " Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
-  m_InGain2 = Gtk::manage(new KnobWidget2(-20.0, 20.0, sIn2 + " Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
-  m_OutGain1 = Gtk::manage(new KnobWidget2(-20.0, 20.0, sOut1 + " Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
-  m_OutGain2 = Gtk::manage(new KnobWidget2(-20.0, 20.0, sOut2 + " Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
+  m_InSolo1.set_label("Solo");
+  m_InSolo2.set_label("Solo");
+  m_OutSolo1.set_label("Solo");
+  m_OutSolo2.set_label("Solo");
   
-  m_InSolo1.set_label(sIn1 + " solo");
-  m_InSolo2.set_label(sIn2 + " solo");
-  m_OutSolo1.set_label(sOut1 + " solo");
-  m_OutSolo2.set_label(sOut2 + " solo");
+  m_In1Frame.set_label( sIn1 );
+  m_In2Frame.set_label( sIn2 );
+  m_Out1Frame.set_label( sOut1 );
+  m_Out2Frame.set_label( sOut2 );
   
-  m_InputVu = Gtk::manage(new VUWidget(2, -48.0, 6.0, "In"));
-  m_OutputVu = Gtk::manage(new VUWidget(2, -48.0, 6.0, "Out"));
+  m_InAlng1.set_border_width(16);
+  m_InAlng2.set_border_width(16);
+  m_OutAlng1.set_border_width(16);
+  m_OutAlng2.set_border_width(16);
   
-  m_VInBox.pack_start( *m_InGain1 ,Gtk::PACK_EXPAND_PADDING);
-  m_VInBox.pack_start( m_InSolo1 );
-  m_VInBox.pack_start( *m_InGain2 ,Gtk::PACK_EXPAND_PADDING);
-  m_VInBox.pack_start( m_InSolo2 );
+  m_InSoloAlng1.set_padding(20, 0, 0, 0);
+  m_InSoloAlng2.set_padding(20, 0, 0, 0);
+  m_OutSoloAlng1.set_padding(20, 0, 0, 0);
+  m_OutSoloAlng2.set_padding(20, 0, 0, 0);
   
-  m_VOutBox.pack_start( *m_OutGain1 ,Gtk::PACK_EXPAND_PADDING);
-  m_VOutBox.pack_start( m_OutSolo1 );
-  m_VOutBox.pack_start( *m_OutGain2 ,Gtk::PACK_EXPAND_PADDING);
-  m_VOutBox.pack_start( m_OutSolo2 );
+  m_HInBox.set_border_width(10);
+  m_HOutBox.set_border_width(10);
   
-  m_HTopBox.pack_start( *m_InputVu);
-  m_HTopBox.pack_start( m_VInBox , Gtk::PACK_EXPAND_PADDING );
-  //m_HTopBox.pack_start( *image_flowChart ); //TODO add the flow chart diagram
-  m_HTopBox.pack_start( m_VOutBox , Gtk::PACK_EXPAND_PADDING);
-  m_HTopBox.pack_start( *m_OutputVu );
+  m_In1Box.set_border_width(2);
+  m_In2Box.set_border_width(2);
+  m_Out1Box.set_border_width(2);
+  m_Out2Box.set_border_width(2);
+    
+  m_InputVu1 = Gtk::manage(new VUWidget(1, -48.0, 6.0, ""));
+  m_InputVu2 = Gtk::manage(new VUWidget(1, -48.0, 6.0, ""));
+  m_OutputVu1 = Gtk::manage(new VUWidget(1, -48.0, 6.0, ""));
+  m_OutputVu2 = Gtk::manage(new VUWidget(1, -48.0, 6.0, ""));
+  
+  set_size_request(-1, 450); 
+  
+  m_InSoloAlng1.add(m_InSolo1);
+  m_In1Box.pack_start( m_InSoloAlng1  ,Gtk::PACK_SHRINK); 
+  m_InVuAlng1.add(*m_InputVu1);
+  m_In1Box.pack_start( m_InVuAlng1);
+  m_In1Box.pack_start( *m_InGain1 ,Gtk::PACK_SHRINK);
+  m_InAlng1.add(m_In1Box);
+  m_In1Frame.add(m_InAlng1);
+  
+  m_InSoloAlng2.add(m_InSolo2);
+  m_In2Box.pack_start( m_InSoloAlng2  ,Gtk::PACK_SHRINK);
+  m_InVuAlng2.add(*m_InputVu2);
+  m_In2Box.pack_start( m_InVuAlng2);
+  m_In2Box.pack_start( *m_InGain2 ,Gtk::PACK_SHRINK);
+  m_InAlng2.add(m_In2Box);
+  m_In2Frame.add(m_InAlng2);
+  
+  m_OutSoloAlng1.add(m_OutSolo1);
+  m_Out1Box.pack_start( m_OutSoloAlng1  ,Gtk::PACK_SHRINK);
+  m_OutVuAlng1.add(*m_OutputVu1);
+  m_Out1Box.pack_start( m_OutVuAlng1);
+  m_Out1Box.pack_start( *m_OutGain1 ,Gtk::PACK_SHRINK);
+  m_OutAlng1.add(m_Out1Box);
+  m_Out1Frame.add(m_OutAlng1);
+  
+  m_OutSoloAlng2.add(m_OutSolo2);
+  m_Out2Box.pack_start( m_OutSoloAlng2  ,Gtk::PACK_SHRINK);
+  m_OutVuAlng2.add(*m_OutputVu2);
+  m_Out2Box.pack_start( m_OutVuAlng2);
+  m_Out2Box.pack_start( *m_OutGain2 ,Gtk::PACK_SHRINK);
+  m_OutAlng2.add(m_Out2Box);
+  m_Out2Frame.add(m_OutAlng2);
+    
+  m_HInBox.pack_start( m_In1Frame, Gtk::PACK_EXPAND_PADDING);
+  m_HInBox.pack_start( m_In2Frame, Gtk::PACK_EXPAND_PADDING);
+  m_HOutBox.pack_start( m_Out1Frame, Gtk::PACK_EXPAND_PADDING);
+  m_HOutBox.pack_start( m_Out2Frame, Gtk::PACK_EXPAND_PADDING);
+  
+  m_HTopBox.pack_start ( m_HInBox);
+  m_HTopBox.pack_start ( m_HOutBox);
+  
+  m_labAlng.set_padding(10,0,0,0);
+  m_labAlng.add(m_LabTitle);
+  m_VTopBox.pack_start(m_labAlng,Gtk::PACK_SHRINK);
+  m_VTopBox.pack_start(m_HTopBox);
   
   show_all();
-  add(m_HTopBox);
-  set_size_request(500, 400);
-  
+  add(m_VTopBox);
+
   //Signal handlers
   m_InGain1->signal_changed().connect(sigc::mem_fun(*this, &MidSideMainWindow::onInGain1Change));
   m_InGain2->signal_changed().connect(sigc::mem_fun(*this, &MidSideMainWindow::onInGain2Change));
@@ -102,9 +165,10 @@ MidSideMainWindow::~MidSideMainWindow()
  delete m_InGain2;
  delete m_OutGain1;
  delete m_OutGain2;
- delete m_InputVu;
- delete m_OutputVu;
- //delete image_flowChart; //TODO
+ delete m_InputVu1;
+ delete m_InputVu2;
+ delete m_OutputVu1;
+ delete m_OutputVu2;
 }
 
 void MidSideMainWindow::onInGain1Change()

@@ -25,7 +25,8 @@
 #include <string>
 
 #include <gtkmm/box.h>
-#include <gtkmm/image.h>
+#include <gtkmm/alignment.h>
+#include <gtkmm/label.h>
 
 #include <cmath>
 
@@ -36,6 +37,7 @@
 #include "vuwidget.h"
 #include "knob2.h"
 #include "toggle_button.h"
+#include "sidechainbox.h"
 
 #define PORT_AUDIO_IN_1 0
 #define PORT_AUDIO_IN_2 1
@@ -111,19 +113,19 @@ class MidSideMainWindow : public MainWidget
 		break;  
 		
 	  case PORT_VU_IN_1:
-		m_InputVu->setValue(0,data);
+		m_InputVu1->setValue(0,data);
 		break;
 		
 	  case PORT_VU_IN_2:
-		m_InputVu->setValue(1,data);
+		m_InputVu2->setValue(0,data);
 		break;
 		
 	  case PORT_VU_OUT_1:
-		m_OutputVu->setValue(0,data);
+		m_OutputVu1->setValue(0,data);
 		break;
 		
 	  case PORT_VU_OUT_2:
-		m_OutputVu->setValue(1,data);
+		m_OutputVu2->setValue(0,data);
 		break;
         }               
     }
@@ -134,11 +136,15 @@ class MidSideMainWindow : public MainWidget
   protected:
     KnobWidget2 *m_InGain1, *m_InGain2, *m_OutGain1, *m_OutGain2;
     ToggleButton m_InSolo1, m_InSolo2, m_OutSolo1, m_OutSolo2;
-    VUWidget *m_InputVu, *m_OutputVu;;
-    Gtk::HBox m_HTopBox;
-    Gtk::VBox m_VInBox, m_VOutBox;
-    Gtk::Image *image_flowChart;
-        
+    VUWidget *m_InputVu1, *m_InputVu2, *m_OutputVu1, *m_OutputVu2;
+    Gtk::HBox m_HTopBox, m_HInBox, m_HOutBox;
+    Gtk::VBox m_In1Box, m_In2Box, m_Out1Box, m_Out2Box, m_VTopBox;
+    SideChainBox m_In1Frame, m_In2Frame, m_Out1Frame, m_Out2Frame;
+    Gtk::Alignment m_InAlng1, m_InAlng2, m_OutAlng1, m_OutAlng2;
+    Gtk::Alignment m_InVuAlng1, m_InVuAlng2, m_OutVuAlng1, m_OutVuAlng2;
+    Gtk::Alignment m_InSoloAlng1, m_InSoloAlng2, m_OutSoloAlng1, m_OutSoloAlng2, m_labAlng;
+    Gtk::Label m_LabTitle;
+    
     //Signal Handlers
     void onInGain1Change();
     void onInGain2Change();

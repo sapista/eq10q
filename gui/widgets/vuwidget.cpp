@@ -176,7 +176,7 @@ bool VUWidget::on_expose_event(GdkEventExpose* event)
       cr->paint();
       cr->restore();
     }
-
+    
     //Draw the VU
     if(m_vu_surface_ptr)
     {

@@ -101,7 +101,7 @@ HelloWorld::HelloWorld()
   //m_hbox.pack_start(*m_GateWin);
   //m_hbox.pack_start(*m_BassUp, Gtk::PACK_SHRINK);
   m_hbox.pack_start( *m_MidSide);
-  m_hbox.pack_start(m_TestScale);
+  //m_hbox.pack_start(m_TestScale);
   add(m_hbox);
 
   show_all_children();

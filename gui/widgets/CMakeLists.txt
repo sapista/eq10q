@@ -17,5 +17,5 @@ target_link_libraries( dynamicwin ${GTKMM_LIBRARIES} m)
 add_library(bassupwin STATIC mainwidget.cpp knob.cpp knob2.cpp bassupwindow.cpp)
 target_link_libraries( bassupwin ${GTKMM_LIBRARIES} m)
 
-add_library(midsidewin STATIC  mainwidget.cpp vuwidget.cpp  knob.cpp knob2.cpp midsidewindow.cpp setwidgetcolors.cpp button.cpp toggle_button.cpp)
+add_library(midsidewin STATIC  mainwidget.cpp vuwidget.cpp  knob.cpp knob2.cpp midsidewindow.cpp setwidgetcolors.cpp button.cpp toggle_button.cpp sidechainbox.cpp)
 target_link_libraries( midsidewin ${GTKMM_LIBRARIES} m)

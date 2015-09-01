@@ -28,6 +28,8 @@ class SideChainBox : public Gtk::EventBox
   public:
     SideChainBox( std::string sTitle = "Side-Chain", int top_padding = 20);
     virtual ~SideChainBox();
+    
+    void set_label(const Glib::ustring& label);
   protected:
     virtual bool on_expose_event(GdkEventExpose* event);
     

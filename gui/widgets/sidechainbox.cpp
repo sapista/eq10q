@@ -34,6 +34,16 @@ SideChainBox::~SideChainBox()
 
 }
 
+void SideChainBox::set_label(const Glib::ustring& label)
+{
+  m_title = label; 
+  Glib::RefPtr<Gdk::Window> win = get_window();
+  if(win)
+  {
+    Gdk::Rectangle r(0, 0, get_allocation().get_width(), get_allocation().get_height());
+    win->invalidate_rect(r, false);
+  }
+}
 
 bool SideChainBox::on_expose_event(GdkEventExpose* event)
 {
@@ -45,7 +55,7 @@ bool SideChainBox::on_expose_event(GdkEventExpose* event)
     Gtk::Allocation allocation = get_allocation();
     const int width = allocation.get_width();
     const int height = allocation.get_height();
-    
+     
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
 
     //Paint backgroud
@@ -66,20 +76,24 @@ bool SideChainBox::on_expose_event(GdkEventExpose* event)
     cr->line_to( MARGIN + 0.5, height - 1 - MARGIN  - 0.5 + RADIUS);
     cr->arc( MARGIN  + 0.5, height - 1 - MARGIN  - 0.5, RADIUS, 0.5*M_PI, M_PI);
     cr->line_to( MARGIN + 0.5 - RADIUS,  MARGIN + m_top_padding + 0.5 );
+    
     cr->set_line_width(1);
     cr->set_source_rgba(1,1,1, 0.3);
     cr->stroke();
     cr->restore();
     
-     //Draw Text FFT
+    //Draw Text
     cr->save();
     Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
     Pango::FontDescription font_desc("sans 12px");
     pangoLayout->set_font_description(font_desc);
     pangoLayout->set_text(m_title);
 
+    int stringWidth, stringHeight;
+    pangoLayout->get_pixel_size(stringWidth, stringHeight);
+
     //and text
-    cr->move_to(width/6 + 4,  m_top_padding - 6 );
+    cr->move_to(0.5*(width - stringWidth),  m_top_padding - 0.5*stringHeight );
     cr->set_source_rgba(0.9, 0.9, 0.9, 0.7);
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke();  
