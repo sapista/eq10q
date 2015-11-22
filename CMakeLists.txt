@@ -6,7 +6,7 @@ PROJECT(eq10q)
 set(CMAKE_C_FLAGS "-Wall -O3 -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse -std=c99")
 #set(CMAKE_C_FLAGS "-Wall -O0 -g -fPIC -finline-functions -finline-functions-called-once  -msse -mfpmath=sse -std=c99")
 
-set(CMAKE_CXX_FLAGS "-Wall -fPIC")
+set(CMAKE_CXX_FLAGS "-Wall -fPIC -std=c++11")
 #set(CMAKE_CXX_FLAGS "-Wall -O0 -g -fPIC -DPIC") ##Debuging GUI
 
 ##ADD_DEFINITIONS(-Wall -O0 -g -fPIC -DPIC) ###USED FOR DEBUG
