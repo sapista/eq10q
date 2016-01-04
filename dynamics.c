@@ -57,9 +57,10 @@ This file implements functionalities for diferent dynamic plugins
 
 #ifdef PLUGIN_IS_COMPRESSOR
 #define PORT_DRY_WET 14
-#define FEEDBACK_MODE 15
-#define PORT_OUTPUT_R 16
-#define PORT_INPUT_R 17
+#define PORT_FEEDBACK 15
+#define PORT_COMP_MODE 16
+#define PORT_OUTPUT_R 17
+#define PORT_INPUT_R 18
 #else
 #define PORT_DRY_WET 13
 #define PORT_OUTPUT_R 14
@@ -85,6 +86,7 @@ typedef struct {
   #ifdef PLUGIN_IS_COMPRESSOR
   float *knee;
   float *feedback;
+  float *compressor_mode;
   #endif
   
   //Plugin Internal data
@@ -97,9 +99,9 @@ typedef struct {
   Filter *LPF_fil, *HPF_fil;
   Buffers LPF_buf, HPF_buf;
   float *LutLog10;
-  double antSampleOut_L;
+  double PGAOut_L;
 #if NUM_CHANNELS == 2
-  double antSampleOut_R;
+  double PGAOut_R;
 #endif
 } Dynamics;
 
@@ -165,8 +167,11 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     case PORT_KNEE:
 	    plugin->knee = (float*)data;
 	    break;
-    case FEEDBACK_MODE:
+    case PORT_FEEDBACK:
 	    plugin->feedback = (float*)data;
+	    break;
+    case PORT_COMP_MODE:
+	    plugin->compressor_mode = (float*)data;
 	    break;
     #endif
 	    
@@ -187,15 +192,21 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   plugin_data->LutLog10 = GenerateLog10LUT();
   plugin_data->sample_rate = s_rate;
   plugin_data->hold_count = 1000000;
-  plugin_data->g = 0.0f;
+  #ifdef PLUGIN_IS_GATE
+  plugin_data->g =  0.0f;
+  #endif
+  #ifdef PLUGIN_IS_COMPRESSOR
+  plugin_data->g =  1.0f;
+  #endif
+  
   plugin_data->InputVu[0] = VuInit(s_rate);
   plugin_data->detector_vu = 0.0f;
   plugin_data->noise = 0.0001; //the noise to get the GR VU workin in GUI
   plugin_data->HPF_fil = FilterInit(s_rate);
   plugin_data->LPF_fil = FilterInit(s_rate);
-  plugin_data->antSampleOut_L = 0.0;
+  plugin_data->PGAOut_L = 0.0;
 #if NUM_CHANNELS == 2
-  plugin_data->antSampleOut_R = 0.0;
+  plugin_data->PGAOut_R = 0.0;
 #endif
   flushBuffers(&plugin_data->LPF_buf);
   flushBuffers(&plugin_data->HPF_buf);
@@ -230,6 +241,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   const float makeup = dB2Lin(*(plugin_data->hold_makeup));
   const float knee = *(plugin_data->knee);
   const double FeedBack = (double)*(plugin_data->feedback);
+  const int bIsOptoCompressor = *(plugin_data->compressor_mode) > 0.5 ? 1 : 0; 
   #endif
   
   //Plguin data
@@ -242,18 +254,20 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   #ifdef PLUGIN_IS_GATE
   const float range_lin = pow(10, range * 0.05); //Range constant, I can not use Fast_dB2Lin10 because the Taylor aprox starts clipping at -67 dB and range is -90 dB to 0 dB
   const int hold_max = (int)round(hold * sample_rate * 0.001f);
+  const float Kac = pow((range_lin/(1.0f-range_lin))*((1.0f-0.9f)/0.9f), 1.0f/(attack*0.001f*sample_rate)); //Attack constant for S curve in gate
   #endif
   
   //Processor vars (only COMPRESSOR)
   #ifdef PLUGIN_IS_COMPRESSOR
   float x_dB, y_dB;
   float knee_range;
+  const float range_lin = pow(10, -12 * 0.05); //By various tests -12 dB is the optimal setting for the release time of a opto-compressor
+  const float ac = exp(-1.0f/(attack * sample_rate * 0.001f)); //Attack constant in compressor
+  const float Kdc = pow((range_lin/(1.0f-range_lin))*((1.0f-0.6f)/0.6f), 1.0f/(decay*0.001f*sample_rate)); //Decay constant for S curve in compressor
   #endif
   
-  //Processor vars  common
-  const float ac = exp(-6.0f/(attack * sample_rate * 0.001f)); //Attack constant
+  //Processor vars  common  
   const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
-
   float detector_vu = plugin_data->detector_vu;
   float gain_reduction = 0.0f;
   float input_filtered = 0.0f;
@@ -277,20 +291,19 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     //Input gain
     input_preL =  plugin_data->input[0][i] * InputGain;
     #ifdef PLUGIN_IS_COMPRESSOR
-    dToFiltersChain = (double)input_preL * (1.0 - FeedBack) + plugin_data->antSampleOut_L*FeedBack;
+    dToFiltersChain = (double)input_preL * (1.0 - FeedBack) + plugin_data->PGAOut_L*FeedBack;
     #else
     dToFiltersChain = (double)input_preL;
     #endif
     #if NUM_CHANNELS == 2
     input_preR = plugin_data->input[1][i] * InputGain;
     #ifdef PLUGIN_IS_COMPRESSOR
-    dToFiltersChain = ((double)(input_preL + input_preR)*(1.0 - FeedBack) + (plugin_data->antSampleOut_L + plugin_data->antSampleOut_R)*FeedBack )*0.5;
+    dToFiltersChain = ((double)(input_preL + input_preR)*(1.0 - FeedBack) + (plugin_data->PGAOut_L + plugin_data->PGAOut_R)*FeedBack )*0.5;
     #else
     dToFiltersChain = (double)(input_preL + input_preR)*0.5;
     #endif
     #endif
     
-
 
     //Apply Filters
     computeFilter(plugin_data->LPF_fil, &plugin_data->LPF_buf, &dToFiltersChain);
@@ -311,16 +324,17 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     if(hold_count < hold_max)
     {
       //Dynamics Open
-      g = 1-(1-g)*ac;
+      g = 1.0f/(1.0f + Kac*((1.0f - g)/(g + 1e-8f)));
       hold_count++;
     }
     else
     {
       //Dynamics Close
       g = g*dc;
+      g = g < range_lin ? range_lin : g; //Limit to range
     }
     DENORMAL_TO_ZERO_FLOAT(g);
-    gain_reduction = range_lin * (1 - g) + g;
+    gain_reduction = g;
     gr_meter=gain_reduction < gr_meter ? gain_reduction : gr_meter;
     #endif
     //===================== END OF GATE CODE =========================
@@ -374,7 +388,14 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     if(gain_reduction > g)
     {
       //Compressor OFF
-      gain_reduction = 1.0f - (1.0f - g)*dc;
+      if(bIsOptoCompressor)
+      {
+	gain_reduction = 1.0f/(1.0f + Kdc*((1.0f - g)/(g + 1e-8f))); //S-Curve release
+      }
+      else
+      {
+	gain_reduction = 1.0f - (1.0f - g)*dc; //Log-Curve release
+      }
     }
     else
     {
@@ -387,11 +408,11 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     #endif
     //=================== END OF COMPRESSOR CODE ======================
     
-    plugin_data->output[0][i] = input_filtered*(KeyListen) + input_preL*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
-    plugin_data->antSampleOut_L = (double) plugin_data->output[0][i];
+    plugin_data->PGAOut_L = (double)input_preL * gain_reduction;
+    plugin_data->output[0][i] = input_filtered*(KeyListen) + (input_preL*(1.0f - DryWet) +  (float)plugin_data->PGAOut_L*DryWet)*(1-KeyListen);
     #if NUM_CHANNELS == 2
-    plugin_data->output[1][i] = input_filtered*(KeyListen) + input_preR*((gain_reduction - 1.0)*DryWet + 1.0)*(1-KeyListen);
-    plugin_data->antSampleOut_R = (double) plugin_data->output[1][i];
+    plugin_data->PGAOut_R = (double)input_preR * gain_reduction;
+    plugin_data->output[1][i] = input_filtered*(KeyListen) + (input_preR*(1.0f - DryWet) +  (float)plugin_data->PGAOut_R*DryWet)*(1-KeyListen);
     #endif
 
   }

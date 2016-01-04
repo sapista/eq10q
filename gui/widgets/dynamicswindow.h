@@ -57,6 +57,7 @@
 #define PORT_KNEE_COMP_DRY_WET_GATE 13
 #define PORT_DRY_WET_COMP 14
 #define PORT_FEEDBACK 15
+#define PORT_COMP_MODE 16
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
@@ -168,6 +169,10 @@ class DynMainWindow : public MainWidget
 	  case PORT_FEEDBACK:
 	     m_FeedBackMode.set_active(data > 0.5);
 	    break;
+	    
+	  case PORT_COMP_MODE:
+	     m_OptoMode.set_active(data > 0.5);
+	    break;
 	}       
         
 	#ifdef PRINT_DEBUG_INFO	    
@@ -191,10 +196,10 @@ class DynMainWindow : public MainWidget
     KnobWidget2 *m_HPF;
     KnobWidget2 *m_LPF;
     KnobWidget2 *m_DryWet;
-    ToggleButton m_KeyButton, m_FeedBackMode;
+    ToggleButton m_KeyButton, m_FeedBackMode, m_OptoMode;
     PlotDynCurve *m_Plot;
     SideChainBox m_SCBox;
-    Gtk::Alignment m_KeyButtonAlign, m_TitleAlign, m_sidchianAlign, m_keyPadding, m_FeedBackModeAlign;
+    Gtk::Alignment m_KeyButtonAlign, m_TitleAlign, m_sidchianAlign, m_keyPadding, m_FeedBackModeAlign, m_OptoModeAlign;
     Gtk::HBox m_VuBox, m_PlotBox, m_BalBox, m_MainBox, m_BotBox, m_SideChain2Box;
     Gtk::VBox m_SideChainBox, m_TitleBox, m_DynBox, m_Main2Box, m_PlotLabelBox;  
     Gtk::Image *image_logo;
@@ -213,6 +218,7 @@ class DynMainWindow : public MainWidget
     void onDryWetChange();
     void onKeyListenChange();
     void onFeedbackModeChange();
+    void onModeCompressorChange();
     
   private:
     std::string m_pluginUri;
@@ -221,3 +227,4 @@ class DynMainWindow : public MainWidget
 };
 
 #endif
+
