@@ -94,7 +94,7 @@ HelloWorld::HelloWorld()
   const LV2_Feature* features[1] = {NULL};
 
   m_EqWin = Gtk::manage(new EqMainWindow(2, 10,"http://eq10q.sourceforge.net/eq/eq10qs",@Eq_Gui_Test_Path@, features)); //TODO he canviat el constructor!
-  m_GateWin =  Gtk::manage(new DynMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), "GT10Q ~ Noise Gate", true));
+  m_GateWin =  Gtk::manage(new DynMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), "GT10Q ~ Noise Gate", false));
   m_BassUp = Gtk::manage(new BassUpMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@)));
   m_MidSide =  Gtk::manage(new MidSideMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), true));
   //m_hbox.pack_start(*m_EqWin);

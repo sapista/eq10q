@@ -41,7 +41,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
   m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0, "In", false, true));
   m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, "GR", true));
-  m_Attack = Gtk::manage(new KnobWidget2(0.1, 500.0, "Attack", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
+  m_Attack = Gtk::manage(new KnobWidget2(0.01, 500.0, "Attack", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_HPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key HPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
   m_LPF = Gtk::manage(new KnobWidget2(20.0, 20000.0, "Key LPF", "Hz",  (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_FREQ));
@@ -57,8 +57,8 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   else
   {
     //Is Gate
-    m_Hold_Makeup = Gtk::manage(new KnobWidget2(5.0, 3000.0, "Hold", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
-    m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, -20.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
+    m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.01, 3000.0, "Hold", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
+    m_Range_Ratio = Gtk::manage(new KnobWidget2(-90.0, 0.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   
   m_Plot = Gtk::manage(new PlotDynCurve(m_bIsCompressor));

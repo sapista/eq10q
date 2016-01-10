@@ -113,7 +113,7 @@ bool KnobWidget::on_button_release_event(GdkEventButton* event)
 
 bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
-  double  increment;
+  double  increment = 0.0;
   
   switch(m_TypeKnob)
   {
@@ -164,7 +164,7 @@ bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
 
 bool KnobWidget::on_scrollwheel_event(GdkEventScroll* event)
 {
-  double  increment;
+  double  increment = 0.0;
   switch(m_TypeKnob)
   {
     case  KNOB_TYPE_FREQ:
@@ -266,7 +266,7 @@ bool KnobWidget::on_expose_event(GdkEventExpose* event)
     
 
     //Calc konb angle (pos)
-    double pos, m, n;
+    double pos = 0.0, m, n;
     switch(m_TypeKnob)
     {
       case KNOB_TYPE_FREQ:

@@ -109,6 +109,10 @@ bool KnobWidget2::on_expose_event(GdkEventExpose* event)
     {   
       ss<<std::fixed<<m_Value/1000.0<<" s";
     }
+    else if(m_TypeKnob == KNOB_TYPE_TIME && m_Value < 1.0)
+    {   
+      ss<<std::fixed<<m_Value*1000.0<<" us";
+    }
     else
     {
       ss<<std::fixed<<m_Value<<" "<<m_Units;
@@ -122,7 +126,7 @@ bool KnobWidget2::on_expose_event(GdkEventExpose* event)
     
  
     //Calc konb angle (pos)
-    double pos, m, n;
+    double pos = 0.0, m, n;
     switch(m_TypeKnob)
     {
       case KNOB_TYPE_FREQ:

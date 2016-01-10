@@ -66,9 +66,9 @@ doap:maintainer [
 	      lv2:index 4;
 	      lv2:symbol "attack";
 	      lv2:name "Attack (ms)";
-	      lv2:minimum 0.1;
+	      lv2:minimum 0.01;
 	      lv2:maximum 500;
-	      lv2:default 30;
+	      lv2:default 10;
       ],
 
 	      [
@@ -88,7 +88,7 @@ doap:maintainer [
 	      lv2:name "Decay (ms)";
 	      lv2:minimum 5;
 	      lv2:maximum 4000;
-	      lv2:default 1000;
+	      lv2:default 250;
       ],
 
 	      [

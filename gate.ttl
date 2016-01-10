@@ -66,9 +66,9 @@ doap:maintainer [
 	      lv2:index 4;
 	      lv2:symbol "attack";
 	      lv2:name "Attack (ms)";
-	      lv2:minimum 0.1;
+	      lv2:minimum 0.01;
 	      lv2:maximum 500;
-	      lv2:default 30;
+	      lv2:default 5;
       ],
 
       [
@@ -76,9 +76,9 @@ doap:maintainer [
 	      lv2:index 5;
 	      lv2:symbol "hold";
 	      lv2:name "Hold (ms)";
-	      lv2:minimum 5;
+	      lv2:minimum 0.01;
 	      lv2:maximum 3000;
-	      lv2:default 500;
+	      lv2:default 100;
       ],
 
       [
@@ -88,7 +88,7 @@ doap:maintainer [
 	      lv2:name "Decay (ms)";
 	      lv2:minimum 5;
 	      lv2:maximum 4000;
-	      lv2:default 1000;
+	      lv2:default 250;
       ],
 
 	      [
@@ -97,7 +97,7 @@ doap:maintainer [
 	      lv2:symbol "gaterange";
 	      lv2:name "Range (dB)";
 	      lv2:minimum -90;
-	      lv2:maximum -20;
+	      lv2:maximum  0;
 	      lv2:default -90;
       ],
       
