@@ -94,11 +94,11 @@ doap:maintainer [
 	      [
 	      a lv2:ControlPort, lv2:InputPort;
 	      lv2:index 7;
-	      lv2:symbol "gaterange";
-	      lv2:name "Range (dB)";
-	      lv2:minimum -90;
-	      lv2:maximum  0;
-	      lv2:default -90;
+	      lv2:symbol "compratio";
+	      lv2:name "Ratio (dB)";
+	      lv2:minimum 1;
+	      lv2:maximum 100;
+	      lv2:default 100;
       ],
       
 	      [
@@ -142,12 +142,32 @@ doap:maintainer [
 	      lv2:symbol "gateled";
 	      lv2:name "Gain Reduction";
       ],
+      	      [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 13;
+	      lv2:symbol "knee";
+	      lv2:name "Knee (dB)";
+	      lv2:minimum 0;
+	      lv2:maximum 20;
+	      lv2:default 0;
+      ],
+      
               [
               a lv2:ControlPort, lv2:InputPort;
-              lv2:index 13;
+              lv2:index 14;
               lv2:symbol "drywet";
               lv2:name "Dry/Wet";
               lv2:minimum 0;
               lv2:maximum 1;
               lv2:default 1;
+      ],
+      
+              [
+	      a lv2:ControlPort, lv2:InputPort;
+	      lv2:index 15;
+	      lv2:symbol "gaterange";
+	      lv2:name "Range (dB)";
+	      lv2:minimum -90;
+	      lv2:maximum  0;
+	      lv2:default -90;
       ].

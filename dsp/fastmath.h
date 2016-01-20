@@ -141,7 +141,7 @@ static inline float Fast_dB2Lin10(float x)
     }
     else
     {
-	return 0.0004f;
+	return 0.0004466835921509630484560471330723885330371558666229248046875f;
     }
 }
 #endif

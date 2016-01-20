@@ -212,11 +212,11 @@ bool PlotDynCurve::on_expose_event(GdkEventExpose* event)
     cr->save();
     cr->rectangle(CURVE_MARGIN + CURVE_TEXT_OFFSET + 0.5, CURVE_MARGIN + 0.5, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET, height -  2*CURVE_MARGIN - CURVE_TEXT_OFFSET);
     cr->clip();
+    cr->move_to( dB2PixelsX(DATA_RANGE_MIN) + 0.5, dB2PixelsY(DATA_RANGE_MIN) + 0.5 );
+    double knee_range, y_dB;
     
     if(m_bIsCompressor)
     {
-      cr->move_to( dB2PixelsX(DATA_RANGE_MIN) + 0.5, dB2PixelsY(DATA_RANGE_MIN) + 0.5 );
-      double knee_range, y_dB;
       for(double x_dB = DATA_RANGE_MIN; x_dB <= DATA_RANGE_MAX; x_dB += 1.0)
       {
         knee_range = 2.0*(x_dB - m_Threshold);
@@ -240,11 +240,34 @@ bool PlotDynCurve::on_expose_event(GdkEventExpose* event)
       }
     }
     else
-    {
-      cr->move_to( dB2PixelsX(DATA_RANGE_MAX) + 0.5, dB2PixelsY(DATA_RANGE_MAX) + 0.5 );
-      cr->line_to( dB2PixelsX(m_Threshold) + 0.5, dB2PixelsY(m_Threshold) + 0.5 );
-      cr->line_to( dB2PixelsX(m_Threshold) + 0.5 , dB2PixelsY(m_Threshold + m_Range) + 0.5 );
-      cr->line_to( dB2PixelsX(DATA_RANGE_MIN) + 0.5 , dB2PixelsY(DATA_RANGE_MIN + m_Range) + 0.5 );
+    {    
+      //Draw Expander/Gate
+      for(double x_dB = DATA_RANGE_MIN; x_dB <= DATA_RANGE_MAX; x_dB += 1.0)
+      {
+        knee_range = 2.0*(x_dB - m_Threshold);
+        if (knee_range < -m_Knee)
+        {
+          //Under Threshold
+          y_dB = m_Threshold + (x_dB - m_Threshold)*m_Ratio;
+        }
+        else if(knee_range >= m_Knee )
+        {
+          //Over Threshold
+          y_dB = x_dB;
+        }
+        else
+        {
+          //On Knee
+          y_dB = x_dB + ((1.0 - m_Ratio)*(x_dB - m_Threshold - m_Knee/2)*(x_dB - m_Threshold - m_Knee/2))/(2*m_Knee);
+        }
+           
+	if( y_dB < x_dB + m_Range )
+	{
+	  y_dB = x_dB + m_Range;
+	}
+        cr->line_to( dB2PixelsX(x_dB) + 0.5, dB2PixelsY(y_dB) + 0.5);
+      }
+      
     }
     cr->set_line_width(1.0);
     cr->set_line_cap(Cairo::LINE_CAP_ROUND);

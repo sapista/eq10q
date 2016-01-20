@@ -86,7 +86,7 @@ void writeTestFunction(LV2UI_Controller controller, uint32_t port_index, uint32_
 	}       
   
   
-  std::cout<<"LV2 Write function tester: Port = "<< sPort <<" Data = "<<data<<std::endl;
+  std::cout<<"LV2 Write function tester: Port = "<< sPort << " ("<< port_index <<") Data = "<<data<<std::endl;
 }
 
 HelloWorld::HelloWorld()

@@ -41,22 +41,20 @@
 #include "dynplot.h"
 #include "sidechainbox.h"
 
-#define PORT_OUTPUT 0
-#define PORT_INPUT 1
 #define PORT_KEY_LISTEN 2
 #define PORT_THRESHOLD 3
 #define PORT_ATACK 4
-#define PORT_HOLD 5
+#define PORT_HOLD_MAKEUP 5
 #define PORT_DECAY 6
-#define PORT_RANGE 7
+#define PORT_RATIO 7
 #define PORT_HPFFREQ 8
 #define PORT_LPFFREQ 9
 #define PORT_GAIN 10
 #define PORT_INVU 11
 #define PORT_GAINREDUCTION 12
-#define PORT_KNEE_COMP_DRY_WET_GATE 13
-#define PORT_DRY_WET_COMP 14
-#define PORT_FEEDBACK 15
+#define PORT_KNEE 13
+#define PORT_DRY_WET 14
+#define PORT_FEEDBACK_RANGE 15
 #define PORT_COMP_MODE 16
 
 //Test print information, comment out for the final release
@@ -109,7 +107,7 @@ class DynMainWindow : public MainWidget
 	    m_Attack->set_value(data);
 	  break;
 	  
-	  case PORT_HOLD:
+	  case PORT_HOLD_MAKEUP:
 	    m_Hold_Makeup->set_value(data);
             if(m_bIsCompressor)
             {
@@ -121,16 +119,9 @@ class DynMainWindow : public MainWidget
 	    m_Release->set_value(data);
 	  break;
 	  
-	  case PORT_RANGE:
-	    m_Range_Ratio->set_value(data);
-            if(m_bIsCompressor)
-            {
-              m_Plot->set_ratio(data);
-            }
-            else
-            {
-              m_Plot->set_range(data);
-            }
+	  case PORT_RATIO:
+	    m_Ratio->set_value(data);
+	    m_Plot->set_ratio(data);
 	  break;
 	  
 	  case PORT_GAINREDUCTION:
@@ -155,19 +146,25 @@ class DynMainWindow : public MainWidget
             m_Plot->set_inputvu(data);
 	  break;
 	  
-	  case PORT_KNEE_COMP_DRY_WET_GATE:
-            if(m_bIsCompressor)
-            {
+	  case PORT_KNEE:
               m_Knee->set_value(data);
               m_Plot->set_knee(data);
-              break; //If is compressor break here and sets knee, if is gate continue to set Dry/Wet using the same method as compressor
-            }          
-          case PORT_DRY_WET_COMP:
+              break; 
+              
+          case PORT_DRY_WET:
               m_DryWet->set_value(100.0*data); //In range of 0% to 100%
             break;
 	    
-	  case PORT_FEEDBACK:
-	     m_FeedBackMode.set_active(data > 0.5);
+	  case PORT_FEEDBACK_RANGE:
+	    if(m_bIsCompressor)
+	    {
+	      m_FeedBackMode.set_active(data > 0.5);
+	    }
+	    else
+	    {
+      	      m_Range->set_value(data);
+              m_Plot->set_range(data);
+	    }
 	    break;
 	    
 	  case PORT_COMP_MODE:
@@ -191,7 +188,7 @@ class DynMainWindow : public MainWidget
     KnobWidget2 *m_Attack;
     KnobWidget2 *m_Hold_Makeup;
     KnobWidget2 *m_Release;
-    KnobWidget2 *m_Range_Ratio;
+    KnobWidget2 *m_Range, *m_Ratio;
     KnobWidget2 *m_Knee;
     KnobWidget2 *m_HPF;
     KnobWidget2 *m_LPF;
@@ -208,6 +205,7 @@ class DynMainWindow : public MainWidget
     //Signal Handlers
     void onGainChange();
     void onThresholdChange();
+    void onRatioChange();
     void onRangeChange();
     void onAttackChange();
     void onHoldChange();
