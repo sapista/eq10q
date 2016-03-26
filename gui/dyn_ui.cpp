@@ -45,7 +45,7 @@ static LV2UI_Handle instantiateDyn_gui(const _LV2UI_Descriptor *descriptor, cons
   #endif
   
   Gtk::Main::init_gtkmm_internals();
-  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path), @Dyn_Title@, @bIsCompressor@);
+  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path), @Dyn_Title@, @bIsCompressor@, @bHasSideChain@);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();

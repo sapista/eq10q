@@ -284,7 +284,7 @@ EqMainWindow::~EqMainWindow()
 {
   //Send FFT_OFF to DSP
   sendAtomFftOn(false);
-  
+
   delete image_logo_center;
   delete m_AParams;
   delete m_BParams;
@@ -292,12 +292,12 @@ EqMainWindow::~EqMainWindow()
   delete m_GainFaderOut;
   delete m_VuMeterIn;
   delete m_VuMeterOut;
-  delete m_Bode;
-  delete m_port_event_Curve_Gain;
-  delete m_port_event_Curve_Freq;
-  delete m_port_event_Curve_Q;
-  delete m_port_event_Curve_Type;
-  delete m_port_event_Curve_Enable;
+  delete m_Bode;  
+  delete[] m_port_event_Curve_Gain;
+  delete[] m_port_event_Curve_Freq;
+  delete[] m_port_event_Curve_Q;
+  delete[] m_port_event_Curve_Type;
+  delete[] m_port_event_Curve_Enable;
   delete m_FftGain;
   delete m_FftRange;
   delete m_FftBox;

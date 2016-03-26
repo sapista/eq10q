@@ -121,7 +121,7 @@ class EqMainWindow : public MainWidget
                   //std::cout<<"N Elem "<<n_elem << std::endl;
                   
                   //Copy data to bodeplot
-                  if(n_elem == (FFT_N/2))
+                  if(n_elem == ((FFT_N/2) + 1)) 
                   {
                     // Double elements immediately follow the vector body header
                     m_Bode->setFftData((double*)(&vec->body + 1));

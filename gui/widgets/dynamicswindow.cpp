@@ -33,7 +33,7 @@
 #define LOGO_PATH "icons/logodynamics.png"
 
 
-DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor)
+DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor, bool hasSideChain)
   :m_pluginUri(uri),
   m_bundlePath(bundlePath),
   m_bIsCompressor(isCompressor)
@@ -68,15 +68,24 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   m_KeyButtonAlign.add(m_KeyButton);
   m_KeyButtonAlign.set_padding(0,0, 10, 10);
   
-  m_FeedBackMode.set_label("Feedback");
-  m_FeedBackMode.set_size_request(-1,20);
-  m_FeedBackModeAlign.add(m_FeedBackMode);
+  if(hasSideChain)
+  {
+    m_FeedBackMode_SideChainActive.set_label("SC Active");
+  }
+  else
+  {
+    m_FeedBackMode_SideChainActive.set_label("Feedback");
+  }
+  m_FeedBackMode_SideChainActive.set_size_request(-1,20);
+  m_FeedBackModeAlign.add(m_FeedBackMode_SideChainActive);
   m_FeedBackModeAlign.set_padding(0,0, 10, 10);
   
-  m_OptoMode.set_label("Opto-Comp");
+
+  m_OptoMode.set_label("S-Release");
   m_OptoMode.set_size_request(-1,20);
   m_OptoModeAlign.add(m_OptoMode);
   m_OptoModeAlign.set_padding(0,0, 10, 10);
+
   
   m_LTitle.set_use_markup(true);
   m_LTitle.set_markup( "<span font_weight=\"bold\" font=\"12px\" font_family=\"Monospace\">"  + title + "</span>");
@@ -178,7 +187,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
       
   if(m_bIsCompressor)
   {
-    m_FeedBackMode.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onFeedbackModeChange));
+    m_FeedBackMode_SideChainActive.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onFeedbackModeChange));
     m_OptoMode.signal_clicked().connect(sigc::mem_fun(*this, &DynMainWindow::onModeCompressorChange));
   }
   else
@@ -231,7 +240,7 @@ void DynMainWindow::onRangeChange()
   aux = m_Range->get_value();
 
   m_Plot->set_range(aux);
-  write_function(controller, PORT_FEEDBACK_RANGE, sizeof(float), 0, &aux);
+  write_function(controller, PORT_FEEDBACK_RANGE_SCACTIVE, sizeof(float), 0, &aux);
 }
 
 void DynMainWindow::onRatioChange()
@@ -317,8 +326,8 @@ void DynMainWindow::onFeedbackModeChange()
 {
   //Write to LV2 port
   float aux;
-  aux = m_FeedBackMode.get_active() ? 1.0 : 0.0;
-  write_function(controller, PORT_FEEDBACK_RANGE, sizeof(float), 0, &aux);
+  aux = m_FeedBackMode_SideChainActive.get_active() ? 1.0 : 0.0;
+  write_function(controller, PORT_FEEDBACK_RANGE_SCACTIVE, sizeof(float), 0, &aux);
 }
 
 void DynMainWindow::onModeCompressorChange()

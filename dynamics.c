@@ -38,7 +38,6 @@ This file implements functionalities for diferent dynamic plugins
 #define USE_EQ10Q_FAST_MATH
 #define NUM_CHANNELS @Dyn_Channels_Count@
 
-
 #define DYN_URI @Dyn_Uri@
 #define PORT_OUTPUT_L 0
 #define PORT_INPUT_L 1
@@ -61,10 +60,25 @@ This file implements functionalities for diferent dynamic plugins
 #define PORT_COMP_MODE 16
 #define PORT_OUTPUT_R 17
 #define PORT_INPUT_R 18
+
+#else
+#ifdef PLUGIN_IS_COMPRESSOR_WITH_SC
+#define PORT_SC_ACTIVE 15
+#define PORT_COMP_MODE 16
+
+#if NUM_CHANNELS==1
+#define PORT_SC_AUDIO_IN 17
+#else
+#define PORT_OUTPUT_R 17
+#define PORT_INPUT_R 18
+#define PORT_SC_AUDIO_IN 19
+#endif
+
 #else
 #define PORT_RANGE 15
 #define PORT_OUTPUT_R 16
 #define PORT_INPUT_R 17
+#endif
 #endif
 
 #define K_BIAS_GAIN 0.0891250938133745507219174442070652730762958526611328125f //A trick to change the dinamic range of the fast_db2lin10 method for gate plugin
@@ -89,7 +103,13 @@ typedef struct {
   float *feedback;
   float *compressor_mode;
   #else
+  #ifdef PLUGIN_IS_COMPRESSOR_WITH_SC
+  float *sidechain_active;
+  float *compressor_mode;
+  const float *input_sidechain;
+  #else
   float *range;
+  #endif
   #endif
   
   //Plugin Internal data
@@ -178,10 +198,24 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     case PORT_COMP_MODE:
 	    plugin->compressor_mode = (float*)data;
 	    break;
+    
+    #else
+    #ifdef  PLUGIN_IS_COMPRESSOR_WITH_SC     
+    case PORT_SC_ACTIVE:
+	    plugin->sidechain_active = (float*)data;
+	    break;
+    case PORT_COMP_MODE:
+	    plugin->compressor_mode = (float*)data;
+	    break;
+    case PORT_SC_AUDIO_IN:
+	    plugin->input_sidechain = (const float*)data;
+	    break;
+	   
     #else
     case PORT_RANGE:
 	    plugin->range = (float*)data;
 	    break;    
+    #endif
     #endif
 	    
     #if NUM_CHANNELS == 2
@@ -205,7 +239,7 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   #ifdef PLUGIN_IS_GATE
   plugin_data->g =  0.0f;
   #endif
-  #ifdef PLUGIN_IS_COMPRESSOR
+  #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   plugin_data->g =  1.0f;
   #endif
     
@@ -248,9 +282,19 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   #endif
   
   //Read ports (compressor/expander)
-  #ifdef PLUGIN_IS_COMPRESSOR
+  #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   const float makeup = dB2Lin(*(plugin_data->hold_makeup));
+  #endif
+  
+  #ifdef PLUGIN_IS_COMPRESSOR
   const double FeedBack = (double)*(plugin_data->feedback);
+  const int bIsOptoCompressor = *(plugin_data->compressor_mode) > 0.5 ? 1 : 0; 
+  const double SideChainActive = 0.0;
+  #endif
+  
+  #ifdef PLUGIN_IS_COMPRESSOR_WITH_SC
+  const double SideChainActive = (double)*(plugin_data->sidechain_active);
+  const double FeedBack = 0.0;
   const int bIsOptoCompressor = *(plugin_data->compressor_mode) > 0.5 ? 1 : 0; 
   #endif
   
@@ -270,7 +314,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   #endif
   
   //Processor vars (only COMPRESSOR)
-  #ifdef PLUGIN_IS_COMPRESSOR
+  #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   const float range_lin = pow(10, -12 * 0.05); //By various tests -12 dB is the optimal setting for the release time of a opto-compressor
   const float Kdc = pow((range_lin/(1.0f-range_lin))*((1.0f-0.6f)/0.6f), 1.0f/(decay*0.001f*sample_rate)); //Decay constant for S curve in compressor
   #endif
@@ -283,6 +327,10 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   float input_filtered = 0.0f;
   double dToFiltersChain = 0.0;
   float input_preL;
+  #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
+  float input_sc = 0.0;
+  #endif
+  
   #if NUM_CHANNELS == 2
   float input_preR;
   #endif
@@ -300,15 +348,18 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
 
     //Input gain
     input_preL =  plugin_data->input[0][i] * InputGain;
-    #ifdef PLUGIN_IS_COMPRESSOR
-    dToFiltersChain = (double)input_preL * (1.0 - FeedBack) + plugin_data->PGAOut_L*FeedBack;
+    #ifdef PLUGIN_IS_COMPRESSOR_WITH_SC
+    input_sc = plugin_data->input_sidechain[i];
+    #endif
+    #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
+    dToFiltersChain = ((double)input_preL * (1.0 - FeedBack) + plugin_data->PGAOut_L*FeedBack)*(1.0  - SideChainActive) + (double)input_sc * SideChainActive;
     #else
     dToFiltersChain = (double)input_preL;
     #endif
     #if NUM_CHANNELS == 2
     input_preR = plugin_data->input[1][i] * InputGain;
-    #ifdef PLUGIN_IS_COMPRESSOR
-    dToFiltersChain = ((double)(input_preL + input_preR)*(1.0 - FeedBack) + (plugin_data->PGAOut_L + plugin_data->PGAOut_R)*FeedBack )*0.5;
+    #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
+    dToFiltersChain = (((double)(input_preL + input_preR)*(1.0 - FeedBack) + (plugin_data->PGAOut_L + plugin_data->PGAOut_R)*FeedBack )*0.5)*(1.0  - SideChainActive) + (double)input_sc * SideChainActive;
     #else
     dToFiltersChain = (double)(input_preL + input_preR)*0.5;
     #endif
@@ -402,7 +453,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     //===================== END OF GATE CODE =========================
     
     //=================== COMPRESSOR CODE ============================
-    #ifdef PLUGIN_IS_COMPRESSOR            
+    #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC)        
     if (knee_range < -knee)
     {
       //Under Threshold
@@ -450,7 +501,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     DENORMAL_TO_ZERO_FLOAT(gain_reduction);
     g = gain_reduction;
     gr_meter = gain_reduction < gr_meter ? gain_reduction : gr_meter;
-    #ifdef PLUGIN_IS_COMPRESSOR 
+    #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
       gain_reduction *= makeup;  
     #endif
     

@@ -44,6 +44,10 @@
   a lv2:Plugin;
   rdfs:seeAlso <compressor.ttl>.
   
+<http://eq10q.sourceforge.net/compressor_sc>
+  a lv2:Plugin;
+  rdfs:seeAlso <compressor_sc.ttl>.
+  
 <http://eq10q.sourceforge.net/gate_stereo>
   a lv2:Plugin;
   rdfs:seeAlso <gate_stereo.ttl>.
@@ -51,6 +55,10 @@
 <http://eq10q.sourceforge.net/compressor_stereo>
   a lv2:Plugin;
   rdfs:seeAlso <compressor_stereo.ttl>.
+  
+<http://eq10q.sourceforge.net/compressor_stereo_sc>
+  a lv2:Plugin;
+  rdfs:seeAlso <compressor_stereo_sc.ttl>.
   
 <http://eq10q.sourceforge.net/bassup>
   a lv2:Plugin;

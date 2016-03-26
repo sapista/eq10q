@@ -54,7 +54,7 @@
 #define PORT_GAINREDUCTION 12
 #define PORT_KNEE 13
 #define PORT_DRY_WET 14
-#define PORT_FEEDBACK_RANGE 15
+#define PORT_FEEDBACK_RANGE_SCACTIVE 15
 #define PORT_COMP_MODE 16
 
 //Test print information, comment out for the final release
@@ -65,7 +65,7 @@ using namespace sigc;
 class DynMainWindow : public MainWidget
 {
   public:
-    DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor);
+    DynMainWindow(const char *uri, std::string bundlePath, std::string title, bool isCompressor, bool hasSideChain);
     virtual ~DynMainWindow();   
     
     // Informing GUI about changes in the control ports
@@ -155,10 +155,10 @@ class DynMainWindow : public MainWidget
               m_DryWet->set_value(100.0*data); //In range of 0% to 100%
             break;
 	    
-	  case PORT_FEEDBACK_RANGE:
+	  case PORT_FEEDBACK_RANGE_SCACTIVE:
 	    if(m_bIsCompressor)
 	    {
-	      m_FeedBackMode.set_active(data > 0.5);
+	      m_FeedBackMode_SideChainActive.set_active(data > 0.5);
 	    }
 	    else
 	    {
@@ -193,7 +193,7 @@ class DynMainWindow : public MainWidget
     KnobWidget2 *m_HPF;
     KnobWidget2 *m_LPF;
     KnobWidget2 *m_DryWet;
-    ToggleButton m_KeyButton, m_FeedBackMode, m_OptoMode;
+    ToggleButton m_KeyButton, m_FeedBackMode_SideChainActive, m_OptoMode;
     PlotDynCurve *m_Plot;
     SideChainBox m_SCBox;
     Gtk::Alignment m_KeyButtonAlign, m_TitleAlign, m_sidchianAlign, m_keyPadding, m_FeedBackModeAlign, m_OptoModeAlign;

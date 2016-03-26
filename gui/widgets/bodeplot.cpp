@@ -108,12 +108,12 @@ m_bFftHold(false)
   m_Bands2Redraw = new bool[m_TotalBandsCount];
   m_curve_surface_ptr = new  Cairo::RefPtr<Cairo::ImageSurface> [m_TotalBandsCount];
   
-  //Allocate memory for FFT data
-  xPixels_fft = new double[FFT_N/2]; 
-  xPixels_fft_bins = new double[FFT_N/2]; 
-  fft_pink_noise = new double[FFT_N/2];
-  fft_plot = new double[FFT_N/2];
-  fft_ant_data = new double [FFT_N/2];
+  //Allocate memory for FFT data 
+  xPixels_fft = new double[(FFT_N/2) + 1]; 
+  xPixels_fft_bins = new double[(FFT_N/2) + 1]; 
+  fft_pink_noise = new double[(FFT_N/2) + 1];
+  fft_plot = new double[(FFT_N/2) + 1];
+  fft_ant_data = new double [(FFT_N/2) + 1];
   
   fft_log_lut = GenerateLog10LUT();
   resetCurve();
@@ -137,8 +137,9 @@ m_bFftHold(false)
   signal_button_press_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_press_event),true);
   signal_button_release_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_button_release_event),true);
   signal_scroll_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_scrollwheel_event),true);
-  Glib::signal_timeout().connect( sigc::mem_fun(*this, &PlotEQCurve::on_timeout_redraw), AUTO_REFRESH_TIMEOUT_MS );
-  signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
+  
+  //The timeout signal used to refresh the display is now connected at first run of on_expose_event to run it with freq vector correctly initialized
+   signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
   signal_leave_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_leave_widget),true);
 
 
@@ -221,7 +222,7 @@ void PlotEQCurve::setCenterSpan(double center, double span)
   
   //Recalc freq bins to fit fft into widget size
   const double wrangePx = (freq2Pixels(MAX_FREQ) - freq2Pixels(MIN_FREQ));
-  for(int i = 0; i < (FFT_N/2); i++)
+  for(int i = 0; i <= (FFT_N/2); i++)
   {
     xPixels_fft_bins[i] =  round(xPixels_fft[i] * wrangePx)/(wrangePx);
   }
@@ -766,6 +767,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       m_yAxis_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, CURVE_TEXT_OFFSET_X, height - CURVE_TEXT_OFFSET_Y);
       redraw_background_widget();
       resetCenterSpan();
+      Glib::signal_timeout().connect( sigc::mem_fun(*this, &PlotEQCurve::on_timeout_redraw), AUTO_REFRESH_TIMEOUT_MS ); //Connectin timer here to avoid using plot with unitialized freq vector
     }
     
     Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context();
@@ -975,7 +977,7 @@ void PlotEQCurve::setSampleRate(double samplerate)
     {
       //Init FFT vectors using real sampleRate
       double fft_raw_freq;
-      for(int i = 0; i < (FFT_N/2); i++)
+      for(int i = 0; i <= (FFT_N/2); i++)
       {     
         fft_raw_freq = (SampleRate * (double)i) /  ((double)(FFT_N));
         xPixels_fft[i] = log10(fft_raw_freq/MIN_FREQ)/log10(MAX_FREQ/MIN_FREQ);        
@@ -1560,12 +1562,12 @@ void PlotEQCurve::redraw_fft_widget()
   Cairo::RefPtr<Cairo::LinearGradient> fft_gradient_ptr = Cairo::LinearGradient::create(0, 0, 1.0, 0);    
 
   double binMax = 1e6;
-  double binX[FFT_N/2];
-  double binY[FFT_N/2];
+  double binX[(FFT_N/2) + 1];
+  double binY[(FFT_N/2) + 1];
   int binCount = 0; 
   fft_plot[0] = 1e6; //I don't care about DC
   
-  for (int i = 1; i < FFT_N/2; i++) 
+  for (int i = 1; i <= (FFT_N/2); i++) 
   {     
     if(m_bIsSpectrogram)
     {
