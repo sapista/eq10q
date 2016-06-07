@@ -131,7 +131,7 @@ bool KnobWidget::on_mouse_motion_event(GdkEventMotion* event)
   }
 
   int yPixels = event->y;
-  float val;
+  float val = 0.0f;
   bool ismoving = false;
   if(yPixels - mouse_move_ant < 0)
   {

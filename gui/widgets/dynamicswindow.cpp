@@ -58,7 +58,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
   {
     //Is Gate
     m_Hold_Makeup = Gtk::manage(new KnobWidget2(0.01, 3000.0, "Hold", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
-    m_Range = Gtk::manage(new KnobWidget2(-90.0, 0.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
+    m_Range = Gtk::manage(new KnobWidget2(-90.0, -1.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str() ));
   }
   
   m_Plot = Gtk::manage(new PlotDynCurve(m_bIsCompressor));

@@ -284,6 +284,8 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   //Read ports (compressor/expander)
   #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   const float makeup = dB2Lin(*(plugin_data->hold_makeup));
+  #else
+  const float makeup = 1.0f;
   #endif
   
   #ifdef PLUGIN_IS_COMPRESSOR
@@ -415,9 +417,6 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
       y_dB = x_dB + range;
     }
     
-    //TODO RANGE A ZERO grans problemes!!!! En ardour... xo a priori no li veig cap sentit! -> Ja se k passa, segons def. d Kac range no pot ser major a -1 dB
-    //TODO potser vull canviar la filosofia del detector tant en el compressor com a la porta i utilitzar atack/release per modelar el detector en comptes del GR
-
     //Linear gain computing 
     #ifdef USE_EQ10Q_FAST_MATH
       gain_reduction = K_BIAS_GAIN*Fast_dB2Lin10(y_dB - x_dB + 22); //22dB bias compensated with K_BIAS_GAIN linear multiplication. This allows a good response of Fast_dB2Lin10 at -90 dB range
@@ -501,16 +500,13 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     DENORMAL_TO_ZERO_FLOAT(gain_reduction);
     g = gain_reduction;
     gr_meter = gain_reduction < gr_meter ? gain_reduction : gr_meter;
-    #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
-      gain_reduction *= makeup;  
-    #endif
     
     plugin_data->PGAOut_L = (double)input_preL * gain_reduction;
-    plugin_data->output[0][i] = input_filtered*(KeyListen) + (input_preL*(1.0f - DryWet) +  (float)plugin_data->PGAOut_L*DryWet)*(1-KeyListen); 
+    plugin_data->output[0][i] = input_filtered*(KeyListen) + (input_preL*(1.0f - DryWet) +  makeup*(float)plugin_data->PGAOut_L*DryWet)*(1-KeyListen); 
     
     #if NUM_CHANNELS == 2
     plugin_data->PGAOut_R = (double)input_preR * gain_reduction;
-    plugin_data->output[1][i] = input_filtered*(KeyListen) + (input_preR*(1.0f - DryWet) +  (float)plugin_data->PGAOut_R*DryWet)*(1-KeyListen);
+    plugin_data->output[1][i] = input_filtered*(KeyListen) + (input_preR*(1.0f - DryWet) +  makeup*(float)plugin_data->PGAOut_R*DryWet)*(1-KeyListen);
     #endif
 
   }
