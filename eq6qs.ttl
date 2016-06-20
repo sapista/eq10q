@@ -5,6 +5,9 @@
 @prefix atom:  <http://lv2plug.in/ns/ext/atom#> .
 @prefix urid:  <http://lv2plug.in/ns/ext/urid#> .
 @prefix rsz:     <http://lv2plug.in/ns/ext/resize-port#> .
+@prefix units: <http://lv2plug.in/ns/extensions/units#> .
+@prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
+
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/eq/eq6qs/gui>
   a guiext:GtkUI;
@@ -48,6 +51,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
   [
@@ -58,6 +62,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -97,6 +102,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -107,6 +113,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -117,6 +124,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -127,6 +135,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -137,6 +146,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
  [
@@ -147,6 +157,7 @@ doap:maintainer [
     lv2:minimum -20;
     lv2:maximum 20;
     lv2:default 0;
+    units:unit units:db;
   ],
 
 ###########FREQ PORTS########################
@@ -158,6 +169,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 30;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
  [
@@ -168,6 +181,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 90;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
   [
@@ -178,6 +193,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 270;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
  [
@@ -188,6 +205,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 810;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
  [
@@ -198,6 +217,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 2430;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
  [
@@ -208,6 +229,8 @@ doap:maintainer [
     lv2:minimum 20;
     lv2:maximum 20000;
     lv2:default 7290;
+    units:unit units:hz;
+    lv2:portProperty pprop:logarithmic;
   ],
 
   ################## Q PORTS #####################

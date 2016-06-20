@@ -917,9 +917,8 @@ void PlotEQCurve::CalcBand_DigitalFilter(int bd_ix)
   m_fil.enable = 1.0f;
   m_fil.iType = m_filters[bd_ix]->fType;
   m_fil.fs = SampleRate;
-  m_fil.freqInter = 1000.0f;
-  m_fil.gainInter = 1000.0f;
-  m_fil.QInter = 1000.0f;
+  m_fil.InterK = 0.0f;
+  m_fil.useInterpolation = 0.0f;
   
   //Calc coefs
   calcCoefs(&m_fil, m_fil.gain, m_fil.freq, m_fil.q, m_fil.iType, m_fil.enable);
@@ -931,6 +930,7 @@ void PlotEQCurve::CalcBand_DigitalFilter(int bd_ix)
   double BK = m_fil.b0 - m_fil.b2;
   double CK = 1 + m_fil.a2;
   double DK = 1 - m_fil.a2;
+  
   
   for(int i=0; i<CURVE_NUM_OF_POINTS; i++)
   {

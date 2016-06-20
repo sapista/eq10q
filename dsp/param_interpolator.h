@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pere Ràfols Soler                               *
+ *   Copyright (C) 2016 by Pere Ràfols Soler                               *
  *   sapista2@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -18,41 +18,27 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-//#include <stdio.h>
+/***************************************************************************
+This file contains the parameter interpolation
+****************************************************************************/
+
+#ifndef  PARAM_INTERPOLATOR_H
+  #define PARAM_INTERPOLATOR_H
+  
 #include <stdlib.h>
-#include "filter.h"
+#include <math.h>
 
-//Initialize filter
-Filter *FilterInit(double rate)
+
+#define STEP_TIME_MS 100.0f
+#define INTER_OF_DEADBAND 0.001f
+#define INTERPOLATOR_CALC_K(x) (4e3f / (x * STEP_TIME_MS)) //Where X is sample_rate
+
+
+static inline float computeParamInterpolation(float target, float current, float K, float enableInterpol)
 {
-  Filter *filter = (Filter *)malloc(sizeof(Filter));
-  filter->fs= rate;
-  filter->gain = 1.0f;
-  filter->freq = 100.0f;
-  filter->q = 1.0f;
-  filter->enable = 0.0f;
-  filter->iType = 0;
-  
-  //Interpolations
-  filter->InterK = INTERPOLATOR_CALC_K((float)rate);
-  filter->useInterpolation = 1.0f;
-  
-  return filter;
+  float res =  current + K*(target - current);
+  res = fabs(res - target) < fabs(INTER_OF_DEADBAND*target) ? target : res;
+  res = enableInterpol*res + (1.0f - enableInterpol)*target;
+  return(res);
 }
-
-//Destroy a filter instance
-void FilterClean(Filter *filter)
-{ 
-  free(filter);
-}
-
-//Clean buffers
-void flushBuffers(Buffers *buf)
-{
-    buf->buf_0 = 0.0;
-    buf->buf_1 = 0.0;
-    buf->buf_2 = 0.0;
-    buf->buf_e0 = 0.0;
-    buf->buf_e1 = 0.0;
-    buf->buf_e2 = 0.0;
-}
+#endif

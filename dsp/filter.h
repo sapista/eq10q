@@ -26,6 +26,7 @@ This file contains the filter definitions
   #define FILTER_H
 
 #include <math.h>
+#include "param_interpolator.h"
 
 //#include <stdio.h>
 
@@ -49,7 +50,7 @@ This file contains the filter definitions
 #define  F_NOTCH 12
 
 //Interpolation params
-#define FREQ_INTER_DEC_SECOND 30.0f
+#define FREQ_INTER_DEC_SECOND 10.0f //30.0f //TEST 6 va molt ve el HPF xo potser es massa lent, en 10 ja fa algu d soroll, automatiza el d linuxDSP a vera kins temps es capaç de donar ell
 #define GAIN_INTER_DB_SECOND 15.0f
 #define Q_INTER_DEC_SECOND 10.0f
 
@@ -59,14 +60,13 @@ typedef struct
   double b1_0, b1_1, b1_2, a1_1, a1_2; //Second Order extra coeficients 
   int filter_order;  //filter order
   double fs; //sample rate
-  float gain, freq, q, enable;
+  float gain, freq, q;
+  double enable;
   int iType; //Filter type
   
-  
-  //Interpolation Params
-  float freqInter;
-  float gainInter;
-  float QInter;
+  //Interpolation K
+  float InterK;  
+  float useInterpolation;
   
 }Filter;
 
@@ -96,53 +96,13 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
     alpha = A = b0 = b1 = b2 = a0 = a1 = a2 = b1_0 = b1_1 = b1_2 = a1_0 = a1_1 = a1_2 = 1.0;
     filter->filter_order = 0;
     
-    //Freq Interpolation    
-    float Err = fFreq/filter->freq;
-    if(Err > filter->freqInter)
-    {
-      filter->freq *= filter->freqInter;
-    }
-    else if(Err < 1/filter->freqInter)
-    {
-      filter->freq /= filter->freqInter;
-    }
-    else
-    {
-      filter->freq = fFreq;
-    }
-    
-    //Gain Interpolation
-    Err = fGain - filter->gain;
-    if(Err > filter->gainInter)
-    {
-      filter->gain += filter->gainInter;
-    }
-    else if(Err < -filter->gainInter)
-    {
-      filter->gain -= filter->gainInter;
-    }
-    else
-    {
-      filter->gain = fGain;
-    }
-    
-    //Q Interpolation
-    Err = fQ/filter->q;
-    if(Err > filter->QInter)
-    {
-      filter->q *= filter->QInter;
-    }
-    else if(Err < 1/filter->QInter)
-    {
-      filter->q /= filter->QInter;
-    }
-    else
-    {
-      filter->q = fQ;
-    }
-    
+    //Param Interpolation    
+    filter->freq = computeParamInterpolation(fFreq, filter->freq, filter->InterK, filter->useInterpolation);
+    filter->gain = computeParamInterpolation(fGain, filter->gain, filter->InterK, filter->useInterpolation);
+    filter->q = computeParamInterpolation(fQ, filter->q, filter->InterK, filter->useInterpolation);
+    filter->enable = (double)computeParamInterpolation(iEnabled, (float)filter->enable, filter->InterK, filter->useInterpolation);
+           
     double w0=2*PI*(filter->freq/filter->fs);
-    filter->enable = iEnabled;
     filter->iType = iType;
     
     switch(iType){
@@ -340,18 +300,18 @@ static inline void calcCoefs(Filter *filter, float fGain, float fFreq, float fQ,
       break;
   } //End of switch
 
-    //Normalice coeficients to a0=1 and apply iEnabled
-    filter->b0 = (b0/a0)* iEnabled + (1.0 - iEnabled); //b0
-    filter->b1 = (b1/a0)* iEnabled; //b1
-    filter->b2 = (b2/a0)* iEnabled; //b2
-    filter->a1 = (a1/a0)* iEnabled; //a1
-    filter->a2 = (a2/a0)* iEnabled; //a2
-    filter->b1_0 = (b1_0/a1_0)* iEnabled + (1.0 - iEnabled);
-    filter->b1_1 = (b1_1/a1_0)* iEnabled;
-    filter->b1_2 = (b1_2/a1_0)* iEnabled;
-    filter->a1_1 = (a1_1/a1_0)* iEnabled;
-    filter->a1_2 = (a1_2/a1_0)* iEnabled;   
-    
+    //Normalice coeficients to a0=1 
+    filter->b0 = (b0/a0); //b0
+    filter->b1 = (b1/a0); //b1
+    filter->b2 = (b2/a0); //b2
+    filter->a1 = (a1/a0); //a1
+    filter->a2 = (a2/a0); //a2
+    filter->b1_0 = (b1_0/a1_0);
+    filter->b1_1 = (b1_1/a1_0);
+    filter->b1_2 = (b1_2/a1_0);
+    filter->a1_1 = (a1_1/a1_0);
+    filter->a1_2 = (a1_2/a1_0);  
+
     //Print coefs
     //printf("Coefs b0=%f b1=%f b2=%f a1=%f a2=%f\r\n",filter->b0,filter->b1,filter->b2,filter->a1,filter->a2);
     //printf("Gain = %f Freq = %f Q = %f\r\n", filter->gain, filter->freq, filter->q);
@@ -380,7 +340,7 @@ static inline  void computeFilter(Filter *filter, Buffers *buf, double *inputSam
     
   DENORMAL_TO_ZERO(buf->buf_0);
   //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
-  *inputSample = filter->b0*buf->buf_0 + filter->b1*buf->buf_1+ filter->b2*buf->buf_2;
+  *inputSample = (filter->b0*buf->buf_0 + filter->b1*buf->buf_1+ filter->b2*buf->buf_2) * filter->enable + (*inputSample)*(1.0 - filter->enable);
 
   buf->buf_2 = buf->buf_1;
   buf->buf_1 = buf->buf_0;
@@ -392,7 +352,7 @@ static inline  void computeFilter(Filter *filter, Buffers *buf, double *inputSam
       buf->buf_e0 = (*inputSample)-filter->a1_1*buf->buf_e1-filter->a1_2*buf->buf_e2;
       //y(n)=bo*w(n)+b1*w(n-1)+b2*w(n-2)
       DENORMAL_TO_ZERO(buf->buf_e0);
-      *inputSample =  filter->b1_0*buf->buf_e0 + filter->b1_1*buf->buf_e1+ filter->b1_2*buf->buf_e2;
+      *inputSample =  (filter->b1_0*buf->buf_e0 + filter->b1_1*buf->buf_e1+ filter->b1_2*buf->buf_e2) * filter->enable + (*inputSample)*(1.0 - filter->enable);
 
       buf->buf_e2 = buf->buf_e1;
       buf->buf_e1 = buf->buf_e0;
