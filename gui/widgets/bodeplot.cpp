@@ -537,6 +537,8 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
     cueBandRedraws(m_iBandSel);
 
     // emit the signal
+    setBandEnable(m_iBandSel, true); //If move control ball then enable band
+    m_BandEnabledSignal.emit(m_iBandSel, m_filters[m_iBandSel]->bIsOn);
     m_BandChangedSignal.emit(m_iBandSel, m_filters[m_iBandSel]->Gain, m_filters[m_iBandSel]->Freq, m_filters[m_iBandSel]->Q);
   }
   else

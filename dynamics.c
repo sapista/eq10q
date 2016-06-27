@@ -340,8 +340,8 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   #endif
   
   //Processor vars  common  
-  const float ac = exp(-5.0f/(attack * sample_rate * 0.001f)); //Attack constant in compressor 
-  const float dc = exp(-3.0f/(decay * sample_rate * 0.001f)); //Decay constant 
+  const float ac = exp(-6.0f/(attack * sample_rate * 0.001f)); //Attack constant in compressor 
+  const float dc = exp(-2.0f/(decay * sample_rate * 0.001f)); //Decay constant 
   float detector_vu = plugin_data->detector_vu;
   float gain_reduction = 0.0f;
   float input_filtered = 0.0f;
