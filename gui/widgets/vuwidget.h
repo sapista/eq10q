@@ -48,6 +48,7 @@ protected:
   //Override default signal handler:
   virtual bool on_expose_event(GdkEventExpose* event);
   virtual bool on_timeout_redraw();
+  virtual bool on_mouse_leave_widget(GdkEventCrossing* event);
   void clearPeak(int uChannel);
   
   //Mouse grab signal handlers
@@ -83,7 +84,7 @@ private:
     int height;
     std::string m_Title; 
     sigc::connection m_motion_connection;
-    bool m_redraw_fader, m_redraw_Vu;
+    bool m_redraw_fader, m_redraw_Vu, m_FaderFocus;
     
     //Fader change signal
     signal_FaderChanged m_FaderChangedSignal;

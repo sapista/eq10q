@@ -56,6 +56,7 @@
 #define PORT_DRY_WET 14
 #define PORT_FEEDBACK_RANGE_SCACTIVE 15
 #define PORT_COMP_MODE 16
+#define PORT_PUNCH 17
 
 //Test print information, comment out for the final release
 //#define PRINT_DEBUG_INFO
@@ -170,6 +171,10 @@ class DynMainWindow : public MainWidget
 	  case PORT_COMP_MODE:
 	     m_OptoMode.set_active(data > 0.5);
 	    break;
+	    
+	  case PORT_PUNCH:
+	    m_Punch->set_value(100.0*data);  //In range of 0% to 100%
+	    break;
 	}       
         
 	#ifdef PRINT_DEBUG_INFO	    
@@ -188,6 +193,7 @@ class DynMainWindow : public MainWidget
     KnobWidget2 *m_Attack;
     KnobWidget2 *m_Hold_Makeup;
     KnobWidget2 *m_Release;
+    KnobWidget2 *m_Punch;
     KnobWidget2 *m_Range, *m_Ratio;
     KnobWidget2 *m_Knee;
     KnobWidget2 *m_HPF;
@@ -217,6 +223,7 @@ class DynMainWindow : public MainWidget
     void onKeyListenChange();
     void onFeedbackModeChange();
     void onModeCompressorChange();
+    void onPunchChange();
     
   private:
     std::string m_pluginUri;

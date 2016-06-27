@@ -110,7 +110,8 @@ class PlotEQCurve : public Gtk::DrawingArea
       virtual void redraw_xAxis_widget();
       virtual void redraw_yAxis_widget();
       virtual void redraw_fft_widget();
-  
+      virtual void redraw_cursor(double x, double y);
+        
       //Override default signal handler:
       virtual bool on_expose_event(GdkEventExpose* event);
     
@@ -128,7 +129,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     bool m_FftActive;
     double m_minFreq, m_maxFreq;
     double m_dB_plot_range;
-    
+        
     //To hadle mouse mouve events
     sigc::connection m_motion_connection;
     
@@ -172,7 +173,7 @@ class PlotEQCurve : public Gtk::DrawingArea
     
     
     //Cairo surfaces
-    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_fft_surface_ptr, m_zoom_surface_ptr, *m_curve_surface_ptr, m_maincurve_surface_ptr, m_grid_surface_ptr, m_xAxis_surface_ptr, m_yAxis_surface_ptr; 
+    Cairo::RefPtr<Cairo::ImageSurface> m_background_surface_ptr, m_fft_surface_ptr, m_zoom_surface_ptr, *m_curve_surface_ptr, m_maincurve_surface_ptr, m_grid_surface_ptr, m_xAxis_surface_ptr, m_yAxis_surface_ptr, m_cursor_surface_ptr; 
     
     //Bode change signal
     signal_BandChanged m_BandChangedSignal;

@@ -28,11 +28,9 @@ This file contains the parameter interpolation
 #include <stdlib.h>
 #include <math.h>
 
-
-#define STEP_TIME_MS 100.0f
+#define STEP_TIME_MS 60.0f
 #define INTER_OF_DEADBAND 0.001f
 #define INTERPOLATOR_CALC_K(x) (4e3f / (x * STEP_TIME_MS)) //Where X is sample_rate
-
 
 static inline float computeParamInterpolation(float target, float current, float K, float enableInterpol)
 {

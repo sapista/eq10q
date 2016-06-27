@@ -26,6 +26,7 @@
 #include <cmath>
 #include <ctime>
 #include <gtkmm/main.h>
+#include <gdkmm/cursor.h>
 
 #include <iostream>
 #include <iomanip>
@@ -35,7 +36,7 @@
 #include "../../dsp/filter.h"
 
 #define SPLINE_TENSION 0.2
-#define BALL_DETECTION_PIXELS 8
+#define BALL_DETECTION_PIXELS 12
 
 PlotEQCurve::PlotEQCurve(int iNumOfBands, int channels)
 :width(PLOT_WIDTH),
@@ -139,7 +140,7 @@ m_bFftHold(false)
   signal_scroll_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_scrollwheel_event),true);
   
   //The timeout signal used to refresh the display is now connected at first run of on_expose_event to run it with freq vector correctly initialized
-   signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
+  signal_motion_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_motion_event),true);
   signal_leave_notify_event().connect(sigc::mem_fun(*this, &PlotEQCurve::on_mouse_leave_widget),true);
 
 
@@ -418,7 +419,7 @@ void PlotEQCurve::setBypass(bool bypass)
 //==========================SIGNAL SLOTS===========================================================
 //Mouse grab signal handlers
 bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
-{  
+{       
   grab_focus();
   
   //Check if is a double click or simple
@@ -430,7 +431,7 @@ bool PlotEQCurve::on_button_press_event(GdkEventButton* event)
       setBandEnable(m_iBandSel, !m_filters[m_iBandSel]->bIsOn);
       m_BandEnabledSignal.emit(m_iBandSel, m_filters[m_iBandSel]->bIsOn);
     }
-    else if (!bMotionIsConnected && m_filters[m_iBandSel]->bIsOn)
+    else //if (!bMotionIsConnected ) // && m_filters[m_iBandSel]->bIsOn)
     {
       bMotionIsConnected = true;
     }
@@ -460,7 +461,7 @@ bool PlotEQCurve::on_button_release_event(GdkEventButton* event)
   m_zoom_widget.center_press = false;
   m_zoom_widget.f1_press = false;
   m_zoom_widget.f2_press = false;
-  return true;
+  return true; 
 }
 
 bool PlotEQCurve::on_scrollwheel_event(GdkEventScroll* event)
@@ -472,8 +473,7 @@ bool PlotEQCurve::on_scrollwheel_event(GdkEventScroll* event)
   
   for(int i = 0; i < m_TotalBandsCount; i++)
   {
-    if( m_filters[i]->bIsOn &&
-	x > freq2Pixels(m_filters[i]->Freq) - BALL_DETECTION_PIXELS &&
+    if( x > freq2Pixels(m_filters[i]->Freq) - BALL_DETECTION_PIXELS &&
 	x < freq2Pixels(m_filters[i]->Freq) + BALL_DETECTION_PIXELS &&
 	y > dB2Pixels(m_filters[i]->Gain) - BALL_DETECTION_PIXELS &&
 	y < dB2Pixels(m_filters[i]->Gain) + BALL_DETECTION_PIXELS )
@@ -507,7 +507,7 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
 { 
   const double x = event->x - CURVE_MARGIN - CURVE_TEXT_OFFSET_X;
   const double y = event->y - CURVE_MARGIN;
-    
+      
   if(bMotionIsConnected)
   {
     //Recompute curve on current band and redraw
@@ -530,6 +530,9 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
     {
       m_filters[m_iBandSel]->Gain = 0.0;
     }
+    
+    redraw_cursor(xclipped,  dB2Pixels(m_filters[m_iBandSel]->Gain));
+    
     //Redraw with timeout
     cueBandRedraws(m_iBandSel);
 
@@ -538,6 +541,8 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
   }
   else
   {
+    redraw_cursor(event->x -CURVE_MARGIN - CURVE_TEXT_OFFSET_X, event->y  - CURVE_MARGIN);
+    
     //Check if is over Zoom widget
     if((event->x > m_zoom_widget.x1 - 10 &&
         event->x < m_zoom_widget.x2 + 10 &&
@@ -663,25 +668,41 @@ bool PlotEQCurve::on_mouse_motion_event(GdkEventMotion* event)
     
     m_BandRedraw = true; //Force a redraw of curve in next timer without computing bands
   }
+  
+  if( event->x > CURVE_MARGIN + CURVE_TEXT_OFFSET_X &&
+      event->x < width - CURVE_MARGIN  &&
+      event->y > CURVE_MARGIN &&
+      event->y < height -CURVE_MARGIN - CURVE_TEXT_OFFSET_Y )
+  {
+    //Mouse on curve zone
+    get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
+  }
+  else
+  {
+    //Mouse outside curve zone
+    get_window()->set_cursor(Gdk::Cursor());
+  }
 
   return true;
 }
 
 bool PlotEQCurve::on_mouse_leave_widget(GdkEventCrossing* event)
 {
-  if(event->x < 0 || event->x > width || event->y<0 || event->y>height)
-  {   
-    m_zoom_widget.center_focus = false;
-    m_zoom_widget.f1_focus = false;
-    m_zoom_widget.f2_focus = false;
+  m_zoom_widget.center_focus = false;
+  m_zoom_widget.f1_focus = false;
+  m_zoom_widget.f2_focus = false;
+  redraw_zoom_widget();
+  m_justRedraw = true;
+  
+  if(!bMotionIsConnected)
+  {
+    redraw_cursor(event->x - CURVE_MARGIN - CURVE_TEXT_OFFSET_X, event->y - CURVE_MARGIN);
     bBandFocus = false;
     m_BandUnselectedSignal.emit();
-    redraw_zoom_widget();
     m_BandRedraw = true;
   }
   return true;
 }
-
 
 //Timer callback for auto redraw and graph math
 bool PlotEQCurve::on_timeout_redraw()
@@ -748,7 +769,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     width = allocation.get_width();
     height = allocation.get_height();
   
-    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_maincurve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr))
+    if( !(m_background_surface_ptr || m_fft_surface_ptr || m_zoom_surface_ptr || m_maincurve_surface_ptr || m_grid_surface_ptr  || m_xAxis_surface_ptr || m_yAxis_surface_ptr || m_cursor_surface_ptr))
     {      
       m_background_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width, height);
       m_fft_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
@@ -765,6 +786,7 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
       m_grid_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
       m_xAxis_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, CURVE_TEXT_OFFSET_Y);    
       m_yAxis_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, CURVE_TEXT_OFFSET_X, height - CURVE_TEXT_OFFSET_Y);
+      m_cursor_surface_ptr = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32,  width - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_X, height - 2*CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);
       redraw_background_widget();
       resetCenterSpan();
       Glib::signal_timeout().connect( sigc::mem_fun(*this, &PlotEQCurve::on_timeout_redraw), AUTO_REFRESH_TIMEOUT_MS ); //Connectin timer here to avoid using plot with unitialized freq vector
@@ -822,6 +844,15 @@ bool PlotEQCurve::on_expose_event(GdkEventExpose* event)
     {     
       cr->save();          
       cr->set_source(m_xAxis_surface_ptr, CURVE_MARGIN + CURVE_TEXT_OFFSET_X, height -  CURVE_MARGIN - CURVE_TEXT_OFFSET_Y);    
+      cr->paint();
+      cr->restore();
+    }
+    
+    //Draw the cursor position
+    if(m_cursor_surface_ptr)
+    {
+      cr->save();          
+      cr->set_source(m_cursor_surface_ptr, CURVE_MARGIN + CURVE_TEXT_OFFSET_X, CURVE_MARGIN);    
       cr->paint();
       cr->restore();
     }
@@ -1270,15 +1301,41 @@ void PlotEQCurve::redraw_curve_widgets(int band)
   
     //Draw curve area in band color
     cr->save();
+    double Y_fil0, Y_fil1;    
+    switch(m_filters[band]->fType)
+    {
+      case PEAK:
+      case LOW_SHELF:
+      case HIGH_SHELF:
+	Y_fil0 = dB2Pixels( m_filters[band]->Gain);
+	Y_fil1 = dB2Pixels((-1.0)* m_filters[band]->Gain);
+	break;
+	
+      case NOTCH:
+	Y_fil0 = (double)m_curve_surface_ptr[band]->get_height();
+	Y_fil1 = 0;
+	break;
+
+      default:
+	Y_fil0 = 0.75*(double)m_curve_surface_ptr[band]->get_height();
+	Y_fil1 = 0.25*(double)m_curve_surface_ptr[band]->get_height();
+    }
+    
+    Cairo::RefPtr<Cairo::LinearGradient> bd_gradient_ptr = Cairo::LinearGradient::create(0, Y_fil0, 0, Y_fil1);  
     if(m_filters[band]->bIsOn and !m_Bypass) //If band is enabled and not bypass
     {
-      Gdk::Color color(bandColorLUT[band]);
-      cr->set_source_rgba(color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.3);
+      Gdk::Color color(bandColorLUT[band]); 
+      bd_gradient_ptr->add_color_stop_rgba(0, color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.3);
+      bd_gradient_ptr->add_color_stop_rgba(0.5, color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.01);
+      bd_gradient_ptr->add_color_stop_rgba(1, color.get_red_p(), color.get_green_p(), color.get_blue_p(), 0.3);
     }
     else //band is disabled
     {
-      cr->set_source_rgba(1, 1, 1, 0.3);
+      bd_gradient_ptr->add_color_stop_rgba(0, 1,1,1, 0.2);
+      bd_gradient_ptr->add_color_stop_rgba(0.5, 1,1,1, 0.01);
+      bd_gradient_ptr->add_color_stop_rgba(1, 1,1,1, 0.2);
     }
+    cr->set_source(bd_gradient_ptr);
     cr->move_to(0, dB2Pixels(0.0));
     for (int j = 0; j < CURVE_NUM_OF_POINTS; j++)
     {
@@ -1554,6 +1611,91 @@ void PlotEQCurve::redraw_yAxis_widget()
   }
 }
 
+void PlotEQCurve::redraw_cursor(double x, double y)
+{   
+  if(m_cursor_surface_ptr)
+  {
+    //Create cairo context using the buffer surface
+    Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(m_cursor_surface_ptr);
+    
+    //Clear current context  
+    cr->save();
+    cr->set_operator(Cairo::OPERATOR_CLEAR);
+    cr->paint();
+    cr->restore();
+            
+    //Draw text with pango to grid
+    if( x > 0 &&
+        x < m_cursor_surface_ptr->get_width()  &&
+        y > 0 &&
+        y < m_cursor_surface_ptr->get_height() )
+    {
+      
+      if(bBandFocus)
+      {
+	x = freq2Pixels(m_filters[m_iBandSel]->Freq);
+	y = dB2Pixels( m_filters[m_iBandSel]->Gain );
+      }
+      
+      cr->save();
+      cr->set_source_rgba(0.9, 0.9, 0.9, 1.0);
+      cr->set_line_width(1);
+      cr->move_to(x + 0.5, 0);
+      cr->line_to(x + 0.5, y - 0.5*BALL_DETECTION_PIXELS);
+      cr->move_to(x + 0.5, y + 0.5*BALL_DETECTION_PIXELS);
+      cr->line_to(x + 0.5, m_cursor_surface_ptr->get_height());
+      cr->move_to(0, y + 0.5);
+      cr->line_to(x - 0.5*BALL_DETECTION_PIXELS , y + 0.5);
+      cr->move_to(x + 0.5*BALL_DETECTION_PIXELS, y + 0.5);
+      cr->line_to(m_cursor_surface_ptr->get_width(), y + 0.5);
+      cr->stroke();
+       
+      Glib::RefPtr<Pango::Layout> pangoLayout = Pango::Layout::create(cr);
+      Pango::FontDescription font_desc("sans 9px");
+      pangoLayout->set_font_description(font_desc);     
+      std::stringstream ss;
+      double freq = Pixels2freq(x); 
+      double gain = Pixels2dB(y);   
+      int precision = 1;
+      if(freq < 100 || (freq >= 1e3 && freq < 1e4)) precision = 2;
+      if(freq >= 1000)
+      {
+	ss<< std::setprecision(precision) << std::fixed << 0.001*freq  << " kHz" ;
+      }
+      else
+      {
+	ss<< std::setprecision(precision) << std::fixed << freq  << " Hz" ;
+      }
+      if( x > (m_cursor_surface_ptr->get_width() - 45))
+      {
+	cr->move_to( x - 45, m_cursor_surface_ptr->get_height() - 10); 
+      }
+      else
+      {
+	cr->move_to( x + 2, m_cursor_surface_ptr->get_height() - 10); 
+      }
+      pangoLayout->set_text(ss.str());
+      pangoLayout->show_in_cairo_context(cr);
+      cr->stroke();
+      ss.str("");
+      ss<< std::setprecision(2) << std::fixed << gain  << " dB" ;
+      if(gain > 0)
+      {
+	cr->move_to( 2, y +1 ); 
+      }
+      else
+      {
+	cr->move_to( 2, y - 10); 
+      }
+      pangoLayout->set_text(ss.str());
+      pangoLayout->show_in_cairo_context(cr);
+      cr->stroke();  
+      cr->restore(); 
+    }
+  }
+}
+
+
 void PlotEQCurve::redraw_fft_widget()
 {
   const double m = (-1.0)/(fft_range);
@@ -1690,3 +1832,4 @@ void PlotEQCurve::setStereoState(int band, PlotEQCurve::MSState state)
     cueBandRedraws(band);
   }
 }
+

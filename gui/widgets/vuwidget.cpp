@@ -21,6 +21,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstdio>
+#include <gdkmm/cursor.h>
 
 #include "colors.h"
 #include "vuwidget.h"
@@ -51,7 +52,8 @@ VUWidget::VUWidget(int iChannels, float fMin, float fMax, std::string title, boo
   m_end(new timeval[m_iChannels]),
   m_Title(title),
   m_redraw_fader(true),
-  m_redraw_Vu(true)
+  m_redraw_Vu(true),
+  m_FaderFocus(false)
 {
   
   for (int i = 0; i < m_iChannels; i++)
@@ -81,10 +83,15 @@ VUWidget::VUWidget(int iChannels, float fMin, float fMax, std::string title, boo
   } 
 
   //The micro fader for threshold
-  add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK);
-  signal_button_press_event().connect(sigc::mem_fun(*this, &VUWidget::on_button_press_event),true);
-  signal_button_release_event().connect(sigc::mem_fun(*this, &VUWidget::on_button_release_event),true);
-  signal_scroll_event().connect(sigc::mem_fun(*this, &VUWidget::on_scrollwheel_event),true);
+  if(m_bDrawThreshold)
+  {
+    add_events(Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::POINTER_MOTION_MASK | Gdk::SCROLL_MASK | Gdk::LEAVE_NOTIFY_MASK);
+    signal_button_press_event().connect(sigc::mem_fun(*this, &VUWidget::on_button_press_event),true);
+    signal_button_release_event().connect(sigc::mem_fun(*this, &VUWidget::on_button_release_event),true);
+    signal_scroll_event().connect(sigc::mem_fun(*this, &VUWidget::on_scrollwheel_event),true);
+    signal_motion_notify_event().connect(sigc::mem_fun(*this, &VUWidget::on_mouse_motion_event),true);
+    signal_leave_notify_event().connect(sigc::mem_fun(*this, &VUWidget::on_mouse_leave_widget),true);
+  }
   
   Glib::signal_timeout().connect( sigc::mem_fun(*this, &VUWidget::on_timeout_redraw), AUTO_REFRESH_TIMEOUT_MS );
 }
@@ -97,7 +104,17 @@ VUWidget::~VUWidget()
   delete [] m_end;
   delete [] m_iBuffCnt;
 }
-  
+
+bool VUWidget::on_mouse_leave_widget(GdkEventCrossing* event)
+{
+  if(!bMotionIsConnected)
+  {
+    m_FaderFocus = false;
+    m_redraw_fader = true;
+  }
+  return true;
+}
+
 void VUWidget::setValue(int iChannel, float fValue)
 {   
   if (fValue > 0)
@@ -228,19 +245,15 @@ bool  VUWidget::on_button_press_event(GdkEventButton* event)
   if( y > m_iThFaderPositon - MICROFADER_WIDTH/2 &&
       y < m_iThFaderPositon + MICROFADER_WIDTH/2)
   {
-
-    if (!bMotionIsConnected)
-    {
-      m_motion_connection = signal_motion_notify_event().connect(sigc::mem_fun(*this, &VUWidget::on_mouse_motion_event),true);
       bMotionIsConnected = true;
-    }
+      get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
   }
   return true;
 }
 
 bool  VUWidget::on_button_release_event(GdkEventButton* event)
 {
-  m_motion_connection.disconnect();
+  get_window()->set_cursor();
   bMotionIsConnected = false;
   return true;
 }
@@ -267,11 +280,21 @@ bool  VUWidget::on_scrollwheel_event(GdkEventScroll* event)
 
 bool  VUWidget::on_mouse_motion_event(GdkEventMotion* event)
 {
+  if (bMotionIsConnected)
+  {
     double m = ((double)(3.0*MARGIN + TOP_OFFSET - height ))/(m_fMax - m_fMin);
     double n = (double)(height - 2.0*MARGIN) - m_fMin*m;
     double faderPos = (event->y - n)/m;
     set_value_th(faderPos);  
     m_FaderChangedSignal.emit();
+  }
+  else 
+  {
+    //Check focus on fader widget
+    m_FaderFocus = event->y > m_iThFaderPositon - MICROFADER_WIDTH/2 && event->y < m_iThFaderPositon + MICROFADER_WIDTH/2 &&
+		   event->x > width - MICROFADER_WIDTH && event->x < width ;
+    m_redraw_fader = true;       
+  }
     return true;
 }
 
@@ -409,7 +432,7 @@ void VUWidget::redraw_faderwidget()
     cr->save();    
     cr->translate(width - MICROFADER_WIDTH/2 + 2,  m_iThFaderPositon + 4);
     cr->scale(MICROFADER_WIDTH/2, MICROFADER_WIDTH/4);
-    Cairo::RefPtr<Cairo::RadialGradient> bkg_gradient_rad_ptr = Cairo::RadialGradient::create(0, 0, 0, 0, 0, 1);
+    Cairo::RefPtr<Cairo::RadialGradient> bkg_gradient_rad_ptr = Cairo::RadialGradient::create(0, 0, 0, 0, 0, 1);   
     bkg_gradient_rad_ptr->add_color_stop_rgba (0.3, 0.2, 0.2, 0.2, 1.0); 
     bkg_gradient_rad_ptr->add_color_stop_rgba (1.0, 0.1, 0.1, 0.2, 0.0); 
     cr->set_source(bkg_gradient_rad_ptr);  
@@ -430,10 +453,20 @@ void VUWidget::redraw_faderwidget()
     bkg_gradient_ptr->add_color_stop_rgba (1.0, 0.2, 0.2, 0.25, 1.0); 
     cr->set_source(bkg_gradient_ptr);
     cr->fill_preserve();   
+    
+    //Draw focus glow
+    if(m_FaderFocus)
+    {
+      Cairo::RefPtr<Cairo::RadialGradient> glow_gradient_rad_ptr = Cairo::RadialGradient::create(width - MICROFADER_WIDTH/2, m_iThFaderPositon, MICROFADER_WIDTH/2, width - MICROFADER_WIDTH/2, m_iThFaderPositon, MICROFADER_WIDTH);   
+      glow_gradient_rad_ptr->add_color_stop_rgba (0.0, 0.0, 1.0, 1.0, 0.1); 
+      glow_gradient_rad_ptr->add_color_stop_rgba (0.05, 1.0, 1.0, 1.0, 0.3); 
+      cr->set_source(glow_gradient_rad_ptr);  
+      cr->fill_preserve();  
+    }
     cr->set_source_rgba(0.1, 0.1, 0.1, 0.7);
     cr->set_line_width(1.0);
     cr->stroke();
-    
+       
     cr->move_to(width - 2 - 5*MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5);
     cr->line_to(width - 4 - MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5);
     cr->move_to(width - 2 - 5*MICROFADER_WIDTH/8, m_iThFaderPositon + 0.5 - 2);

@@ -49,11 +49,6 @@ This file contains the filter definitions
 #define  F_PEAK 11
 #define  F_NOTCH 12
 
-//Interpolation params
-#define FREQ_INTER_DEC_SECOND 10.0f //30.0f //TEST 6 va molt ve el HPF xo potser es massa lent, en 10 ja fa algu d soroll, automatiza el d linuxDSP a vera kins temps es capaç de donar ell
-#define GAIN_INTER_DB_SECOND 15.0f
-#define Q_INTER_DEC_SECOND 10.0f
-
 typedef struct
 {
   double b0, b1, b2, a1, a2; //Second Order coeficients

@@ -8,32 +8,37 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
+<http://eq10q.sourceforge.net/prafols#me>
+	a foaf:Person ;
+	foaf:name "Pere Ràfols Soler" ;
+	foaf:mbox <mailto:sapista2@gmail.com> ;
+	foaf:homepage <http://eq10q.sourceforge.net> .
+
+<http://eq10q.sourceforge.net/eq10qplugins>
+	a doap:Project ;
+	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:name "EQ10Q plugins" .
+
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/eq/eq1qm/gui>
   a guiext:GtkUI;
   guiext:binary <gui/eq1qm_gui.so>;
-  guiext:requiredFeature guiext:makeResident, urid:map;
-  guiext:optionalFeature guiext:noUserResize.
+  lv2:requiredFeature urid:map;
+  lv2:optionalFeature guiext:noUserResize.
   
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/eq/eq1qm>
-  a lv2:Plugin, lv2:EQPlugin;
+  a lv2:Plugin, lv2:EQPlugin, doap:Project;
   lv2:binary <eq1qm.so>;
   doap:name "EQ1Q Mono";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:requiredFeature urid:map;
-  lv2:optionalFeature lv2:hardRtCapable;
-
-guiext:ui <http://eq10q.sourceforge.net/eq/eq1qm/gui>;
-
-doap:maintainer [
-      foaf:name "Pere Rafols Soler";
-      foaf:homepage <http://eq10q.sourceforge.net/> ;
-      foaf:mbox <mailto:sapista2@gmail.com> ;
-   ] ;
+  lv2:optionalFeature lv2:hardRTCapable;
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  guiext:ui <http://eq10q.sourceforge.net/eq/eq1qm/gui>;
 
   lv2:port [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 0;
     lv2:symbol "bypass";
     lv2:name "Bypass";
@@ -113,7 +118,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 8;
     lv2:symbol "filter1_type";
     lv2:name "Filter 1 Type";
@@ -124,7 +129,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 9;
     lv2:symbol "filter1_enable";
     lv2:name "Filter 1 Enable";

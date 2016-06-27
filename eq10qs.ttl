@@ -8,32 +8,37 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
+<http://eq10q.sourceforge.net/prafols#me>
+	a foaf:Person ;
+	foaf:name "Pere Ràfols Soler" ;
+	foaf:mbox <mailto:sapista2@gmail.com> ;
+	foaf:homepage <http://eq10q.sourceforge.net> .
+
+<http://eq10q.sourceforge.net/eq10qplugins>
+	a doap:Project ;
+	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:name "EQ10Q plugins" .
+
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/eq/eq10qs/gui>
   a guiext:GtkUI;
   guiext:binary <gui/eq10qs_gui.so>;
-  guiext:requiredFeature guiext:makeResident, urid:map;
-  guiext:optionalFeature guiext:noUserResize.
+  lv2:requiredFeature urid:map;
+  lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/eq/eq10qs>
-  a lv2:Plugin, lv2:EQPlugin;
+  a lv2:Plugin, lv2:EQPlugin, doap:Project;
   lv2:binary <eq10qs.so>;
   doap:name "EQ10Q Stereo";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:requiredFeature urid:map;
-  lv2:optionalFeature lv2:hardRtCapable;
-
-guiext:ui <http://eq10q.sourceforge.net/eq/eq10qs/gui>;
-
-doap:maintainer [
-      foaf:name "Pere Rafols Soler";
-      foaf:homepage <http://eq10q.sourceforge.net/> ;
-      foaf:mbox <mailto:sapista2@gmail.com> ;
-   ] ;
+  lv2:optionalFeature lv2:hardRTCapable;
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  guiext:ui <http://eq10q.sourceforge.net/eq/eq10qs/gui>;
 
   lv2:port [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 0;
     lv2:symbol "bypass";
     lv2:name "Bypass";
@@ -428,7 +433,7 @@ doap:maintainer [
 
 ######### TYPE PORTS ####################
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 37;
     lv2:symbol "filter1_type";
     lv2:name "Filter 1 Type";
@@ -439,7 +444,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 38;
     lv2:symbol "filter2_type";
     lv2:name "Filter 2 Type";
@@ -450,7 +455,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 39;
     lv2:symbol "filter3_type";
     lv2:name "Filter 3 Type";
@@ -461,7 +466,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 40;
     lv2:symbol "filter4_type";
     lv2:name "Filter 4 Type";
@@ -472,7 +477,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 41;
     lv2:symbol "filter5_type";
     lv2:name "Filter 5 Type";
@@ -483,7 +488,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 42;
     lv2:symbol "filter6_type";
     lv2:name "Filter 6 Type";
@@ -494,7 +499,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 43;
     lv2:symbol "filter7_type";
     lv2:name "Filter 7 Type";
@@ -505,7 +510,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 44;
     lv2:symbol "filter8_type";
     lv2:name "Filter 8 Type";
@@ -516,7 +521,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 45;
     lv2:symbol "filter9_type";
     lv2:name "Filter 9 Type";
@@ -527,7 +532,7 @@ doap:maintainer [
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 46;
     lv2:symbol "filter10_type";
     lv2:name "Filter 10 Type";
@@ -539,113 +544,113 @@ doap:maintainer [
 
 ################# ENABLE PORTS ###################
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 47;
     lv2:symbol "filter1_enable";
     lv2:name "Filter 1 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 48;
     lv2:symbol "filter2_enable";
     lv2:name "Filter 2 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 49;
     lv2:symbol "filter3_enable";
     lv2:name "Filter 3 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 50;
     lv2:symbol "filter4_enable";
     lv2:name "Filter 4 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 51;
     lv2:symbol "filter5_enable";
     lv2:name "Filter 5 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 52;
     lv2:symbol "filter6_enable";
     lv2:name "Filter 6 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 53;
     lv2:symbol "filter7_enable";
     lv2:name "Filter 7 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 54;
     lv2:symbol "filter8_enable";
     lv2:name "Filter 8 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 55;
     lv2:symbol "filter9_enable";
     lv2:name "Filter 9 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 56;
     lv2:symbol "filter10_enable";
     lv2:name "Filter 10 Enable";
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:integer;
+    lv2:portProperty lv2:toggled;
   ],
 
 ############## VU PORTS ############################
@@ -698,7 +703,7 @@ doap:maintainer [
   ],
   
   [
-    a lv2:ControlPort, lv2:InputPort, lv2:integer;
+    a lv2:ControlPort, lv2:InputPort;
     lv2:index 63;
     lv2:symbol "midsidemode";
     lv2:name "Mid Side Mode";

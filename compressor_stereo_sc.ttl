@@ -5,28 +5,32 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
+<http://eq10q.sourceforge.net/prafols#me>
+	a foaf:Person ;
+	foaf:name "Pere Ràfols Soler" ;
+	foaf:mbox <mailto:sapista2@gmail.com> ;
+	foaf:homepage <http://eq10q.sourceforge.net> .
+
+<http://eq10q.sourceforge.net/eq10qplugins>
+	a doap:Project ;
+	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:name "EQ10Q plugins" .
+
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/compressor_sc/gui>
   a guiext:GtkUI;
   guiext:binary <gui/compressor_gui_sc.so>;
-  guiext:requiredFeature guiext:makeResident;
-  guiext:optionalFeature guiext:noUserResize.
+  lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/compressor_stereo_sc>
-  a lv2:Plugin, lv2:CompressorPlugin;
+  a lv2:Plugin, lv2:CompressorPlugin, doap:Project;
   lv2:binary <compressor_stereo_sc.so>;
   doap:name "CS10QS-SC";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
-  lv2:optionalFeature lv2:hardRtCapable;
-
-guiext:ui <http://eq10q.sourceforge.net/compressor_sc/gui>;
-
-doap:maintainer [
-      foaf:name "Pere Rafols Soler";
-      foaf:homepage <http://eq10q.sourceforge.net/> ;
-      foaf:mbox <mailto:sapista2@gmail.com> ;
-   ] ;
+  lv2:optionalFeature lv2:hardRTCapable;
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  guiext:ui <http://eq10q.sourceforge.net/compressor_sc/gui>;
 
       lv2:port [
 	      a lv2:AudioPort, lv2:OutputPort;
@@ -50,7 +54,7 @@ doap:maintainer [
 	      lv2:minimum 0;
 	      lv2:maximum 1;
 	      lv2:default 0;
-	      lv2:PortProperty lv2:toggled;
+	      lv2:portProperty lv2:toggled;
       ],
 
       [
@@ -181,7 +185,7 @@ doap:maintainer [
 	      lv2:minimum 0;
 	      lv2:maximum 1;
 	      lv2:default 0;
-	      lv2:PortProperty lv2:toggled;
+	      lv2:portProperty lv2:toggled;
       ],
       
               [
@@ -192,24 +196,34 @@ doap:maintainer [
 	      lv2:minimum 0;
 	      lv2:maximum 1;
 	      lv2:default 0;
-	      lv2:PortProperty lv2:toggled;
+	      lv2:portProperty lv2:toggled;
+      ],
+      
+	      [
+              a lv2:ControlPort, lv2:InputPort;
+              lv2:index 17;
+              lv2:symbol "punch";
+              lv2:name "Punch";
+              lv2:minimum 0;
+              lv2:maximum 1;
+              lv2:default 0;
       ],
             
 	      [
 	      a lv2:AudioPort, lv2:OutputPort;
-	      lv2:index 17;
+	      lv2:index 18;
 	      lv2:symbol "outputR";
 	      lv2:name "OutputR";
       ],
 	      [
 	      a lv2:AudioPort, lv2:InputPort;
-	      lv2:index 18;
+	      lv2:index 19;
 	      lv2:symbol "inputR";
 	      lv2:name "InputR";
       ],
              [
 	      a lv2:AudioPort, lv2:InputPort;
-	      lv2:index 19;
+	      lv2:index 20;
 	      lv2:symbol "inputSC";
 	      lv2:name "InputSC";
 	      lv2:portProperty lv2:isSideChain;

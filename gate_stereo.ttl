@@ -5,28 +5,32 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
+<http://eq10q.sourceforge.net/prafols#me>
+	a foaf:Person ;
+	foaf:name "Pere Ràfols Soler" ;
+	foaf:mbox <mailto:sapista2@gmail.com> ;
+	foaf:homepage <http://eq10q.sourceforge.net> .
+
+<http://eq10q.sourceforge.net/eq10qplugins>
+	a doap:Project ;
+	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:name "EQ10Q plugins" .
+
 ##LV2 GUI extension
 <http://eq10q.sourceforge.net/gate/gui>
   a guiext:GtkUI;
   guiext:binary <gui/gate_gui.so>;
-  guiext:requiredFeature guiext:makeResident;
-  guiext:optionalFeature guiext:noUserResize.
+  lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
 <http://eq10q.sourceforge.net/gate_stereo>
-  a lv2:Plugin, lv2:GatePlugin ;
+  a lv2:Plugin, lv2:GatePlugin, doap:Project;
   lv2:binary <gate_stereo.so>;
   doap:name "GT10QS";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
-  lv2:optionalFeature lv2:hardRtCapable;
-
-guiext:ui <http://eq10q.sourceforge.net/gate/gui>;
-
-doap:maintainer [
-      foaf:name "Pere Rafols Soler";
-      foaf:homepage <http://eq10q.sourceforge.net/> ;
-      foaf:mbox <mailto:sapista2@gmail.com> ;
-   ] ;
+  lv2:optionalFeature lv2:hardRTCapable;
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  guiext:ui <http://eq10q.sourceforge.net/gate/gui>;
 
       lv2:port [
 	      a lv2:AudioPort, lv2:OutputPort;
@@ -50,7 +54,7 @@ doap:maintainer [
 	      lv2:minimum 0;
 	      lv2:maximum 1;
 	      lv2:default 0;
-	      lv2:PortProperty lv2:toggled;
+	      lv2:portProperty lv2:toggled;
       ],
 
       [

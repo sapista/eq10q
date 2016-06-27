@@ -25,7 +25,7 @@
 #include "toggle_button.h" //To draw the LED using a static function
 
 #include <gdkmm.h>
-#include <gdk/gdkkeysyms.h>
+#include <gdkmm/cursor.h>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -497,6 +497,12 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
       m_FreqBtn.pressed = m_bBandIsEnabled & (event->x > m_FreqBtn.x0 && event->x < m_FreqBtn.x1 && event->y > m_FreqBtn.y0 && event->y < m_FreqBtn.y1);
       m_QBtn.pressed = m_bBandIsEnabled & (event->x > m_QBtn.x0 && event->x < m_QBtn.x1 && event->y > m_QBtn.y0 && event->y < m_QBtn.y1);
       
+      if( m_GainBtn.pressed || m_FreqBtn.pressed || m_QBtn.pressed)
+      {
+	//Disable cursor
+	get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
+      }
+      
       if(m_bIsStereoPlugin)
       {
         m_MidSideBtn.ML_pressed = m_bBandIsEnabled & (event->x > m_MidSideBtn.Mx && event->x < m_MidSideBtn.Dx && event->y > m_MidSideBtn.y0 && event->y < m_MidSideBtn.y1);
@@ -519,6 +525,8 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
 
 bool BandCtl::on_button_release_event(GdkEventButton* event)
 {
+  get_window()->set_cursor();
+  
   //Check for enable button
   if(m_EnableBtn.pressed && (event->x > m_EnableBtn.x0 && event->x < m_EnableBtn.x1 && event->y > m_EnableBtn.y0 && event->y < m_EnableBtn.y1))
   {

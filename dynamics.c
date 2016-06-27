@@ -58,20 +58,22 @@ This file implements functionalities for diferent dynamic plugins
 #ifdef PLUGIN_IS_COMPRESSOR
 #define PORT_FEEDBACK 15
 #define PORT_COMP_MODE 16
-#define PORT_OUTPUT_R 17
-#define PORT_INPUT_R 18
+#define PORT_PUNCH 17
+#define PORT_OUTPUT_R 18
+#define PORT_INPUT_R 19
 
 #else
 #ifdef PLUGIN_IS_COMPRESSOR_WITH_SC
 #define PORT_SC_ACTIVE 15
 #define PORT_COMP_MODE 16
+#define PORT_PUNCH 17
 
 #if NUM_CHANNELS==1
-#define PORT_SC_AUDIO_IN 17
+#define PORT_SC_AUDIO_IN 18
 #else
-#define PORT_OUTPUT_R 17
-#define PORT_INPUT_R 18
-#define PORT_SC_AUDIO_IN 19
+#define PORT_OUTPUT_R 18
+#define PORT_INPUT_R 19
+#define PORT_SC_AUDIO_IN 20
 #endif
 
 #else
@@ -110,6 +112,11 @@ typedef struct {
   #else
   float *range;
   #endif
+  #endif
+  
+  #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
+  float *punch;
+  float g_error0;
   #endif
   
   //Plugin Internal data
@@ -198,6 +205,10 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
     case PORT_COMP_MODE:
 	    plugin->compressor_mode = (float*)data;
 	    break;
+	    
+    case PORT_PUNCH:
+	    plugin->punch = (float*)data;
+	    break;
     
     #else
     #ifdef  PLUGIN_IS_COMPRESSOR_WITH_SC     
@@ -209,6 +220,9 @@ static void connectPortDyn(LV2_Handle instance, uint32_t port, void *data)
 	    break;
     case PORT_SC_AUDIO_IN:
 	    plugin->input_sidechain = (const float*)data;
+	    break;
+    case PORT_PUNCH:
+	    plugin->punch = (float*)data;
 	    break;
 	   
     #else
@@ -241,6 +255,7 @@ static LV2_Handle instantiateDyn(const LV2_Descriptor *descriptor, double s_rate
   #endif
   #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   plugin_data->g =  1.0f;
+  plugin_data->g_error0 = 0.0f;
   #endif
     
   plugin_data->InputVu[0] = VuInit(s_rate);
@@ -284,6 +299,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   //Read ports (compressor/expander)
   #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
   const float makeup = dB2Lin(*(plugin_data->hold_makeup));
+  const float punch = *(plugin_data->punch);
   #else
   const float makeup = 1.0f;
   #endif
@@ -317,13 +333,15 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
   
   //Processor vars (only COMPRESSOR)
   #if defined(PLUGIN_IS_COMPRESSOR) || defined(PLUGIN_IS_COMPRESSOR_WITH_SC) 
+  float g_error = 0.0f;
+  float scl = 0.0f;
   const float range_lin = pow(10, -12 * 0.05); //By various tests -12 dB is the optimal setting for the release time of a opto-compressor
   const float Kdc = pow((range_lin/(1.0f-range_lin))*((1.0f-0.6f)/0.6f), 1.0f/(decay*0.001f*sample_rate)); //Decay constant for S curve in compressor
   #endif
   
   //Processor vars  common  
-  const float ac = exp(-1.0f/(attack * sample_rate * 0.001f)); //Attack constant in compressor
-  const float dc = exp(-1.0f/(decay * sample_rate * 0.001f)); //Decay constant
+  const float ac = exp(-5.0f/(attack * sample_rate * 0.001f)); //Attack constant in compressor 
+  const float dc = exp(-3.0f/(decay * sample_rate * 0.001f)); //Decay constant 
   float detector_vu = plugin_data->detector_vu;
   float gain_reduction = 0.0f;
   float input_filtered = 0.0f;
@@ -479,6 +497,7 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     //Ballistics and peak detector
     if(gain_reduction > g)
     {
+     
       //Compressor OFF
       if(bIsOptoCompressor)
       {
@@ -492,7 +511,10 @@ static void runDyn(LV2_Handle instance, uint32_t sample_count)
     else
     {
       //Compressor ON
-      gain_reduction = gain_reduction  - (gain_reduction - g)*ac;
+      g_error = gain_reduction - g;      
+      scl = punch*(g_error*plugin_data->g_error0)/((1.0f-gain_reduction + 1e-8f)*(1.0f-gain_reduction + 1e-8f));
+      gain_reduction = (gain_reduction - (g_error*ac))*(1.0f- scl) + scl*g;
+      plugin_data->g_error0 = g_error;     
     }  
     #endif
     //=================== END OF COMPRESSOR CODE ======================

@@ -136,7 +136,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_dBScaleAlign.set_padding(0, 3, 0, 0);
   m_dBScaleAlign.add(*m_dBScaleFrame);
   
-  //Stereo mode packç
+  //Stereo mode pack
   if(m_iNumOfChannels == 2)
   {
     m_LRStereoMode.set_active(true);
