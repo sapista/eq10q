@@ -98,8 +98,9 @@ class BandCtl : public Gtk::DrawingArea
     //Override default signal handler:
     virtual bool on_expose_event(GdkEventExpose* event);
     
+    //TODO remove??
     //Keyboard signal handler
-    sigc::connection  keyPressEvent;
+    //sigc::connection  keyPressEvent;
         
   private:
     

@@ -98,7 +98,7 @@ HelloWorld::HelloWorld()
   m_BassUp = Gtk::manage(new BassUpMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@)));
   m_MidSide =  Gtk::manage(new MidSideMainWindow("http://eq10q.sourceforge.net/eq/eq10qs",std::string(@Eq_Gui_Test_Path@), true));
   m_hbox.pack_start(*m_EqWin);
-  //m_hbox.pack_start(*m_GateWin);
+  m_hbox.pack_start(*m_GateWin);
   //m_hbox.pack_start(*m_BassUp, Gtk::PACK_SHRINK);
   //m_hbox.pack_start( *m_MidSide);
   //m_hbox.pack_start(m_TestScale);

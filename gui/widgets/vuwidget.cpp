@@ -21,7 +21,6 @@
 #include <iostream>
 #include <cmath>
 #include <cstdio>
-#include <gdkmm/cursor.h>
 
 #include "colors.h"
 #include "vuwidget.h"
@@ -246,14 +245,12 @@ bool  VUWidget::on_button_press_event(GdkEventButton* event)
       y < m_iThFaderPositon + MICROFADER_WIDTH/2)
   {
       bMotionIsConnected = true;
-      get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
   }
   return true;
 }
 
 bool  VUWidget::on_button_release_event(GdkEventButton* event)
 {
-  get_window()->set_cursor();
   bMotionIsConnected = false;
   return true;
 }

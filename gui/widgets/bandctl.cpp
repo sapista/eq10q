@@ -25,7 +25,6 @@
 #include "toggle_button.h" //To draw the LED using a static function
 
 #include <gdkmm.h>
-#include <gdkmm/cursor.h>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -112,7 +111,7 @@ m_bIsStereoPlugin(isStereo)
   itm_peak->signal_activate().connect(sigc::mem_fun(*this, &BandCtl::on_menu_peak));
   itm_notch->signal_activate().connect(sigc::mem_fun(*this, &BandCtl::on_menu_notch));
   m_TypePopUp->signal_hide().connect(sigc::mem_fun(*this, &BandCtl::on_menu_hide));
-  signal_focus_out_event().connect(sigc::mem_fun(*this, &BandCtl::on_focus_out_event));
+  signal_focus_out_event().connect(sigc::mem_fun(*this, &BandCtl::on_focus_out_event)); 
   
   m_TypePopUp->append(*itm_lpf);
   m_TypePopUp->append(*itm_hpf);
@@ -135,6 +134,8 @@ m_bIsStereoPlugin(isStereo)
   signal_scroll_event().connect(sigc::mem_fun(*this, &BandCtl::on_scrollwheel_event),true);
   signal_motion_notify_event().connect(sigc::mem_fun(*this, &BandCtl::on_mouse_motion_event),true);
   signal_leave_notify_event().connect(sigc::mem_fun(*this, &BandCtl::on_mouse_leave_widget),true);
+  
+  signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event)); //TODO
   
   Glib::RefPtr<Gtk::Style> sty =  Gtk::Style::create();  
   sty->set_font(Pango::FontDescription("sans 11px"));
@@ -439,11 +440,9 @@ void BandCtl::on_menu_hide()
   redraw();
 }
 
-
+//TODO: En ardour4 event de tecla mai arriba
 bool BandCtl::on_button_press_event(GdkEventButton* event)
-{ 
-  grab_focus();
-  
+{  
   //Notify band over
   m_bandSelectedSignal.emit(m_iBandNum);
   
@@ -460,22 +459,22 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
       {
         m_GainBtn.ss.str(""); //Clear stringstream
         m_GainBtn.ss<<std::setprecision(2)<< std::fixed << m_GainBtn.value;
-        grab_focus();
-        keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
+	grab_focus();
+        //keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event)); //TODO
       }
       else if(m_FreqBtn.text)
       {
         m_FreqBtn.ss.str(""); //Clear stringstream
         m_FreqBtn.ss<<std::setprecision(2)<< std::fixed <<m_FreqBtn.value;
         grab_focus();
-        keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
+        //keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event)); //TODO
       }
       else if(m_QBtn.text)
       {
         m_QBtn.ss.str(""); //Clear stringstream
         m_QBtn.ss<<std::setprecision(2)<< std::fixed <<m_QBtn.value;
         grab_focus();
-        keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event));
+        //keyPressEvent = signal_key_press_event().connect(sigc::mem_fun(*this, &BandCtl::on_key_press_event)); //TODO
       }
       
     }
@@ -496,13 +495,7 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
       m_GainBtn.pressed = m_bBandIsEnabled & (event->x > m_GainBtn.x0 && event->x < m_GainBtn.x1 && event->y > m_GainBtn.y0 && event->y < m_GainBtn.y1);
       m_FreqBtn.pressed = m_bBandIsEnabled & (event->x > m_FreqBtn.x0 && event->x < m_FreqBtn.x1 && event->y > m_FreqBtn.y0 && event->y < m_FreqBtn.y1);
       m_QBtn.pressed = m_bBandIsEnabled & (event->x > m_QBtn.x0 && event->x < m_QBtn.x1 && event->y > m_QBtn.y0 && event->y < m_QBtn.y1);
-      
-      if( m_GainBtn.pressed || m_FreqBtn.pressed || m_QBtn.pressed)
-      {
-	//Disable cursor
-	get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
-      }
-      
+           
       if(m_bIsStereoPlugin)
       {
         m_MidSideBtn.ML_pressed = m_bBandIsEnabled & (event->x > m_MidSideBtn.Mx && event->x < m_MidSideBtn.Dx && event->y > m_MidSideBtn.y0 && event->y < m_MidSideBtn.y1);
@@ -524,9 +517,7 @@ bool BandCtl::on_button_press_event(GdkEventButton* event)
 }
 
 bool BandCtl::on_button_release_event(GdkEventButton* event)
-{
-  get_window()->set_cursor();
-  
+{ 
   //Check for enable button
   if(m_EnableBtn.pressed && (event->x > m_EnableBtn.x0 && event->x < m_EnableBtn.x1 && event->y > m_EnableBtn.y0 && event->y < m_EnableBtn.y1))
   {
@@ -710,6 +701,9 @@ bool BandCtl::on_scrollwheel_event(GdkEventScroll* event)
 
 bool BandCtl::on_key_press_event(GdkEventKey* event)
 { 
+  
+  std::cout<<"BandCtl::on_key_press_event()"<<" event = "<<event->keyval<<std::endl; //TODO reomve
+  
   switch(event->keyval)
   {
     case GDK_KEY_Return:
@@ -742,7 +736,7 @@ bool BandCtl::on_key_press_event(GdkEventKey* event)
        m_GainBtn.text = false;
        m_FreqBtn.text = false;
        m_QBtn.text = false;
-       keyPressEvent.disconnect();
+       //keyPressEvent.disconnect(); //TODO
       break;
       
     case GDK_KEY_BackSpace:
@@ -836,12 +830,14 @@ bool BandCtl::on_key_press_event(GdkEventKey* event)
 }
 
 
+//TODO no estic segur de necessitar aquest senyal per a res.
 bool BandCtl::on_focus_out_event(GdkEventFocus* event)
 {
+  std::cout <<"on_focus_out_event"<<std::endl; //TODO Remove
   m_GainBtn.text = false;
   m_FreqBtn.text = false;
   m_QBtn.text = false;
-  keyPressEvent.disconnect();
+  //keyPressEvent.disconnect(); //TODO
   redraw();
   return true;
 }
@@ -911,7 +907,7 @@ bool BandCtl::parseBtnString(BandCtl::Button* btn)
   {
     //Found both, k and decimal but in inverse order, rise an error
     btn->text = false;
-    keyPressEvent.disconnect();
+    //keyPressEvent.disconnect(); //TODO
     return false;
   }
   
@@ -958,7 +954,7 @@ bool BandCtl::parseBtnString(BandCtl::Button* btn)
     {
       //throw an error, imposible to match str > 3 with k
       btn->text = false;
-      keyPressEvent.disconnect();
+      //keyPressEvent.disconnect(); //TODO
       return false;
     }
   }
@@ -973,7 +969,7 @@ bool BandCtl::parseBtnString(BandCtl::Button* btn)
   btn->value = btn->value > btn->max ? btn->max : btn->value;
   btn->value = btn->value < btn->min ? btn->min : btn->value;
   btn->text = false;
-  keyPressEvent.disconnect();
+  //keyPressEvent.disconnect(); //TODO
   return true;
 }
 
@@ -985,7 +981,7 @@ bool BandCtl::on_mouse_leave_widget(GdkEventCrossing* event)
   m_GainBtn.focus = m_GainBtn.pressed; //Lost focus only if is no pressed
   m_FreqBtn.focus = m_FreqBtn.pressed; //Lost focus only if is no pressed
   m_QBtn.focus = m_QBtn.pressed; //Lost focus only if is no pressed
-  keyPressEvent.disconnect();
+  //keyPressEvent.disconnect(); //TODO
   if(m_bIsStereoPlugin)
   {
     m_MidSideBtn.Dual_focus = false;

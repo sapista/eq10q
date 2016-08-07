@@ -136,7 +136,6 @@ bool KnobWidget2::on_button_press_event(GdkEventButton* event)
       event->type == GDK_BUTTON_PRESS) //Only grab single click
   {
     mouse_move_ant = y;
-    get_window()->set_cursor(Gdk::Cursor(Gdk::BLANK_CURSOR));
     if(event->button == 1)
     { 
       bMotionIsConnected = true;
@@ -153,7 +152,6 @@ bool KnobWidget2::on_button_press_event(GdkEventButton* event)
 
 bool KnobWidget2::on_button_release_event(GdkEventButton* event)
 {
-  get_window()->set_cursor();
   bMotionIsConnected = false;
   return true;
 }
