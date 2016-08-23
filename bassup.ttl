@@ -28,7 +28,7 @@
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:binary <bassup.so>;
   lv2:optionalFeature lv2:hardRTCapable;
-  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
   guiext:ui <http://eq10q.sourceforge.net/bassup/gui>;
 
       lv2:port [

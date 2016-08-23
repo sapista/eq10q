@@ -34,7 +34,7 @@
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:requiredFeature urid:map;
   lv2:optionalFeature lv2:hardRTCapable;
-  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>
+  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
   guiext:ui <http://eq10q.sourceforge.net/eq/eq6qm/gui>;
 
   lv2:port [
