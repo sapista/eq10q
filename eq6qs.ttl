@@ -375,7 +375,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -386,7 +386,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -397,7 +397,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -408,7 +408,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -419,7 +419,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
   [
@@ -430,7 +430,7 @@
     lv2:minimum 0;
     lv2:maximum 5;
     lv2:default 0;
-    lv2:portProperty lv2:toggled;
+    lv2:portProperty lv2:integer;
   ],
 
 ############## VU PORTS ############################
