@@ -40,7 +40,7 @@ DynMainWindow::DynMainWindow(const char *uri, std::string bundlePath, std::strin
 { 
   m_InGainFader = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
   m_InputVu = Gtk::manage(new VUWidget(1, -48.0, 6.0, "In", false, true));
-  m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 60.0, "GR", true));
+  m_GainReductionVu = Gtk::manage(new VUWidget(1, 0.0, 20.0, "GR", true));
   m_Attack = Gtk::manage(new KnobWidget2(0.01, 500.0, "Attack", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_Release = Gtk::manage(new KnobWidget2(5.0, 4000.0, "Release", "ms", (m_bundlePath + KNOB_ICON_FILE).c_str() , KNOB_TYPE_TIME ));
   m_Punch = Gtk::manage(new KnobWidget2(0.0, 100.0, "Punch", "%", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN ));

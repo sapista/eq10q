@@ -101,8 +101,8 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   
   m_GainFaderIn = Gtk::manage(new KnobWidget2(-20.0, 20.0, "In Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
   m_GainFaderOut = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Out Gain", "dB", (m_bundlePath + KNOB_ICON_FILE).c_str(), KNOB_TYPE_LIN, true ));
-  m_VuMeterIn = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "In")); 
-  m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -24.0, 6.0, "Out"));
+  m_VuMeterIn = Gtk::manage(new VUWidget(m_iNumOfChannels, -36.0, 6.0, "In")); 
+  m_VuMeterOut = Gtk::manage(new VUWidget(m_iNumOfChannels, -36.0, 6.0, "Out"));
    
   m_FftRange = Gtk::manage(new KnobWidget2(20.0, 100.0, "Range", "dB", (m_bundlePath + KNOB_ICON_FILE_MINI).c_str(), KNOB_TYPE_LIN ));
   m_FftGain = Gtk::manage(new KnobWidget2(-20.0, 20.0, "Gain", "dB", (m_bundlePath + KNOB_ICON_FILE_MINI).c_str(), KNOB_TYPE_LIN, true ));

@@ -66,6 +66,7 @@ protected:
   int m_iChannels;
   float m_fMin; //Min representable value in dB
   float m_fMax; //Max representable value in dB
+  int m_textdBseparation;  //Integer number of dB for each VU text step
   bool m_bIsGainReduction;
   bool bMotionIsConnected;
   float* m_fValues;

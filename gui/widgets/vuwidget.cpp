@@ -29,7 +29,6 @@
 #define MARGIN 6.5
 #define CHANNEL_WIDTH 9
 #define MICROFADER_WIDTH 30
-#define TEXT_DB_SEPARATION 3.0
 #define SCROLL_EVENT_PERCENT 0.02
 #define WIDGET_HEIGHT 150
 #define TOP_OFFSET 24
@@ -54,6 +53,8 @@ VUWidget::VUWidget(int iChannels, float fMin, float fMax, std::string title, boo
   m_redraw_Vu(true),
   m_FaderFocus(false)
 {
+  
+  m_textdBseparation = (int)round((m_fMax - m_fMin)/18.0);
   
   for (int i = 0; i < m_iChannels; i++)
   {
@@ -327,7 +328,7 @@ void VUWidget::redraw_background()
     pangoLayout->show_in_cairo_context(cr);
     cr->stroke();  
     
-    for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + TEXT_DB_SEPARATION)
+    for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + m_textdBseparation)
     {
       std::stringstream ss;
       ss<<abs(round(fdb));
@@ -373,7 +374,7 @@ void VUWidget::redraw_foreground()
     cr->save();
     cr->set_line_width(1.0);
     cr->set_source_rgba(0.8, 0.8, 0.8, 0.4);
-    for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + TEXT_DB_SEPARATION)
+    for(float fdb = m_fMin; fdb <= m_fMax; fdb = fdb + m_textdBseparation)
     {
       cr->move_to(MARGIN + TEXT_OFFSET - 2, round(dB2Pixels(fdb)) + 0.5);
       cr->line_to(MARGIN + TEXT_OFFSET + CHANNEL_WIDTH + (m_iChannels - 1 ) * (CHANNEL_WIDTH + MARGIN ) + 2, round(dB2Pixels(fdb)) + 0.5);
