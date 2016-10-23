@@ -20,9 +20,9 @@
 	doap:name "EQ10Q plugins" .
 
 ##LV2 GUI extension
-<http://eq10q.sourceforge.net/eq/eq6qm/gui>
+<http://eq10q.sourceforge.net/eq/eq10q/gui>
   a guiext:GtkUI;
-  guiext:binary <gui/eq6qm_gui.so>;
+  guiext:binary <gui/eq10q_gui.so>;
   lv2:requiredFeature urid:map;
   lv2:optionalFeature guiext:noUserResize.
 
@@ -35,7 +35,7 @@
   lv2:requiredFeature urid:map;
   lv2:optionalFeature lv2:hardRTCapable;
   lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
-  guiext:ui <http://eq10q.sourceforge.net/eq/eq6qm/gui>;
+  guiext:ui <http://eq10q.sourceforge.net/eq/eq10q/gui>;
 
   lv2:port [
     a lv2:ControlPort, lv2:InputPort;

@@ -27,6 +27,8 @@ This plugin is inside the Sapista Plugins Bundle
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 #include <gtkmm/main.h>
 #include "widgets/midsidewindow.h"
+#include <string>
+#include "../plugins_uris.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
 //#define TESTING_EQ10Q
@@ -35,17 +37,33 @@ This plugin is inside the Sapista Plugins Bundle
 using namespace std;
 #endif
 
-#define MIDSIDE_GUI_URI @Gui_MidSide_Uri@
-
-
 static LV2UI_Handle instantiateMidSide_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
   #ifdef TESTING_EQ10Q
   cout<<"instantiateEq10q_gui Entring... ";
   #endif
   
+  bool bIsLR2MS;
+  bool bAllOk = false;
+  
+  std::string str_plugin_uri(plugin_uri);
+  if( str_plugin_uri == LR2MS_URI )
+  {
+    bIsLR2MS = true;
+    bAllOk = true;
+  }
+  if( str_plugin_uri == MS2LR_URI )
+  {
+    bIsLR2MS = false;
+    bAllOk = true;
+  }
+  if(! bAllOk)
+  {
+    return NULL;
+  }
+  
   Gtk::Main::init_gtkmm_internals();
-  MidSideMainWindow* gui_data = new MidSideMainWindow(plugin_uri, std::string(bundle_path), @bIsLR2MS@);
+  MidSideMainWindow* gui_data = new MidSideMainWindow(plugin_uri, std::string(bundle_path), bIsLR2MS);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();
@@ -88,7 +106,7 @@ static void portEventMidSide_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t 
 }
 
 static const LV2UI_Descriptor MidSide_guiDescriptor = {
-  MIDSIDE_GUI_URI,
+  MIDSIDEMAT_GUI_URI,
   instantiateMidSide_gui,
   cleanupMidSide_gui,
   portEventMidSide_gui,

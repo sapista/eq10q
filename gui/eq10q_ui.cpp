@@ -27,6 +27,8 @@ This plugin is inside the Sapista Plugins Bundle
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 #include <gtkmm/main.h>
 #include "widgets/eqwindow.h"
+#include <string>
+#include "../plugins_uris.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
 //#define TESTING_EQ10Q
@@ -40,10 +42,66 @@ static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, co
 {
   #ifdef TESTING_EQ10Q
   cout<<"instantiateEq10q_gui Entring... ";
+  cout<<endl<<"Plguins URI:"<<plugin_uri;
   #endif
   
+  int nChannels = 0;
+  int nBands = 0;
+  std::string str_plugin_uri(plugin_uri);
+  if( str_plugin_uri == EQ1QM_URI)
+  {
+    nChannels = 1;
+    nBands = 1;
+  }
+  if( str_plugin_uri == EQ1QS_URI)
+  {
+    nChannels = 2;
+    nBands = 1;
+  }
+  if( str_plugin_uri == EQ4QM_URI)
+  {
+    nChannels = 1;
+    nBands = 4;
+  }
+  if( str_plugin_uri == EQ4QS_URI)
+  {
+    nChannels = 2;
+    nBands = 4;
+  }
+  if( str_plugin_uri == EQ6QM_URI)
+  {
+    nChannels = 1;
+    nBands = 6;
+  }
+  if( str_plugin_uri == EQ6QS_URI)
+  {
+    nChannels = 2;
+    nBands = 6;
+  }
+  if( str_plugin_uri == EQ10QM_URI)
+  {
+    nChannels = 1;
+    nBands = 10;
+  }
+  if( str_plugin_uri == EQ10QS_URI)
+  {
+    nChannels = 2;
+    nBands = 10;
+  }
+  #ifdef TESTING_EQ10Q
+  cout<<"\nChannels = "<< nChannels<<"\tnBands = "<< nBands;
+  #endif
+  if(nChannels == 0)
+  {
+    return NULL;
+  }
+  if(nBands == 0)
+  {
+    return NULL;
+  }
+  
   Gtk::Main::init_gtkmm_internals();
-  EqMainWindow* gui_data = new EqMainWindow(@Eq_Channels_Count@, @Eq_Bands_Count@, plugin_uri, bundle_path, features);
+  EqMainWindow* gui_data = new EqMainWindow( nChannels, nBands, plugin_uri, bundle_path, features);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();
@@ -90,7 +148,7 @@ static void portEventEq10q_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t bu
 
 
 static const LV2UI_Descriptor eq10q_guiDescriptor = {
-  @Eq_Uri@,
+  EQ10Q_GUI_URI,
   instantiateEq10q_gui,
   cleanupEq10q_gui,
   portEventEq10q_gui,
