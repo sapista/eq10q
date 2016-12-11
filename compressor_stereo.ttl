@@ -17,9 +17,9 @@
 	doap:name "EQ10Q plugins" .
 
 ##LV2 GUI extension
-<http://eq10q.sourceforge.net/compressor/gui>
+<http://eq10q.sourceforge.net/dynamics/gui>
   a guiext:GtkUI;
-  guiext:binary <gui/compressor_gui.so>;
+  guiext:binary <gui/dynamics_gui.so>;
   lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
@@ -30,7 +30,7 @@
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRTCapable;
   lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
-  guiext:ui <http://eq10q.sourceforge.net/compressor/gui>;
+  guiext:ui <http://eq10q.sourceforge.net/dynamics/gui>;
 
       lv2:port [
 	      a lv2:AudioPort, lv2:OutputPort;

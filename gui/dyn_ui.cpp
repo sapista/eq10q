@@ -27,6 +27,8 @@ This plugin is inside the Sapista Plugins Bundle
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 #include <gtkmm/main.h>
 #include "widgets/dynamicswindow.h"
+#include <string>
+#include "../plugins_uris.h"
 
 //Testing Headers TODO: comment define TESTING_EQ10Q for the final relase
 //#define TESTING_EQ10Q
@@ -35,17 +37,45 @@ This plugin is inside the Sapista Plugins Bundle
 using namespace std;
 #endif
 
-#define DYN_GUI_URI @Gui_Dyn_Uri@
-
-
 static LV2UI_Handle instantiateDyn_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
   #ifdef TESTING_EQ10Q
-  cout<<"instantiateEq10q_gui Entring... ";
+  cout<<"instantiateDyn_gui Entring... ";
   #endif
   
+   std::string sTitle;
+   bool bIsCompressor, bHasSideChain;
+   bool bAllOk = false;
+  
+  std::string str_plugin_uri(plugin_uri);
+  if( str_plugin_uri == GATE_MONO_URI || str_plugin_uri == GATE_STEREO_URI)
+  {
+    sTitle = "GT10Q ~ Noise Gate";
+    bIsCompressor = false;
+    bHasSideChain = false;
+    bAllOk = true;
+  }
+  if( str_plugin_uri == COMPRESSOR_MONO_URI || str_plugin_uri == COMPRESSOR_STEREO_URI)
+  {
+    sTitle = "CS10Q ~ Compressor";
+    bIsCompressor = true;
+    bHasSideChain = false;
+    bAllOk = true;
+  }
+  if( str_plugin_uri == COMPRESSOR_SC_MONO_URI || str_plugin_uri == COMPRESSOR_SC_STEREO_URI)
+  {
+    sTitle = "CS10Q-SC ~ Side-Chain Compressor";
+    bIsCompressor = true;
+    bHasSideChain = true;
+    bAllOk = true;
+  }
+  if(! bAllOk)
+  {
+    return NULL;
+  }
+  
   Gtk::Main::init_gtkmm_internals();
-  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path), @Dyn_Title@, @bIsCompressor@, @bHasSideChain@);
+  DynMainWindow* gui_data = new DynMainWindow(plugin_uri, std::string(bundle_path), sTitle, bIsCompressor, bHasSideChain);
   gui_data->controller = controller;
   gui_data->write_function = write_function;
   *widget = gui_data->gobj();
@@ -88,7 +118,7 @@ static void portEventDyn_gui(LV2UI_Handle ui, uint32_t port_index, uint32_t buff
 }
 
 static const LV2UI_Descriptor dyn_guiDescriptor = {
-  DYN_GUI_URI,
+  DYNAMICS_GUI_URI,
   instantiateDyn_gui,
   cleanupDyn_gui,
   portEventDyn_gui,
