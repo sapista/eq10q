@@ -5,32 +5,32 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
-<http://eq10q.sourceforge.net/prafols#me>
+<http://eq10q.plugin.org/prafols#me>
 	a foaf:Person ;
 	foaf:name "Pere Ràfols Soler" ;
 	foaf:mbox <mailto:sapista2@gmail.com> ;
-	foaf:homepage <http://eq10q.sourceforge.net> .
+	foaf:homepage <http://eq10q.plugin.org> .
 
-<http://eq10q.sourceforge.net/eq10qplugins>
+<http://eq10q.plugin.org/eq10qplugins>
 	a doap:Project ;
-	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:maintainer <http://eq10q.plugin.org/prafols#me> ;
 	doap:name "EQ10Q plugins" .
 
 ##LV2 GUI extension
-<http://eq10q.sourceforge.net/matrix_ms/gui>
+<http://eq10q.plugin.org/matrix_ms/gui>
   a guiext:GtkUI;
   guiext:binary <gui/matrix_ms_gui.so>;
   lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
-<http://eq10q.sourceforge.net/matrix_ms2lr>
+<http://eq10q.plugin.org/matrix_ms2lr>
   a lv2:Plugin, lv2:UtilityPlugin, doap:Project;
   lv2:binary <matrix_ms2lr.so>;
   doap:name "MS2LR";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRTCapable;
-  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
-  guiext:ui <http://eq10q.sourceforge.net/matrix_ms/gui>;
+  lv2:project <http://eq10q.plugin.org/eq10qplugins>;
+  guiext:ui <http://eq10q.plugin.org/matrix_ms/gui>;
 
       lv2:port
       [

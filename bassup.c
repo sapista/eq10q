@@ -30,7 +30,7 @@ This plugin is inside the Sapista Plugins Bundle
 #include <lv2/lv2plug.in/ns/lv2core/lv2.h>
 #include "dsp/filter.h"
 
-#define BASSUP_URI "http://eq10q.sourceforge.net/bassup"
+#define BASSUP_URI "http://eq10q.plugin.org/bassup"
 #define PORT_OUTPUT 0
 #define PORT_INPUT 1
 #define PORT_AMOUNT 2

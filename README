@@ -10,10 +10,10 @@ with IIR algorithms and a nice GUI displaying the equalization curve.
 At the moment we have implemented second order biquadratic filters (Peaking, Low Shelving,
 High Shelving and Notch), and configurable order (1, 2, 3, 4) HPF and LPF filters.
 All with IIR algorithms. And a GUI writed with Gtkmm (http://www.gtkmm.org) to control 
-all the parameters and display the curve using plotmm (http://plotmm.sourceforge.net).
+all the parameters and display the curve.
 The plugin is over LV2 standard and writed in C for the audio DSP and C++ for the GUI.
 
-EQ10Q is hosted at http://eq10q.sourceforge.net/
+EQ10Q is hosted at https://github.com/sapista/eq10q
 Main developer: Pere Ràfols Soler (sapista2@gmail.com)
 
 Installation

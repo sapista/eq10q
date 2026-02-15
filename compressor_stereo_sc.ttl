@@ -5,32 +5,32 @@
 @prefix units: <http://lv2plug.in/ns/extensions/units#> .
 @prefix pprop: <http://lv2plug.in/ns/ext/port-props#> .
 
-<http://eq10q.sourceforge.net/prafols#me>
+<http://eq10q.plugin.org/prafols#me>
 	a foaf:Person ;
 	foaf:name "Pere Ràfols Soler" ;
 	foaf:mbox <mailto:sapista2@gmail.com> ;
-	foaf:homepage <http://eq10q.sourceforge.net> .
+	foaf:homepage <http://eq10q.plugin.org> .
 
-<http://eq10q.sourceforge.net/eq10qplugins>
+<http://eq10q.plugin.org/eq10qplugins>
 	a doap:Project ;
-	doap:maintainer <http://eq10q.sourceforge.net/prafols#me> ;
+	doap:maintainer <http://eq10q.plugin.org/prafols#me> ;
 	doap:name "EQ10Q plugins" .
 
 ##LV2 GUI extension
-<http://eq10q.sourceforge.net/dynamics/gui>
+<http://eq10q.plugin.org/dynamics/gui>
   a guiext:GtkUI;
   guiext:binary <gui/dynamics_gui.so>;
   lv2:optionalFeature guiext:noUserResize.
 
 ##LV2 plugin binary
-<http://eq10q.sourceforge.net/compressor_stereo_sc>
+<http://eq10q.plugin.org/compressor_stereo_sc>
   a lv2:Plugin, lv2:CompressorPlugin, doap:Project;
   lv2:binary <compressor_stereo_sc.so>;
   doap:name "CS10QS-SC";
   doap:license <http://usefulinc.com/doap/licenses/gpl>;
   lv2:optionalFeature lv2:hardRTCapable;
-  lv2:project <http://eq10q.sourceforge.net/eq10qplugins>;
-  guiext:ui <http://eq10q.sourceforge.net/dynamics/gui>;
+  lv2:project <http://eq10q.plugin.org/eq10qplugins>;
+  guiext:ui <http://eq10q.plugin.org/dynamics/gui>;
 
       lv2:port [
 	      a lv2:AudioPort, lv2:OutputPort;

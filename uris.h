@@ -21,7 +21,7 @@
 #ifndef EQ10Q_URIS_H
 #define EQ10Q_URIS_H
 
-#define EQ_ATOM_URI "http://eq10q.sourceforge.net/atom"
+#define EQ_ATOM_URI "http://eq10q.plugin.org/atom"
 #define EQ_SAMPLE_RATE_KEY EQ_ATOM_URI "#sampleratekey"
 #define EQ_SAMPLE_RATE_RESPONSE EQ_ATOM_URI "#samplerate"
 #define EQ_FFT_DATA_KEY EQ_ATOM_URI "#fftdatakey"

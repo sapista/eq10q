@@ -38,7 +38,7 @@ using namespace std;
 #endif
 
 
-static LV2UI_Handle instantiateEq10q_gui(const _LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
+static LV2UI_Handle instantiateEq10q_gui(const LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)
 {
   #ifdef TESTING_EQ10Q
   cout<<"instantiateEq10q_gui Entring... ";
