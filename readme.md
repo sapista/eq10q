@@ -47,17 +47,21 @@ Ensure you have the following libraries and tools installed:
 
 ### Building from Source
 Navigate to the EQ10Q top-level directory:
-Bash
+```bash
 cmake ./
-
+```
 Compile the source:
 
-Bash
+```bash
 make
+```
+
 Install as root:
 
-Bash
+```bash
 sudo make install
+```
+
 The plugin installs to /usr/local/lib/lv2 by default.
 
 ## 📋 Requirements
@@ -70,8 +74,9 @@ To run these plugins, you need an LV2-compliant host. We recommend:
 ## 🗑 Uninstallation
 To remove the plugins from your system, delete the installation folder (default location):
 
-Bash
+```bash
 sudo rm -rf /usr/local/lib/lv2/sapistaEQv2.lv2
+```
 
 ### 🤝 Contributing & License
 EQ10Q is released under the GPL License. You are free to copy, redistribute, and modify the software.
