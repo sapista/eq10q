@@ -22,7 +22,7 @@
 #include "colors.h"
 #include <gtkmm/window.h>
 
-#define BORDER 3
+#define BORDER 0
 #define RADIUS 8
 
 MainWidget::MainWidget()
@@ -82,6 +82,7 @@ bool MainWidget::on_expose_event(GdkEventExpose* event)
     cr->fill();
     cr->restore();
   
+    
     //Draw a line
     cr->save();
     cr->begin_new_sub_path();
@@ -94,6 +95,7 @@ bool MainWidget::on_expose_event(GdkEventExpose* event)
     cr->set_source_rgba(0,0.3,0.3, 0.9);
     cr->stroke();
     cr->restore();    
+    
   }
 
   return ret;

@@ -39,11 +39,22 @@ Side-chain Filtering: Features side-chain input and filtering options to ensure 
 Prerequisites
 Ensure you have the following libraries and tools installed:
 * Compiler: G++
-* Build System: CMake, pkg-config
+* Build System: 
+  * CMake
+  * pkg-config
+  
 * Libraries: 
   * LV2 Headers
+  * Gtk2
   * Gtkmm >= 2.4
   * FFTW3
+  * lilv
+  * X11
+  
+Under Debian-based systems these can be installed with:
+```bash
+sudo apt install build-essential cmake pkg-config lv2-dev libgtk2.0-dev libgtkmm-2.4-dev libfftw3-dev liblilv-dev libx11-dev 
+```  
 
 ### Building from Source
 Navigate to the EQ10Q top-level directory:
@@ -56,13 +67,10 @@ Compile the source:
 make
 ```
 
-Install as root:
+### Installation
+After a successful build, simply copy the `EQ10QPlugins.lv2` bundle contained in the `bin` folder into any directory within the `LV2_PATH`, for example `~/.lv2/`.
 
-```bash
-sudo make install
-```
-
-The plugin installs to /usr/local/lib/lv2 by default.
+Note that there is no `make install` step, you can easily just copy the bundle yourself.
 
 ## 📋 Requirements
 To run these plugins, you need an LV2-compliant host. We recommend:
@@ -70,13 +78,6 @@ To run these plugins, you need an LV2-compliant host. We recommend:
 * Ardour
 * Carla
 * Harrison Mixbus
-
-## 🗑 Uninstallation
-To remove the plugins from your system, delete the installation folder (default location):
-
-```bash
-sudo rm -rf /usr/local/lib/lv2/sapistaEQv2.lv2
-```
 
 ### 🤝 Contributing & License
 EQ10Q is released under the GPL License. You are free to copy, redistribute, and modify the software.

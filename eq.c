@@ -308,10 +308,16 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
    
 
   //Set up forge to write directly to notify output port.
-  const uint32_t notify_capacity = plugin_data->notify_port->atom.size;
-  lv2_atom_forge_set_buffer(&plugin_data->forge, (uint8_t*)plugin_data->notify_port, notify_capacity);
-  lv2_atom_forge_sequence_head(&plugin_data->forge, &plugin_data->notify_frame, 0);
-  //printf("Notify port size %d\n", notify_capacity);
+  const int can_notify = (plugin_data->notify_port != NULL && 
+                          plugin_data->notify_port->atom.size >= sizeof(LV2_Atom_Sequence));
+  
+  if (can_notify)
+  {
+    const uint32_t notify_capacity = plugin_data->notify_port->atom.size;
+    lv2_atom_forge_set_buffer(&plugin_data->forge, (uint8_t*)plugin_data->notify_port, notify_capacity);
+    lv2_atom_forge_sequence_head(&plugin_data->forge, &plugin_data->notify_frame, 0);
+    //printf("Notify port size %d\n", notify_capacity);
+  }
    
   //Interpolation coefs force to recompute
   int recalcCoefs[NUM_BANDS];
@@ -391,16 +397,16 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
         }
         else if(obj->body.otype == plugin_data->uris.atom_sample_rate_request)
         {
-          //Send sample rate
-          LV2_Atom_Forge_Frame frameSR;       
-          lv2_atom_forge_frame_time(&plugin_data->forge, 0);
-          lv2_atom_forge_object( &plugin_data->forge, &frameSR, 0, plugin_data->uris.atom_sample_rate_response); 
-          lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_sample_rate_key); 
-          lv2_atom_forge_double(&plugin_data->forge, plugin_data->sampleRate); 
-          lv2_atom_forge_pop(&plugin_data->forge, &frameSR);
-                
-          // Close off sequence
-          lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
+          if (can_notify) 
+          {
+            //Send sample rate
+            LV2_Atom_Forge_Frame frameSR;       
+            lv2_atom_forge_frame_time(&plugin_data->forge, 0);
+            lv2_atom_forge_object( &plugin_data->forge, &frameSR, 0, plugin_data->uris.atom_sample_rate_response); 
+            lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_sample_rate_key); 
+            lv2_atom_forge_double(&plugin_data->forge, plugin_data->sampleRate); 
+            lv2_atom_forge_pop(&plugin_data->forge, &frameSR);
+          } 
         }
       }
       ev = lv2_atom_sequence_next(ev);
@@ -473,15 +479,15 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
           
 
           //Send FFT data vector
-          LV2_Atom_Forge_Frame frameFft;       
-          lv2_atom_forge_frame_time(&plugin_data->forge, 0);
-          lv2_atom_forge_object( &plugin_data->forge, &frameFft, 0, plugin_data->uris.atom_fft_data_event); 
-          lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_fft_data_key);
-          lv2_atom_forge_vector(&plugin_data->forge, sizeof(double), plugin_data->uris.atom_Double, ((FFT_N/2) + 1), plugin_data->fft_out);
-          lv2_atom_forge_pop(&plugin_data->forge, &frameFft);
-          
-          // Close off sequence
-          lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
+          if (can_notify)
+          {
+            LV2_Atom_Forge_Frame frameFft;       
+            lv2_atom_forge_frame_time(&plugin_data->forge, 0);
+            lv2_atom_forge_object( &plugin_data->forge, &frameFft, 0, plugin_data->uris.atom_fft_data_event); 
+            lv2_atom_forge_key(&plugin_data->forge, plugin_data->uris.atom_fft_data_key);
+            lv2_atom_forge_vector(&plugin_data->forge, sizeof(double), plugin_data->uris.atom_Double, ((FFT_N/2) + 1), plugin_data->fft_out);
+            lv2_atom_forge_pop(&plugin_data->forge, &frameFft);
+          }
         }
         
         if(plugin_data->fft_ix2 == FFT_N)
@@ -630,6 +636,11 @@ static void runEQ_v2(LV2_Handle instance, uint32_t sample_count)
   *(plugin_data->fVuIn[1]) = ComputeVu(plugin_data->InputVu[1], sample_count);
   *(plugin_data->fVuOut[1]) = ComputeVu(plugin_data->OutputVu[1], sample_count);
   #endif
+  
+  if (can_notify)
+  {
+    lv2_atom_forge_pop(&plugin_data->forge, &plugin_data->notify_frame);
+  }
 }
 
 static const LV2_Descriptor eqDescriptor = {

@@ -35,7 +35,7 @@ This plugin is inside the Sapista Plugins Bundle
 using namespace std;
 #endif
 
-#define BASSUP_GUI_URI "http://eq10q.plugin.org/bassup/gui"
+#define BASSUP_GUI_URI "http://eq10q.sourceforge.net/bassup/gui"
 
 
 static LV2UI_Handle instantiateBassUp_gui(const LV2UI_Descriptor *descriptor, const char *plugin_uri, const char *bundle_path, LV2UI_Write_Function write_function, LV2UI_Controller controller, LV2UI_Widget *widget, const LV2_Feature *const *features)

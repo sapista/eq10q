@@ -1,70 +1,118 @@
 @prefix lv2:  <http://lv2plug.in/ns/lv2core#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix ui:         <http://lv2plug.in/ns/extensions/ui#> .
+@prefix urid:       <http://lv2plug.in/ns/ext/urid#> .
+@prefix eq10q_gtk2: <http://eq10q.sourceforge.net/lv2-gtk2-ui-bridge> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
 
-<http://eq10q.plugin.org/eq/eq1qm>
-  a lv2:Plugin;
-  rdfs:seeAlso <eq1qm.ttl>.
+# -----------------------------------------------------------------------------
+# Common Bundle Metadata
+# -----------------------------------------------------------------------------
+<http://sapaudio.es/prafols#me>
+	a foaf:Person ;
+	foaf:name "Pere Ràfols Soler" ;
+	foaf:mbox <mailto:info@sapaudio.es> ;
+	foaf:homepage <https://sapaudio.es> .
 
-<http://eq10q.plugin.org/eq/eq1qs>
-  a lv2:Plugin;
-  rdfs:seeAlso <eq1qs.ttl>.
+<http://sapaudio.es/plugins>
+	a doap:Project ;
+	doap:maintainer <http://sapaudio.es/prafols#me> ;
+	doap:name "EQ10Q plugins" .
 
-<http://eq10q.plugin.org/eq/eq4qm>
-  a lv2:Plugin;
-  rdfs:seeAlso <eq4qm.ttl>.
+# -----------------------------------------------------------------------------
+# UI Bridge Definition
+# -----------------------------------------------------------------------------
+eq10q_gtk2:
+    a ui:X11UI ;
+    lv2:extensionData ui:idleInterface ;
+    lv2:requiredFeature ui:parent , urid:map ;
+    ui:binary <eq10q-gtk-ui-bridge.so> .
 
-<http://eq10q.plugin.org/eq/eq4qs>
+# -----------------------------------------------------------------------------
+# Plugins and Manifest Links
+# -----------------------------------------------------------------------------
+<http://eq10q.sourceforge.net/eq/eq1qm>
   a lv2:Plugin;
-  rdfs:seeAlso <eq4qs.ttl>.
+  rdfs:seeAlso <eq1qm.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/eq/eq6qm>
+<http://eq10q.sourceforge.net/eq/eq1qs>
   a lv2:Plugin;
-  rdfs:seeAlso <eq6qm.ttl>.
+  rdfs:seeAlso <eq1qs.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/eq/eq6qs>
+<http://eq10q.sourceforge.net/eq/eq4qm>
   a lv2:Plugin;
-  rdfs:seeAlso <eq6qs.ttl>.
+  rdfs:seeAlso <eq4qm.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/eq/eq10qm>
+<http://eq10q.sourceforge.net/eq/eq4qs>
   a lv2:Plugin;
-  rdfs:seeAlso <eq10qm.ttl>.
+  rdfs:seeAlso <eq4qs.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/eq/eq10qs>
+<http://eq10q.sourceforge.net/eq/eq6qm>
   a lv2:Plugin;
-  rdfs:seeAlso <eq10qs.ttl>.
+  rdfs:seeAlso <eq6qm.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/gate>
+<http://eq10q.sourceforge.net/eq/eq6qs>
   a lv2:Plugin;
-  rdfs:seeAlso <gate.ttl>.
+  rdfs:seeAlso <eq6qs.ttl>;
+  ui:ui eq10q_gtk2: .
+
+<http://eq10q.sourceforge.net/eq/eq10qm>
+  a lv2:Plugin;
+  rdfs:seeAlso <eq10qm.ttl>;
+  ui:ui eq10q_gtk2: .
+
+<http://eq10q.sourceforge.net/eq/eq10qs>
+  a lv2:Plugin;
+  rdfs:seeAlso <eq10qs.ttl>;
+  ui:ui eq10q_gtk2: .
+
+<http://eq10q.sourceforge.net/gate>
+  a lv2:Plugin;
+  rdfs:seeAlso <gate.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/compressor>
+<http://eq10q.sourceforge.net/compressor>
   a lv2:Plugin;
-  rdfs:seeAlso <compressor.ttl>.
+  rdfs:seeAlso <compressor.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/compressor_sc>
+<http://eq10q.sourceforge.net/compressor_sc>
   a lv2:Plugin;
-  rdfs:seeAlso <compressor_sc.ttl>.
+  rdfs:seeAlso <compressor_sc.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/gate_stereo>
+<http://eq10q.sourceforge.net/gate_stereo>
   a lv2:Plugin;
-  rdfs:seeAlso <gate_stereo.ttl>.
+  rdfs:seeAlso <gate_stereo.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/compressor_stereo>
+<http://eq10q.sourceforge.net/compressor_stereo>
   a lv2:Plugin;
-  rdfs:seeAlso <compressor_stereo.ttl>.
+  rdfs:seeAlso <compressor_stereo.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/compressor_stereo_sc>
+<http://eq10q.sourceforge.net/compressor_stereo_sc>
   a lv2:Plugin;
-  rdfs:seeAlso <compressor_stereo_sc.ttl>.
+  rdfs:seeAlso <compressor_stereo_sc.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/bassup>
+<http://eq10q.sourceforge.net/bassup>
   a lv2:Plugin;
-  rdfs:seeAlso <bassup.ttl>.
+  rdfs:seeAlso <bassup.ttl>;
+  ui:ui eq10q_gtk2: .
 
-<http://eq10q.plugin.org/matrix_lr2ms>
+<http://eq10q.sourceforge.net/matrix_lr2ms>
   a lv2:Plugin;
-  rdfs:seeAlso <lr2ms.ttl>.
+  rdfs:seeAlso <lr2ms.ttl>;
+  ui:ui eq10q_gtk2: .
   
-<http://eq10q.plugin.org/matrix_ms2lr>
+<http://eq10q.sourceforge.net/matrix_ms2lr>
   a lv2:Plugin;
-  rdfs:seeAlso <ms2lr.ttl>.
+  rdfs:seeAlso <ms2lr.ttl>;
+  ui:ui eq10q_gtk2: .

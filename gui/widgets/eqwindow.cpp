@@ -197,10 +197,13 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   m_CurveBypassBandsBox.pack_start(m_ABFlatBox ,Gtk::PACK_SHRINK);
   m_CurveBypassBandsBox.pack_start(m_BandBox ,Gtk::PACK_SHRINK);
 
-  m_InGainBox.pack_start(*m_VuMeterIn, Gtk::PACK_EXPAND_WIDGET);
+  
+  m_VuMeterIn->set_size_request(-1, 470);
+  m_InGainBox.pack_start(*m_VuMeterIn, Gtk::PACK_SHRINK);
   m_InGainBox.pack_start(*m_GainFaderIn, Gtk::PACK_SHRINK);
   
-  m_OutGainBox.pack_start(*m_VuMeterOut, Gtk::PACK_EXPAND_WIDGET);
+  m_VuMeterOut->set_size_request(-1, 470);
+  m_OutGainBox.pack_start(*m_VuMeterOut, Gtk::PACK_SHRINK);
   m_OutGainBox.pack_start(*m_GainFaderOut, Gtk::PACK_SHRINK);
 
   m_GainEqBox.pack_start(m_CurveBypassBandsBox, Gtk::PACK_SHRINK);
