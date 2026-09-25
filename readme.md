@@ -79,5 +79,8 @@ To run these plugins, you need an LV2-compliant host. We recommend:
 * Carla
 * Harrison Mixbus
 
+## 🙏 Acknowledgments
+Special thanks to **falkTX** for creating the [lv2-gtk-ui-bridge](https://github.com/falkTX/lv2-gtk-ui-bridge) project, which enables reliable GTK UI bridging and embedding across modern LV2 hosts.
+
 ### 🤝 Contributing & License
 EQ10Q is released under the GPL License. You are free to copy, redistribute, and modify the software.
