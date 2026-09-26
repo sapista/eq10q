@@ -176,6 +176,7 @@ EqMainWindow::EqMainWindow(int iAudioChannels, int iNumBands, const char *uri, c
   }
 
   //Bode plot layout
+  m_Bode->set_size_request(-1, 400);
   m_PlotBox.set_spacing(0);
   m_PlotBox.pack_start(*m_Bode);
   m_PlotBox.pack_start(m_FftdBBox,Gtk::PACK_SHRINK);
