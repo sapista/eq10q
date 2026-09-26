@@ -35,7 +35,28 @@ Dynamic Control: Effectively eliminate noise or expand the dynamic range of your
 
 Side-chain Filtering: Features side-chain input and filtering options to ensure the gate only opens when the desired signal trigger is present.
 
+---
+
 ## 🛠 Installation
+
+You can either install pre-built binaries (recommended for Debian 13 and derivatives) or compile the plugins from source.
+
+### Option 1: Pre-built Binary (Debian 13 & Derivatives)
+
+1. **Install runtime dependencies:**
+Under Debian-based systems these can be installed with:
+
+    ```bash
+      sudo apt install libgtkmm-2.4-1t64 libfftw3-bin liblilv-0-0 libx11-6
+    ```
+
+2. **Download & Install:**
+Download the latest release .zip file from the GitHub Releases page:
+ [EQ10QPlugins.zip](https://github.com/sapista/eq10q/releases/download/eq10q/EQ10QPlugins.zip)
+
+ 3. **Uncompress the archive** and copy the EQ10QPlugins.lv2 folder into your local LV2 directory (~/.lv2/)
+
+### Option 2: Building from Source
 Prerequisites
 Ensure you have the following libraries and tools installed:
 * Compiler: G++
@@ -54,9 +75,9 @@ Ensure you have the following libraries and tools installed:
 Under Debian-based systems these can be installed with:
 ```bash
 sudo apt install build-essential cmake pkg-config lv2-dev libgtk2.0-dev libgtkmm-2.4-dev libfftw3-dev liblilv-dev libx11-dev 
-```  
+```
 
-### Building from Source
+#### Building from Source
 Navigate to the EQ10Q top-level directory:
 ```bash
 cmake ./
@@ -67,10 +88,12 @@ Compile the source:
 make
 ```
 
-### Installation
+#### Installation
 After a successful build, simply copy the `EQ10QPlugins.lv2` bundle contained in the `bin` folder into any directory within the `LV2_PATH`, for example `~/.lv2/`.
 
 Note that there is no `make install` step, you can easily just copy the bundle yourself.
+
+---
 
 ## 📋 Requirements
 To run these plugins, you need an LV2-compliant host. We recommend:
